@@ -75,7 +75,6 @@ public class PlayerWeaponVisuals : MonoBehaviour
                 shouldIncrease_RigWeight = false;
         }
     }
-
     private void ReduceRigWeight()
     {
         rig.weight = .15f;
@@ -91,7 +90,6 @@ public class PlayerWeaponVisuals : MonoBehaviour
 
         SetBusyGrabbingWeaponTo(true);
     }
-
     public void SetBusyGrabbingWeaponTo(bool busy)
     {
         isGrabbingWeapon = busy;
