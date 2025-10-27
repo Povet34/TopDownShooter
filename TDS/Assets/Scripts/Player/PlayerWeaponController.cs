@@ -8,6 +8,7 @@ public class PlayerWeaponController : MonoBehaviour
     private const float REFERENCE_BULLET_SPEED = 20;
     //This is the default speed from whcih our mass formula is derived.
 
+    [SerializeField] private Weapon_Data defaultWeaponData;
     [SerializeField] private Weapon currentWeapon;
     private bool weaponReady;
     private bool isShooting;
@@ -41,7 +42,11 @@ public class PlayerWeaponController : MonoBehaviour
 
     #region Slots managment - Pickup\Equip\Drop\Ready Weapon
 
-    private void EquipStartingWeapon() => EquipWeapon(0);
+    private void EquipStartingWeapon() 
+    {
+        weaponSlots[0] = new Weapon(defaultWeaponData);
+        EquipWeapon(0);
+    }
     private void EquipWeapon(int i)
     {
         if (i >= weaponSlots.Count)
@@ -54,7 +59,7 @@ public class PlayerWeaponController : MonoBehaviour
 
         CameraManager.instance.ChangeCameraDistance(currentWeapon.cameraDistance);
     }
-    public void PickupWeapon(Weapon newWeapon)
+    public void PickupWeapon(Weapon_Data newWeaponData)
     {
         if (weaponSlots.Count >= maxSlots)
         {
@@ -62,6 +67,7 @@ public class PlayerWeaponController : MonoBehaviour
             return;
         }
 
+        Weapon newWeapon = new Weapon(newWeaponData);
 
         weaponSlots.Add(newWeapon);
         player.weaponVisuals.SwitchOnBackupWeaponModel();
@@ -125,7 +131,7 @@ public class PlayerWeaponController : MonoBehaviour
         currentWeapon.bulletsInMagazine--;
 
 
-        GameObject newBullet = ObjectPool.instance.GetBullet();
+        GameObject newBullet = ObjectPool.instance.GetObject(bulletPrefab);
 
         newBullet.transform.position = GunPoint().position;
         newBullet.transform.rotation = Quaternion.LookRotation(GunPoint().forward);
@@ -158,8 +164,6 @@ public class PlayerWeaponController : MonoBehaviour
         if (player.aim.CanAimPrecisly() == false && player.aim.Target() == null)
             direction.y = 0;
 
-
-
         return direction;
     }
 
@@ -174,7 +178,6 @@ public class PlayerWeaponController : MonoBehaviour
 
         return null;
     }
-
     public Weapon CurrentWeapon() => currentWeapon;
     public Transform GunPoint() => player.weaponVisuals.CurrentWeaponModel().gunPoint;
 
