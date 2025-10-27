@@ -1,9 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 
-public enum HangType { LowBackHang, BackHang, SideHang}
+public enum HangType { LowBackHang, BackHang, SideHang }
 
 
 public class BackupWeaponModel : MonoBehaviour
