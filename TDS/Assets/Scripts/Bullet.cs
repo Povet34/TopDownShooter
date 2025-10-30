@@ -82,7 +82,7 @@ public class Bullet : MonoBehaviour
 
         if (enemy != null)
         {
-            Vector3 force = rb.velocity.normalized * impactForce;
+            Vector3 force = rb.linearVelocity.normalized * impactForce;
             Rigidbody hitRigidbody = collision.collider.attachedRigidbody;
 
             enemy.GetHit();

@@ -43,7 +43,7 @@ public class Enemy_Grenade : MonoBehaviour
 
     public void SetupGrenade(Vector3 target, float timeToTarget,float countdown,float impactPower)
     {
-        rb.velocity = CalculateLaunchVelocity(target, timeToTarget);
+        rb.linearVelocity = CalculateLaunchVelocity(target, timeToTarget);
         timer = countdown + timeToTarget;
         this.impactPower = impactPower;
     }

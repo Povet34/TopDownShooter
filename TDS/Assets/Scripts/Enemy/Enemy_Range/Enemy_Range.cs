@@ -251,7 +251,7 @@ public class Enemy_Range : Enemy
         Vector3 bulletDirectionWithSpread = weaponData.ApplyWeaponSpread(bulletsDirection);
 
         rbNewBullet.mass = 20 / weaponData.bulletSpeed;
-        rbNewBullet.velocity = bulletDirectionWithSpread * weaponData.bulletSpeed;
+        rbNewBullet.linearVelocity = bulletDirectionWithSpread * weaponData.bulletSpeed;
 
     }
     private void SetupWeapon()

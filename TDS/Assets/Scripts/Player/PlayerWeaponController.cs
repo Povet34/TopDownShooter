@@ -169,7 +169,7 @@ public class PlayerWeaponController : MonoBehaviour
         Vector3 bulletsDirection = currentWeapon.ApplySpread(BulletDirection());
 
         rbNewBullet.mass = REFERENCE_BULLET_SPEED / bulletSpeed;
-        rbNewBullet.velocity = bulletsDirection * bulletSpeed;
+        rbNewBullet.linearVelocity = bulletsDirection * bulletSpeed;
     }
 
     private void Reload()
