@@ -18,16 +18,18 @@ public class Enemy_RangeWeaponData : ScriptableObject
     public float maxWeaponCooldown = 3;
 
     [Header("Bullet details")]
+    public int bulletDamage;
+    [Space]
     public float bulletSpeed = 20;
     public float weaponSpread = .1f;
 
-    public int GetBulletsPerAttack() => Random.Range(minBulletsPerAttack, maxBulletsPerAttack);
+    public int GetBulletsPerAttack() => Random.Range(minBulletsPerAttack, maxBulletsPerAttack + 1); // we do +1 because random.range max number is exclusive
     public float GetWeaponCooldown() => Random.Range(minWeaponCooldown,maxWeaponCooldown);
 
     public Vector3 ApplyWeaponSpread(Vector3 originalDirection)
     {
         float randomizedValue = Random.Range(-weaponSpread,weaponSpread);
-        Quaternion spreadRotation = Quaternion.Euler(randomizedValue, randomizedValue, randomizedValue);
+        Quaternion spreadRotation = Quaternion.Euler(randomizedValue, randomizedValue / 2, randomizedValue);
 
 
         return spreadRotation * originalDirection;
