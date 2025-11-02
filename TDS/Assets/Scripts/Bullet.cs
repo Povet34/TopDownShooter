@@ -101,7 +101,7 @@ public class Bullet : MonoBehaviour
         Enemy enemy = collision.gameObject.GetComponentInParent<Enemy>();
         if (enemy != null)
         {
-            Vector3 force = rb.velocity.normalized * impactForce;
+            Vector3 force = rb.linearVelocity.normalized * impactForce;
             Rigidbody hitRigidbody = collision.collider.attachedRigidbody;
             enemy.BulletImpact(force, collision.contacts[0].point, hitRigidbody);
         }

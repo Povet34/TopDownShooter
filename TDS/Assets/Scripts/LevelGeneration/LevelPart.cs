@@ -40,9 +40,9 @@ Physics.OverlapBox(collider.bounds.center, collider.bounds.extents, Quaternion.i
 
             foreach (var hit in hitColliders)
             {
-                InteresectionCheck interesectionCheck = hit.GetComponentInParent<InteresectionCheck>();
+                IntersectionCheck intersectionCheck = hit.GetComponentInParent<IntersectionCheck>();
 
-                if (interesectionCheck != null && intersectionCheckParent != interesectionCheck.transform)
+                if (intersectionCheck != null && intersectionCheckParent != intersectionCheck.transform)
                     return true;
             }
 

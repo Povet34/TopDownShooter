@@ -80,7 +80,7 @@ public class Enemy_Grenade : MonoBehaviour
 
         this.grenadeDamage = grenadeDamage;
         this.allyLayerMask = allyLayerMask;
-        rb.velocity = CalculateLaunchVelocity(target, timeToTarget);
+        rb.linearVelocity = CalculateLaunchVelocity(target, timeToTarget);
         timer = countdown + timeToTarget;
         this.impactPower = impactPower;
     }

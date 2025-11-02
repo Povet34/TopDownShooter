@@ -34,12 +34,12 @@ public class Enemy_Axe : MonoBehaviour
             direction = player.position + Vector3.up - transform.position;
 
 
-        transform.forward = rb.velocity;
+        transform.forward = rb.linearVelocity;
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = direction.normalized * flySpeed;
+        rb.linearVelocity = direction.normalized * flySpeed;
     }
 
 
