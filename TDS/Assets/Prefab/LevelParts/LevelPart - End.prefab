@@ -59,6 +59,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -115,6 +118,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3966566735694463111}
   - component: {fileID: 8998350207592059660}
+  - component: {fileID: 8094195729080621188}
   m_Layer: 0
   m_Name: LevelPart - End
   m_TagString: Untagged
@@ -159,6 +163,19 @@ MonoBehaviour:
   intersectionCheckColliders:
   - {fileID: 1257682215024555145}
   intersectionCheckParent: {fileID: 2877112043706317462}
+--- !u!114 &8094195729080621188
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593296202396551607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e92f621104e11e49b0e14889908c59a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fogWarPrefab: {fileID: 1078076445627490616, guid: b098ce0ac4ec3a64cb04f6f45bf9f253, type: 3}
 --- !u!1 &5835601134635904799
 GameObject:
   m_ObjectHideFlags: 0
@@ -168,7 +185,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2877112043706317462}
-  - component: {fileID: 3572335807069082439}
+  - component: {fileID: 7453887816434489222}
   m_Layer: 6
   m_Name: IntersectionCheckParent
   m_TagString: Untagged
@@ -192,7 +209,7 @@ Transform:
   - {fileID: 5251472730898841616}
   m_Father: {fileID: 3966566735694463111}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3572335807069082439
+--- !u!114 &7453887816434489222
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -201,7 +218,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5835601134635904799}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25d85d6e637ba6945aa2d5e4edf3fda0, type: 3}
+  m_Script: {fileID: 11500000, guid: 319164e5f813525438638febf5200ed5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8306109610556605702
@@ -308,6 +325,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:

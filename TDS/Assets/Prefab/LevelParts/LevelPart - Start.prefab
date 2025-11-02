@@ -62,6 +62,8 @@ GameObject:
   - component: {fileID: 4657643777315235595}
   - component: {fileID: 7971264263925578437}
   - component: {fileID: 6981802689782524821}
+  - component: {fileID: 3752272713878550149}
+  - component: {fileID: -6911798324271248793}
   m_Layer: 6
   m_Name: LevelPart - Start
   m_TagString: Untagged
@@ -101,6 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SerializedVersion: 0
   m_AgentTypeID: 0
   m_CollectObjects: 0
   m_Size: {x: 10, y: 10, z: 10}
@@ -138,6 +141,32 @@ MonoBehaviour:
   intersectionCheckColliders:
   - {fileID: 623316252593915584}
   intersectionCheckParent: {fileID: 1721073627327215874}
+--- !u!114 &3752272713878550149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4433517393710392160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e92f621104e11e49b0e14889908c59a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fogWarPrefab: {fileID: 1078076445627490616, guid: b098ce0ac4ec3a64cb04f6f45bf9f253, type: 3}
+--- !u!114 &-6911798324271248793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4433517393710392160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e92f621104e11e49b0e14889908c59a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fogWarPrefab: {fileID: 0}
 --- !u!1 &6988198834318230359
 GameObject:
   m_ObjectHideFlags: 0
@@ -182,7 +211,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1721073627327215874}
-  - component: {fileID: 2615493078274836983}
+  - component: {fileID: 8497853507295040826}
   m_Layer: 6
   m_Name: IntersectionCheckParent
   m_TagString: Untagged
@@ -206,7 +235,7 @@ Transform:
   - {fileID: 727633649124457587}
   m_Father: {fileID: 4657643777315235595}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2615493078274836983
+--- !u!114 &8497853507295040826
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -215,7 +244,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7082414406061446700}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25d85d6e637ba6945aa2d5e4edf3fda0, type: 3}
+  m_Script: {fileID: 11500000, guid: 319164e5f813525438638febf5200ed5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8478486316990030469
@@ -278,6 +307,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -396,6 +428,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
