@@ -2,10 +2,12 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
 
+public enum EnemyType { Melee, Range, Boss ,Random}
+
 [RequireComponent(typeof(NavMeshAgent))]
 public class Enemy : MonoBehaviour
 {
-
+    public EnemyType enemyType;
     public LayerMask whatIsAlly;
     public LayerMask whatIsPlayer;
     
@@ -37,6 +39,9 @@ public class Enemy : MonoBehaviour
 
     public Ragdoll ragdoll { get; private set; }
 
+    public Enemy_DropController dropController { get; private set; }
+
+
     protected virtual void Awake()
     {
         stateMachine = new EnemyStateMachine();
@@ -46,6 +51,7 @@ public class Enemy : MonoBehaviour
         visuals = GetComponent<Enemy_Visuals>();
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponentInChildren<Animator>();
+        dropController = GetComponent<Enemy_DropController>();
         player = GameObject.Find("Player").GetComponent<Transform>();
     }
 
@@ -65,6 +71,15 @@ public class Enemy : MonoBehaviour
     protected virtual void InitializePerk()
     {
 
+    }
+
+    public virtual void MakeEnemyVIP()
+    {
+        int additionalHealth = Mathf.RoundToInt(health.currentHealth * 1.5f);
+
+        health.currentHealth += additionalHealth;
+
+        transform.localScale = transform.localScale * 1.15f;
     }
 
     protected bool ShouldEnterBattleMode()
@@ -90,13 +105,15 @@ public class Enemy : MonoBehaviour
         if (health.ShouldDie())
             Die();
 
-
         EnterBattleMode();
     }
 
     public virtual void Die()
     {
+        dropController.DropItems();
 
+        MissionObject_HuntTarget huntTarget = GetComponent<MissionObject_HuntTarget>();
+        huntTarget?.InvokeOnTargetKilled();
     }
 
     public virtual void MeleeAttackCheck(Transform[] damagePoints, float attackCheckRadius,GameObject fx,int damage)

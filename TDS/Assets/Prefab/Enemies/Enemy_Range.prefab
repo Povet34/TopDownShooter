@@ -1446,6 +1446,7 @@ GameObject:
   - component: {fileID: 7514313664782962610}
   - component: {fileID: 1940292121413942818}
   - component: {fileID: 1334087555910019399}
+  - component: {fileID: 4108937853566445864}
   m_Layer: 11
   m_Name: Enemy_Range
   m_TagString: Untagged
@@ -1498,6 +1499,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07e1c739c1cddfb45880ccc0e8df19c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyType: 1
   whatIsAlly:
     serializedVersion: 2
     m_Bits: 2048
@@ -1607,6 +1609,19 @@ MonoBehaviour:
   leftElbowIK: {fileID: 8601710550309007857}
   leftHandIKConstraint: {fileID: 1601646893650882009}
   weaponAimConstraint: {fileID: 3311437297003741549}
+--- !u!114 &4108937853566445864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1316571440960610406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa2950ee4bd56748afb555994b8f4a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  missionObjectKey: {fileID: 0}
 --- !u!1 &1416550309579397773
 GameObject:
   m_ObjectHideFlags: 0

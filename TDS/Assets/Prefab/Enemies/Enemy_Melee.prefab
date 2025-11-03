@@ -4782,6 +4782,7 @@ GameObject:
   - component: {fileID: 7991282927474603119}
   - component: {fileID: 8619387491810796290}
   - component: {fileID: 1410124891614150917}
+  - component: {fileID: 5862230748364963212}
   m_Layer: 11
   m_Name: Enemy_Melee
   m_TagString: Untagged
@@ -4839,7 +4840,6 @@ MonoBehaviour:
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
-  healthPoints: 3
   idleTime: 60
   aggresionRange: 10
   walkSpeed: 1.5
@@ -4944,6 +4944,18 @@ MonoBehaviour:
   leftElbowIK: {fileID: 0}
   leftHandIKConstraint: {fileID: 0}
   weaponAimConstraint: {fileID: 0}
+--- !u!114 &5862230748364963212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5957605082017663771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa2950ee4bd56748afb555994b8f4a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6135291453938831984
 GameObject:
   m_ObjectHideFlags: 0

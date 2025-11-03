@@ -18702,6 +18702,7 @@ GameObject:
   - component: {fileID: 2583303110093365540}
   - component: {fileID: 1220252299848808864}
   - component: {fileID: 421906443778875881}
+  - component: {fileID: 7967682950002811877}
   m_Layer: 11
   m_Name: Enemy_Boss_Flamethrower
   m_TagString: Untagged
@@ -18762,13 +18763,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2a09f0c8824a0f47899dac419e29215, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyType: 2
   whatIsAlly:
     serializedVersion: 2
     m_Bits: 2048
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
-  healthPoints: 5
   idleTime: 3
   aggresionRange: 15
   walkSpeed: 1.25
@@ -18855,6 +18856,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 2000
   currentHealth: 0
+--- !u!114 &7967682950002811877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7364281645933512702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa2950ee4bd56748afb555994b8f4a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  missionObjectKey: {fileID: 0}
 --- !u!1 &7455410051620454792
 GameObject:
   m_ObjectHideFlags: 0

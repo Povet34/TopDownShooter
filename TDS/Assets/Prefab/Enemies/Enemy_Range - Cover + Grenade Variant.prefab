@@ -54,11 +54,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1522754735549448092, guid: a60407b8a6a86714d80c91866e7b12fe, type: 3}
       propertyPath: coverPerk
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1522754735549448092, guid: a60407b8a6a86714d80c91866e7b12fe, type: 3}
       propertyPath: weaponType
-      value: 5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1522754735549448092, guid: a60407b8a6a86714d80c91866e7b12fe, type: 3}
       propertyPath: grenadePerk

@@ -1,6 +1,4 @@
-using FischlWorks_FogWar;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class LevelPart : MonoBehaviour
@@ -42,9 +40,9 @@ Physics.OverlapBox(collider.bounds.center, collider.bounds.extents, Quaternion.i
 
             foreach (var hit in hitColliders)
             {
-                IntersectionCheck intersectionCheck = hit.GetComponentInParent<IntersectionCheck>();
+                InteresectionCheck interesectionCheck = hit.GetComponentInParent<InteresectionCheck>();
 
-                if (intersectionCheck != null && intersectionCheckParent != intersectionCheck.transform)
+                if (interesectionCheck != null && intersectionCheckParent != interesectionCheck.transform)
                     return true;
             }
 

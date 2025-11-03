@@ -13,6 +13,14 @@ PrefabInstance:
       value: Enemy_Range - Advance + Grenade Variant
       objectReference: {fileID: 0}
     - target: {fileID: 7239057773979472322, guid: ac9d6c026beb0c945bdff63e080cf3f9, type: 3}
+      propertyPath: coverPerk
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7239057773979472322, guid: ac9d6c026beb0c945bdff63e080cf3f9, type: 3}
+      propertyPath: weaponType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7239057773979472322, guid: ac9d6c026beb0c945bdff63e080cf3f9, type: 3}
       propertyPath: grenadePerk
       value: 1
       objectReference: {fileID: 0}
