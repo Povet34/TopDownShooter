@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Bolt R-7
   bulletDamage: 35
+  bulletSpeed: 30
   bulletsInMagazine: 6
   magazineCapacity: 6
   totalReserveAmmo: 32

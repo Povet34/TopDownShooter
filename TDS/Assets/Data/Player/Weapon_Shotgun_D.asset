@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Shotgun G7
   bulletDamage: 21
+  bulletSpeed: 30
   bulletsInMagazine: 20
   magazineCapacity: 20
   totalReserveAmmo: 31

@@ -8,6 +8,7 @@ public class Weapon_Data : ScriptableObject
 
     [Header("Bullet info")]
     public int bulletDamage;
+    public int bulletSpeed;
 
     [Header("Magazine details")]
     public int bulletsInMagazine;
