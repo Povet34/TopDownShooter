@@ -8,6 +8,7 @@ public class Player_AimController : MonoBehaviour
 
     [Header("Aim Viusal - Laser")]
     [SerializeField] private LineRenderer aimLaser; // this component is on the waepon holder(child of a player)
+    [SerializeField] private Transform aimLaserEnd; //¿Ã∞≈ sprite∑Œ hit normal 
 
     [Header("Aim control")]
     [SerializeField] private Transform aim;
@@ -92,6 +93,9 @@ public class Player_AimController : MonoBehaviour
         aimLaser.SetPosition(0, gunPoint.position);
         aimLaser.SetPosition(1, endPoint);
         aimLaser.SetPosition(2, endPoint + laserDirection * laserTipLenght);
+
+        aimLaserEnd.transform.position = endPoint;
+        aimLaserEnd.transform.forward = hit.normal;
     }
     private void UpdateAimPosition()
     {
@@ -103,7 +107,6 @@ public class Player_AimController : MonoBehaviour
                 aim.position = target.GetComponent<Renderer>().bounds.center;
             else
                 aim.position = target.position;
-
 
             return;
         }   
