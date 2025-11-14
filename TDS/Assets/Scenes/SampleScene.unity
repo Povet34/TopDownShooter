@@ -23136,6 +23136,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6486840493343198948, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
+      propertyPath: m_Size.x
+      value: 1.9723892
+      objectReference: {fileID: 0}
+    - target: {fileID: 6486840493343198948, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
+      propertyPath: m_Size.z
+      value: 3.8591313
+      objectReference: {fileID: 0}
+    - target: {fileID: 6486840493343198948, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
+      propertyPath: m_Center.x
+      value: 0.018894196
+      objectReference: {fileID: 0}
+    - target: {fileID: 6486840493343198948, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
+      propertyPath: m_Center.z
+      value: -0.22765422
+      objectReference: {fileID: 0}
     - target: {fileID: 6630811048521316626, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
       propertyPath: m_Name
       value: Car_Jeep
