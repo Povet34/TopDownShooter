@@ -5,6 +5,7 @@
         "TDS.Core",
         "TDS.Game",
         "TDS.Input",
+        "Unity.InputSystem",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

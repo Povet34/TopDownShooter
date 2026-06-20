@@ -22,7 +22,8 @@ public class Player_Health : HealthController
         if (ShouldDie())
             Die();
 
-        UI.instance.inGameUI.UpdateHealthUI(currentHealth, maxHealth);
+        if (UI.instance != null) // UI 없는 컨텍스트(맵 단독/테스트)에서도 안전
+            UI.instance.inGameUI.UpdateHealthUI(currentHealth, maxHealth);
     }
 
     private void Die()
