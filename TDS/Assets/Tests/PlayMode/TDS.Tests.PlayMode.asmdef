@@ -3,6 +3,8 @@
     "rootNamespace": "TDS.Tests.PlayMode",
     "references": [
         "TDS.Core",
+        "TDS.Game",
+        "TDS.Input",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

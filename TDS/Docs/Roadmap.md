@@ -214,7 +214,9 @@
 - **0.2.6 aim/무기 풀배선 ✅ — 빈 맵에서 사격 가능**: 프리팹에 `Aim_Target`/`Aim_EndPoint` 자식 배선, `UpdateCameraPosition` cameraTarget null 가드.
   `PlayerMapBootstrap`(Assembly-CSharp)가 스폰 플레이어에 **컨트롤 활성화 + 기본무기(Pistol+AutoRifle) 부여**(UI 없이). 검증: `FireSingleBullet` 호출 시 **총알 스폰(ObjectPool), NullRef 0**. controlsEnabled=True·weaponReady=True·currentWeapon=Pistol.
 - 남음: 끊긴 `cameraTarget`(레거시, CameraFollow로 대체됨) 정리, 무기 UI/HUD(선택), 그 후 동굴/스티칭/미션/몬스터.
-- **참고(asmdef 한계)**: Player 통합 테스트는 게임 코드가 Assembly-CSharp이라 TDS.Tests에서 직접 못 침 → 현재는 play+리플렉션 검증. 정식 Player TDD는 게임 코드의 asmdef화가 선행돼야 함(향후).
+- **0.2.7 게임 코드 asmdef화 ✅ — Player 통합 테스트 가능**: 게임 스크립트 132개를 **`TDS.Game` asmdef**(Assets/Scripts/)로, `PlayerControls`를 **`TDS.Input` asmdef**(Assets/Input Manager/)로 묶음. 스크립트 GUID 불변 → 씬/프리팹 참조 보존. 컴파일 클린, SampleScene 정상 부팅.
+  - `TDS.Tests.PlayMode`가 `TDS.Game` 참조 → **Player 통합 테스트 작성 가능**. `PlayerCombatTests`: ① 스폰 시 서브시스템(movement/weapon/aim/health/controls) 배선 ② 기본무기 장착 후 `FireSingleBullet`→총알 스폰. **PlayMode 9 green**.
+  - `Player_AimController.UpdateAimVisuals` Camera.main null 가드 추가(테스트/카메라 없는 컨텍스트 안전).
 - **IK**: 0.2.3에서 aim 리그 유지 시도. 포지션 잡기가 과하면 딜레이(탑다운이라 티 적음 — 사용자 동의).
 
 ---

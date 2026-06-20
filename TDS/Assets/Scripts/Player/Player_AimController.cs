@@ -87,7 +87,9 @@ public class Player_AimController : MonoBehaviour
     public void EnableAimLaer(bool enable) => aimLaser.enabled = enable;
     private void UpdateAimVisuals()
     {
-        aim.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+        if (Camera.main != null) // 카메라 없는 컨텍스트(테스트 등)에서도 안전
+            aim.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+
         aimLaser.enabled = player.weapon.WeaponReady();
 
         if (aimLaser.enabled == false)
