@@ -114,7 +114,8 @@ public class Enemy : MonoBehaviour
 
 
         anim.enabled = false;
-        agent.isStopped = true;
+        if (agent.isOnNavMesh) // navmesh 밖 에이전트에서도 안전
+            agent.isStopped = true;
         agent.enabled = false;
 
         ragdoll.RagdollActive(true);
