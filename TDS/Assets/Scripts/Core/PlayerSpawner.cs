@@ -39,6 +39,7 @@ namespace TDS.Core
 
             var pos = PlayerSpawnPoint.Resolve(mapCenter, groundY);
             Spawned = Instantiate(prefab, pos, Quaternion.identity);
+            Spawned.name = "Player"; // 적 AI가 GameObject.Find("Player")로 찾으므로 "(Clone)" 제거
             return Spawned;
         }
     }
