@@ -14,6 +14,9 @@ public class Player_FogController : MonoBehaviour
 
     void Update()
     {
+        if (fogVolume == null) // 포그 없는 씬(맵 단독 등)에서도 안전
+            return;
+
         if ((transform.position - lastPos).magnitude > distanceCheck)
         {
             lastPos = transform.position;

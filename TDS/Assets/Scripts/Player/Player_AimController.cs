@@ -7,9 +7,9 @@ public class Player_AimController : MonoBehaviour
     private PlayerControls controls;
 
     [Header("Aim Viusal - Laser")]
-    [SerializeField] private LayerMask laserLayerMask; // ·ÎÁ÷ Äİ¶óÀÌ´õ °É·¯³»°í, º¸ÀÌ´Â ¸Ş½¬µé¸¸ Ã³¸®ÇÏ·Á°í
+    [SerializeField] private LayerMask laserLayerMask; // ï¿½ï¿½ï¿½ï¿½ ï¿½İ¶ï¿½ï¿½Ì´ï¿½ ï¿½É·ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½Ş½ï¿½ï¿½é¸¸ Ã³ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½
     [SerializeField] private LineRenderer aimLaser; // this component is on the waepon holder(child of a player)
-    [SerializeField] private Transform aimLaserEnd; //ÀÌ°Å sprite·Î hit normal 
+    [SerializeField] private Transform aimLaserEnd; //ï¿½Ì°ï¿½ spriteï¿½ï¿½ hit normal 
 
     [Header("Aim Control")]
     [SerializeField] float preciseAimCamDist = 6;
@@ -146,6 +146,9 @@ public class Player_AimController : MonoBehaviour
     public bool CanAimPrecisly() => isAimingPrecisly;
     public RaycastHit GetMouseHitInfo()
     {
+        if (Camera.main == null) // ë©”ì¸ ì¹´ë©”ë¼ ì—†ëŠ” ì»¨í…ìŠ¤íŠ¸ì—ì„œë„ ì•ˆì „
+            return lastKnownMouseHit;
+
         Ray ray = Camera.main.ScreenPointToRay(mouseInput);
 
         if (Physics.Raycast(ray, out var hitInfo, Mathf.Infinity, preciseAim))

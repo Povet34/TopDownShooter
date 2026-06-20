@@ -202,7 +202,9 @@
 - **0.2.1 순수 시임 ✅**: `AimRotation.FaceHorizontal`(0벡터 가드 → "Look rotation" 경고도 해결), `PlayerSpawnPoint.Resolve`. EditMode 5 green.
   - 후속: `Player_Movement.ApplyRotation`을 `AimRotation` 사용으로 교체(경고 제거, 작은 독립 변경).
 - **0.2.2 Player 회복력**: Player/Player_AimController가 `UI.instance`·`Camera.main` 없이도 안 죽도록 guard(각 guard 독립, ControlsManager 패턴).
-- **0.2.3 Player 프리팹 추출**: Player 생태계(Player+모델+aim리그+aim타겟+카메라팔로우타겟)를 프리팹화, 외부 직렬참조 정리.
+- **0.2.2/0.2.3 🔧 진행**: `Resources/Player.prefab` 생성(비파괴 스냅샷). **TDD 스폰 테스트 green**(`Player_prefab_spawns_without_nullrefs`) — 시스템만 있는 컨텍스트에서 **NullRef 0**.
+  - 스폰 테스트가 드러낸 결합 3건을 격리 수정: `Player_FogController`(fogVolume null 가드)·`Player_AimController.GetMouseHitInfo`(Camera.main null 가드)·MagicaCloth 비활성(cape 잔재, 딜레이 합의).
+  - 남음: 끊긴 외부참조 배선(`aim`=Aim_Target·`aimLaserEnd`=Aim_EndPoint·`cameraTarget`=CameraFollow_Target → 프리팹 내부화 or 스포너 배선), 카메라 리그, 무기 부여(walk-first는 후순위).
 - **0.2.4 카메라 리그**: Cinemachine(Brain+vcam+CameraManager)을 맵 씬/시스템에 제공.
 - **0.2.5 PlayerSpawner**: 맵 생성 후 `PlayerSpawnPoint` 위치에 프리팹 스폰. PlayMode 테스트(스폰·위치·NullRef 0).
 - **IK**: 0.2.3에서 aim 리그 유지 시도. 포지션 잡기가 과하면 딜레이(탑다운이라 티 적음 — 사용자 동의).
