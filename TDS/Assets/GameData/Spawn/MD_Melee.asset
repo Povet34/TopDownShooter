@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: TDS.Core::TDS.Core.MonsterDef
   id: Melee
   prefab: {fileID: 5957605082017663771, guid: c6f7c97c0776f5545820ad52b6aeba38, type: 3}
-  weight: 2
+  weight: 3
   cost: 1
   tags: []

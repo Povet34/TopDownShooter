@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95ae9faaf1a5e0344afa64287d4e69c0, type: 3}
-  m_Name: MD_Range
+  m_Name: MD_Boss_Hummer
   m_EditorClassIdentifier: TDS.Core::TDS.Core.MonsterDef
-  id: Range
-  prefab: {fileID: 1316571440960610406, guid: a60407b8a6a86714d80c91866e7b12fe, type: 3}
-  weight: 2
-  cost: 2
+  id: Boss_Hummer
+  prefab: {fileID: 5522898272314983028, guid: 331ca337b3b39aa4e97d96ae844a487d, type: 3}
+  weight: 1
+  cost: 8
   tags: []
