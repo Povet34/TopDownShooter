@@ -144,7 +144,8 @@
   - 0.1a 남음: **AudioManager** — `Start`가 bgm 소스에 의존 + 사운드 작업(Phase D, 보류)과 묶임 → 후속. 그 외 전역 매니저는 모두 배선됨.
   - **다음 큰 작업 = 0.2 컴포지션 루트**: ControlsManager/GameManager가 "플레이어/UI 준비 시" 실제 배선되도록(현재는 guard로 스킵). 맵 씬 진입점에서 `EnsureSystems()` 호출 연결.
 - 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
-- 📋 Phase C — `MonsterDef`/`SpawnTable`/`MonsterSpawner` 데이터 스폰
+- 🔧 **Phase C — 몬스터 스폰 (동작)**: `SpawnSelection`(순수 가중선택, EditMode 5 green) + `MonsterDef`/`SpawnTable` SO + `MonsterSpawner`(플레이어 생성 후 navmesh 링에 시드 스폰). 데이터 `MD_Melee`/`MD_Range`/`ST_Basic`. Map_Generated에서 **적 5마리 스폰 확인**(가중치 반영, navmesh 위, 크래시 0). `PlayerSpawner`가 인스턴스를 "Player"로 명명(적 AI `Find("Player")`), `Player.playerBody`=Bip001 Spine2 배선(Range 조준).
+  - 남음: 적이 더 다양한 변형 포함, 웨이브/긴장도(SpawnDirector), 적↔플레이어 전투(피격/사망 연출) 검증.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)
