@@ -73,3 +73,14 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# JetBrains Rider IDE
+.idea/
+
+# MCP for Unity — in-editor Roslyn compiler (tooling DLLs, not game assets)
+/[Aa]ssets/[Pp]lugins/
+/[Aa]ssets/[Pp]lugins.meta
+
+# MCP/manual debug screenshots (auto-generated, throwaway)
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta
