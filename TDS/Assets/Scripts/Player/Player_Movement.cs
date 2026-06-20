@@ -66,13 +66,13 @@ public class Player_Movement : MonoBehaviour
     }
     private void ApplyRotation()
     {
-        Vector3 lookingDirection = player.aim.GetMouseHitInfo().point - transform.position;
-        lookingDirection.y = 0f;
-        lookingDirection.Normalize();
+        Vector3 aimPoint = player.aim.GetMouseHitInfo().point;
 
-        Quaternion desiredRotation = Quaternion.LookRotation(lookingDirection);
+        // 테스트된 순수 시임 사용: 조준점이 거의 자기 위치면 현재 회전 유지(0벡터 LookRotation 경고 회피).
+        Quaternion desiredRotation =
+            TDS.Core.AimRotation.FaceHorizontal(transform.position, aimPoint, transform.rotation);
+
         transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, turnSpeed * Time.deltaTime);
-
     }
     private void ApplyMovement()
     {
