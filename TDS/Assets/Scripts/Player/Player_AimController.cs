@@ -164,6 +164,9 @@ public class Player_AimController : MonoBehaviour
 
     private void UpdateCameraPosition()
     {
+        if (cameraTarget == null) // 신형 CameraFollow 사용 시 레거시 카메라 타겟 없음 → 스킵
+            return;
+
         if(Vector3.Distance(cameraTarget.position, DesieredCameraPosition()) < .5f)
             return;
 

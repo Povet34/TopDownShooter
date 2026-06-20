@@ -75,6 +75,7 @@
 
 ### P3 — 추후(보류)
 - 인벤토리 시스템 · 파밍 시스템 · interaction 아이템 확장(현재 `Interactable`/`Player_Interaction` 존재 → 확장).
+- **차량/운전 시스템 재통합** — `Car_Controller`/`Car_Interaction`/`Car_Sounds`/`Car_HealthController` **이미 구현됨**(SampleScene 기준). 새 맵/스폰/부트 구조에 맞춰 재배선 필요(맵에 차량 배치, 탑승 시 `ControlsManager.SwitchToCarControls` 등). **지금은 보류 — 기록만.**
 
 ---
 
@@ -210,7 +211,10 @@
 - **0.2.4 카메라 추적 + 입력 회복력 ✅**: `CameraFollow`(태그로 스폰 플레이어 자동 추적, 3/4 뷰) + `FollowPosition` 순수 시임(EditMode 2 green). Map_Generated 카메라 원근+추적.
   - **입력 크래시 가드 5건**: `EnablePrecisesAim`(CameraManager null)·`Player.OnEnable`(UI null ×2)·`UpdateWeaponUI`(UI null)·`Reload`/`ToggleWeaponMode`(currentWeapon null) → **조작 시 에러 0** (SampleScene 동작 보존).
   - **이동(WASD)은 `controlsEnabled` 게이트 없이 동작 → 걷기 가능**(스크린샷에서 카메라 추적 확인). MCP로 키입력 시뮬 불가 → 사용자가 Play+WASD로 최종 확인.
-- 남음: aim/무기 풀배선(끊긴 `Aim_Target`/`Aim_EndPoint`/`CameraFollow_Target` + 무기 부여 + UI), 그 후 동굴/스티칭/미션.
+- **0.2.6 aim/무기 풀배선 ✅ — 빈 맵에서 사격 가능**: 프리팹에 `Aim_Target`/`Aim_EndPoint` 자식 배선, `UpdateCameraPosition` cameraTarget null 가드.
+  `PlayerMapBootstrap`(Assembly-CSharp)가 스폰 플레이어에 **컨트롤 활성화 + 기본무기(Pistol+AutoRifle) 부여**(UI 없이). 검증: `FireSingleBullet` 호출 시 **총알 스폰(ObjectPool), NullRef 0**. controlsEnabled=True·weaponReady=True·currentWeapon=Pistol.
+- 남음: 끊긴 `cameraTarget`(레거시, CameraFollow로 대체됨) 정리, 무기 UI/HUD(선택), 그 후 동굴/스티칭/미션/몬스터.
+- **참고(asmdef 한계)**: Player 통합 테스트는 게임 코드가 Assembly-CSharp이라 TDS.Tests에서 직접 못 침 → 현재는 play+리플렉션 검증. 정식 Player TDD는 게임 코드의 asmdef화가 선행돼야 함(향후).
 - **IK**: 0.2.3에서 aim 리그 유지 시도. 포지션 잡기가 과하면 딜레이(탑다운이라 티 적음 — 사용자 동의).
 
 ---
