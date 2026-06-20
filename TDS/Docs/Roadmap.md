@@ -207,7 +207,10 @@
   - 남음: 끊긴 외부참조 배선(`aim`=Aim_Target·`aimLaserEnd`=Aim_EndPoint·`cameraTarget`=CameraFollow_Target → 프리팹 내부화 or 스포너 배선), 카메라 리그, 무기 부여(walk-first는 후순위).
 - **0.2.4 카메라 리그**: Cinemachine(Brain+vcam+CameraManager)을 맵 씬/시스템에 제공.
 - **0.2.5 PlayerSpawner ✅**: `PlayerSpawner`(시스템 보장→중앙 스폰, Resources/Player 폴백). PlayMode 2 green(스폰·위치). Map_Generated에 배치 → **플레이어가 절차 맵 중앙에 스폰(스크린샷 확인, NullRef 0)**.
-- **남음(walk/see)**: 컨트롤 배선(controlsEnabled=true → 입력으로 이동), 카메라 추적(Cinemachine 리그/CameraFollow_Target), 끊긴 aim 외부참조, 무기.
+- **0.2.4 카메라 추적 + 입력 회복력 ✅**: `CameraFollow`(태그로 스폰 플레이어 자동 추적, 3/4 뷰) + `FollowPosition` 순수 시임(EditMode 2 green). Map_Generated 카메라 원근+추적.
+  - **입력 크래시 가드 5건**: `EnablePrecisesAim`(CameraManager null)·`Player.OnEnable`(UI null ×2)·`UpdateWeaponUI`(UI null)·`Reload`/`ToggleWeaponMode`(currentWeapon null) → **조작 시 에러 0** (SampleScene 동작 보존).
+  - **이동(WASD)은 `controlsEnabled` 게이트 없이 동작 → 걷기 가능**(스크린샷에서 카메라 추적 확인). MCP로 키입력 시뮬 불가 → 사용자가 Play+WASD로 최종 확인.
+- 남음: aim/무기 풀배선(끊긴 `Aim_Target`/`Aim_EndPoint`/`CameraFollow_Target` + 무기 부여 + UI), 그 후 동굴/스티칭/미션.
 - **IK**: 0.2.3에서 aim 리그 유지 시도. 포지션 잡기가 과하면 딜레이(탑다운이라 티 적음 — 사용자 동의).
 
 ---

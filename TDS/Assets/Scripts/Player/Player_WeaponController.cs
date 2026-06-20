@@ -135,6 +135,9 @@ public class Player_WeaponController : MonoBehaviour
 
     public void UpdateWeaponUI()
     {
+        if (UI.instance == null) // UI 없는 컨텍스트(맵 단독)에서도 안전
+            return;
+
         UI.instance.inGameUI.UpdateWeaponUI(weaponSlots, currentWeapon);
     }
 
@@ -282,13 +285,13 @@ public class Player_WeaponController : MonoBehaviour
 
         controls.Character.Reload.performed += context =>
         {
-            if (currentWeapon.CanReload() && WeaponReady())
+            if (currentWeapon != null && currentWeapon.CanReload() && WeaponReady())
             {
                 Reload();
             }
         };
 
-        controls.Character.ToogleWeaponMode.performed += context => currentWeapon.ToggleBurst();
+        controls.Character.ToogleWeaponMode.performed += context => { if (currentWeapon != null) currentWeapon.ToggleBurst(); };
 
     }
 

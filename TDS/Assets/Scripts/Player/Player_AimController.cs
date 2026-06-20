@@ -68,12 +68,12 @@ public class Player_AimController : MonoBehaviour
 
         if(enable)
         {
-            CameraManager.instance.ChangeCameraDistance(preciseAimCamDist, camChangeRate);
+            if (CameraManager.instance != null) CameraManager.instance.ChangeCameraDistance(preciseAimCamDist, camChangeRate);
             Time.timeScale = 0.9f;
         }
         else
         {
-            CameraManager.instance.ChangeCameraDistance(regularAimCamDist, camChangeRate);
+            if (CameraManager.instance != null) CameraManager.instance.ChangeCameraDistance(regularAimCamDist, camChangeRate);
             Time.timeScale = 1f;
         }
     }
