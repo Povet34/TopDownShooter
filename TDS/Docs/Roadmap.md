@@ -137,7 +137,8 @@
 - 🔧 **Phase 0** — **기존 코드 실용적 디커플링** (B/C보다 먼저 — 결정 D5) ← **현재 작업**
   - 0.1a ✅: `GameServices`·`SystemsEnsurer`·`GameBootstrap.EnsureSystems()`(Resources/Systems 프리팹, 멱등·DontDestroyOnLoad).
     `IClockService`(TimeManager)·`IMissionService`(MissionManager) 배선(자기등록, `.instance` 유지). **EditMode 11 + PlayMode 3 green.**
-  - 0.1a 남음: 나머지 전역 매니저 배선 — **ObjectPool**(weapon/ammo 프리팹 참조 보존)·**ControlsManager**·**AudioManager**(bgm 소스 재구성 필요)·**GameManager**. 배선할 때마다 PlayMode assert 추가.
+  - GameManager(`IGameStateService`)·ObjectPool(`IObjectPoolService`, `Start` null-guard로 단독 안전화) 배선 ✅ → Systems 프리팹 4종, PlayMode **4 서비스 green**. SampleScene 회귀 없음 확인.
+  - 0.1a 남음: **ControlsManager**·**AudioManager** — 둘 다 `Start()`가 player/UI/bgm에 하드 의존 → **단순 등록이 아니라 `Start` 디커플(resilient)** 필요. 별도 증분.
 - 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
 - 📋 Phase C — `MonsterDef`/`SpawnTable`/`MonsterSpawner` 데이터 스폰
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정

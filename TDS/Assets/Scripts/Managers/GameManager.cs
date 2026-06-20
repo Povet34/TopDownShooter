@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TDS.Core;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IGameStateService
 {
     public static GameManager instance;
     public Player player;
@@ -16,6 +17,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        GameServices.Registry.Register<IGameStateService>(this);
 
         player = FindObjectOfType<Player>();
     }

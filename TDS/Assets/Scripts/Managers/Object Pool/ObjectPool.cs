@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TDS.Core;
 
-public class ObjectPool : MonoBehaviour
+public class ObjectPool : MonoBehaviour, IObjectPoolService
 {
     public static ObjectPool instance;
 
@@ -19,14 +20,20 @@ public class ObjectPool : MonoBehaviour
     {
         if (instance == null)
             instance = this;
-        else 
+        else
+        {
             Destroy(gameObject);
+            return;
+        }
+
+        GameServices.Registry.Register<IObjectPoolService>(this);
     }
 
     private void Start()
     {
-        InitializeNewPool(weaponPickup);
-        InitializeNewPool(ammoPickup);
+        // 단독 씬(부트 프리팹)에서도 안전하도록 null-guard. 풀은 GetObject에서 지연 초기화도 됨.
+        if (weaponPickup != null) InitializeNewPool(weaponPickup);
+        if (ammoPickup != null) InitializeNewPool(ammoPickup);
     }
 
     public GameObject GetObject(GameObject prefab,Transform target)
