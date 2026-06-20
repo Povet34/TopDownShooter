@@ -206,7 +206,8 @@
   - 스폰 테스트가 드러낸 결합 3건을 격리 수정: `Player_FogController`(fogVolume null 가드)·`Player_AimController.GetMouseHitInfo`(Camera.main null 가드)·MagicaCloth 비활성(cape 잔재, 딜레이 합의).
   - 남음: 끊긴 외부참조 배선(`aim`=Aim_Target·`aimLaserEnd`=Aim_EndPoint·`cameraTarget`=CameraFollow_Target → 프리팹 내부화 or 스포너 배선), 카메라 리그, 무기 부여(walk-first는 후순위).
 - **0.2.4 카메라 리그**: Cinemachine(Brain+vcam+CameraManager)을 맵 씬/시스템에 제공.
-- **0.2.5 PlayerSpawner**: 맵 생성 후 `PlayerSpawnPoint` 위치에 프리팹 스폰. PlayMode 테스트(스폰·위치·NullRef 0).
+- **0.2.5 PlayerSpawner ✅**: `PlayerSpawner`(시스템 보장→중앙 스폰, Resources/Player 폴백). PlayMode 2 green(스폰·위치). Map_Generated에 배치 → **플레이어가 절차 맵 중앙에 스폰(스크린샷 확인, NullRef 0)**.
+- **남음(walk/see)**: 컨트롤 배선(controlsEnabled=true → 입력으로 이동), 카메라 추적(Cinemachine 리그/CameraFollow_Target), 끊긴 aim 외부참조, 무기.
 - **IK**: 0.2.3에서 aim 리그 유지 시도. 포지션 잡기가 과하면 딜레이(탑다운이라 티 적음 — 사용자 동의).
 
 ---

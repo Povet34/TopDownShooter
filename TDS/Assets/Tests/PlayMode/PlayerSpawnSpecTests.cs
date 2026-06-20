@@ -43,5 +43,23 @@ namespace TDS.Tests.PlayMode
 
             Object.DestroyImmediate(player);
         }
+
+        [UnityTest]
+        public IEnumerator PlayerSpawner_spawns_player_at_map_center()
+        {
+            GameServices.ResetForTests();
+
+            var go = new GameObject("Spawner");
+            go.AddComponent<PlayerSpawner>(); // Start에서 EnsureSystems + Spawn
+            yield return null;
+            yield return null;
+
+            var spawner = go.GetComponent<PlayerSpawner>();
+            Assert.IsNotNull(spawner.Spawned, "플레이어가 스폰되지 않음");
+            Assert.Less(spawner.Spawned.transform.position.magnitude, 0.1f, "맵 중앙(0)에 스폰돼야 함");
+
+            if (spawner.Spawned != null) Object.DestroyImmediate(spawner.Spawned);
+            Object.DestroyImmediate(go);
+        }
     }
 }
