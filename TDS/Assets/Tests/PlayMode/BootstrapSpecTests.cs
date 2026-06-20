@@ -1,5 +1,6 @@
 using System.Collections;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.TestTools;
 using TDS.Core;
 
@@ -27,9 +28,39 @@ namespace TDS.Tests.PlayMode
 
         // ---- Phase 0 통합 명세 (구현되면 [Ignore] 제거) ----
 
-        [Test]
-        [Ignore("Phase 0.1a: GameBootstrap 구현 후 활성화 — 부트가 필수 서비스 9종을 등록해야 함")]
-        public void Bootstrap_registers_all_required_services() { }
+        // 0.1a ✅: EnsureSystems가 Systems 프리팹을 띄우면 담긴 전역 매니저가 자기 등록한다.
+        // (매니저 추가 마이그레이션 시 아래 assert를 늘려간다 — ObjectPool/Controls/Audio/GameState…)
+        [UnityTest]
+        public IEnumerator Bootstrap_registers_global_services()
+        {
+            GameServices.ResetForTests();
+
+            var systems = GameBootstrap.EnsureSystems();
+            Assert.IsNotNull(systems, "Resources/Systems 프리팹 로드 실패");
+            yield return null;
+
+            Assert.IsTrue(GameServices.Registry.IsRegistered<IClockService>(), "IClockService 미등록");
+            Assert.IsTrue(GameServices.Registry.IsRegistered<IMissionService>(), "IMissionService 미등록");
+
+            if (systems != null) Object.DestroyImmediate(systems.gameObject);
+            GameServices.ResetForTests();
+        }
+
+        [UnityTest]
+        public IEnumerator EnsureSystems_is_idempotent()
+        {
+            GameServices.ResetForTests();
+
+            var first = GameBootstrap.EnsureSystems();
+            var second = GameBootstrap.EnsureSystems();
+            yield return null;
+
+            Assert.IsNotNull(first);
+            Assert.AreSame(first, second, "EnsureSystems가 중복 생성됨");
+
+            if (first != null) Object.DestroyImmediate(first.gameObject);
+            GameServices.ResetForTests();
+        }
 
         [Test]
         [Ignore("Phase 0.1b: Systems 씬 분리 후 활성화 — 맵 씬 교체 시 시스템/서비스가 유지돼야 함")]

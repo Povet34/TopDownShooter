@@ -135,8 +135,9 @@
   - `Assets/Scenes/Map_Generated.unity` — 루트 3개만. 시드 7로 바닥+경계벽+장애물26+엄폐12, 중앙 스폰존 비움, **NavMesh 베이크 확인**.
   - 결정성: 전용 `System.Random(seed)`. 프리팹 비면 프리미티브 폴백.
 - 🔧 **Phase 0** — **기존 코드 실용적 디커플링** (B/C보다 먼저 — 결정 D5) ← **현재 작업**
-  - 0.1a 기반 ✅: `GameServices`(전역 레지스트리) + `SystemsEnsurer`(멱등) + `IClockService`. `TimeManager` 첫 배선(자기등록, `.instance` 유지). EditMode 11 green.
-  - 0.1a 남음: `Systems` 프리팹 + `GameBootstrap.EnsureSystems()`(Resources.Load) + 나머지 전역 매니저 5종 배선 → PlayMode 명세 `Bootstrap_registers_all_required_services` green.
+  - 0.1a ✅: `GameServices`·`SystemsEnsurer`·`GameBootstrap.EnsureSystems()`(Resources/Systems 프리팹, 멱등·DontDestroyOnLoad).
+    `IClockService`(TimeManager)·`IMissionService`(MissionManager) 배선(자기등록, `.instance` 유지). **EditMode 11 + PlayMode 3 green.**
+  - 0.1a 남음: 나머지 전역 매니저 배선 — **ObjectPool**(weapon/ammo 프리팹 참조 보존)·**ControlsManager**·**AudioManager**(bgm 소스 재구성 필요)·**GameManager**. 배선할 때마다 PlayMode assert 추가.
 - 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
 - 📋 Phase C — `MonsterDef`/`SpawnTable`/`MonsterSpawner` 데이터 스폰
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
@@ -183,8 +184,8 @@
 | `TDS.Tests.EditMode` | `Assets/Tests/EditMode/` | 순수 로직 단위 테스트 |
 | `TDS.Tests.PlayMode` | `Assets/Tests/PlayMode/` | 씬/부트 통합 테스트 |
 
-- **현재 상태**: EditMode **6 green**(ServiceRegistry 4 + BootSequence 2), PlayMode **1 green**(하니스) + **3 Ignored = 0.1 명세**:
-  - `Bootstrap_registers_all_required_services` → 0.1a
+- **현재 상태**: EditMode **11 green**(ServiceRegistry 4 + BootSequence 2 + GameServices 2 + SystemsEnsurer 3),
+  PlayMode **3 green**(`ServiceRegistry_resolves_across_a_frame` + `Bootstrap_registers_global_services` ✅0.1a + `EnsureSystems_is_idempotent`) + **2 Ignored = 남은 명세**:
   - `Services_persist_after_map_scene_swap` → 0.1b
   - `Map_scene_runs_standalone_without_nullrefs` → 0.1c
 - 구현하며 `[Ignore]`를 제거해 green으로 전환. 실행: MCP `run_tests(mode, assembly_names=["TDS.Tests.EditMode"])` 또는 Test Runner 창.

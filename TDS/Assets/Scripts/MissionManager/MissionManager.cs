@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TDS.Core;
 
-public class MissionManager : MonoBehaviour
+public class MissionManager : MonoBehaviour, IMissionService
 {
     public static MissionManager instance;
 
@@ -12,6 +13,7 @@ public class MissionManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        GameServices.Registry.Register<IMissionService>(this);
     }
 
 
