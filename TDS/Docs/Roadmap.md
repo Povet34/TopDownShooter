@@ -138,7 +138,9 @@
   - 0.1a ✅: `GameServices`·`SystemsEnsurer`·`GameBootstrap.EnsureSystems()`(Resources/Systems 프리팹, 멱등·DontDestroyOnLoad).
     `IClockService`(TimeManager)·`IMissionService`(MissionManager) 배선(자기등록, `.instance` 유지). **EditMode 11 + PlayMode 3 green.**
   - GameManager(`IGameStateService`)·ObjectPool(`IObjectPoolService`, `Start` null-guard로 단독 안전화) 배선 ✅ → Systems 프리팹 4종, PlayMode **4 서비스 green**. SampleScene 회귀 없음 확인.
-  - 0.1a 남음: **ControlsManager**·**AudioManager** — 둘 다 `Start()`가 player/UI/bgm에 하드 의존 → **단순 등록이 아니라 `Start` 디커플(resilient)** 필요. 별도 증분.
+  - ControlsManager(`IControlsService`, `Start` null-guard) 배선 ✅ → Systems 프리팹 **5종**, PlayMode **5 서비스 green**.
+  - 0.1a 남음: **AudioManager** — `Start`가 bgm 소스에 의존 + 사운드 작업(Phase D, 보류)과 묶임 → 후속. 그 외 전역 매니저는 모두 배선됨.
+  - **다음 큰 작업 = 0.2 컴포지션 루트**: ControlsManager/GameManager가 "플레이어/UI 준비 시" 실제 배선되도록(현재는 guard로 스킵). 맵 씬 진입점에서 `EnsureSystems()` 호출 연결.
 - 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
 - 📋 Phase C — `MonsterDef`/`SpawnTable`/`MonsterSpawner` 데이터 스폰
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정

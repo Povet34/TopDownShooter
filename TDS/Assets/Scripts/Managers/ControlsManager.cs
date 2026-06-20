@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TDS.Core;
 
-public class ControlsManager : MonoBehaviour
+public class ControlsManager : MonoBehaviour, IControlsService
 {
     public static ControlsManager instance;
     public PlayerControls controls { get; private set; }
@@ -12,14 +13,19 @@ public class ControlsManager : MonoBehaviour
     {
         instance = this;
         controls = new PlayerControls();
+        GameServices.Registry.Register<IControlsService>(this);
     }
 
 
     private void Start()
     {
-        player = GameManager.instance.player;
+        // 단독 부트(플레이어/UI 없는 씬)에서도 안전하도록 guard.
+        // 실제 "플레이어 준비 시 컨트롤 활성화" 재배선은 Phase 0.2(컴포지션 루트)에서.
+        if (GameManager.instance != null)
+            player = GameManager.instance.player;
 
-        SwitchToCharacterControls();
+        if (player != null && UI.instance != null)
+            SwitchToCharacterControls();
     }
 
     public void SwitchToCharacterControls()

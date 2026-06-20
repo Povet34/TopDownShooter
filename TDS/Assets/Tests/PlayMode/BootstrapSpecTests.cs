@@ -43,6 +43,7 @@ namespace TDS.Tests.PlayMode
             Assert.IsTrue(GameServices.Registry.IsRegistered<IMissionService>(), "IMissionService 미등록");
             Assert.IsTrue(GameServices.Registry.IsRegistered<IGameStateService>(), "IGameStateService 미등록");
             Assert.IsTrue(GameServices.Registry.IsRegistered<IObjectPoolService>(), "IObjectPoolService 미등록");
+            Assert.IsTrue(GameServices.Registry.IsRegistered<IControlsService>(), "IControlsService 미등록");
 
             if (systems != null) Object.DestroyImmediate(systems.gameObject);
             GameServices.ResetForTests();
