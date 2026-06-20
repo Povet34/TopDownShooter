@@ -1,4 +1,4 @@
-using Cinemachine;
+using Unity.Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,8 +8,8 @@ public class CameraManager : MonoBehaviour
     public static CameraManager instance;
 
 
-    private CinemachineVirtualCamera virtualCamera;
-    private CinemachineFramingTransposer transposer;
+    private CinemachineCamera virtualCamera;
+    private CinemachinePositionComposer composer;
 
 
     [Header("Camera distance")]
@@ -28,8 +28,8 @@ public class CameraManager : MonoBehaviour
         }
 
 
-        virtualCamera = GetComponentInChildren<CinemachineVirtualCamera>();
-        transposer = virtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
+        virtualCamera = GetComponentInChildren<CinemachineCamera>();
+        composer = virtualCamera.GetComponent<CinemachinePositionComposer>();
 
     }
 
@@ -43,12 +43,12 @@ public class CameraManager : MonoBehaviour
         if (canChangeCameraDistance == false)
             return;
 
-        float currentDistnace = transposer.m_CameraDistance;
+        float currentDistnace = composer.CameraDistance;
 
         if (Mathf.Abs(targetCameraDistance - currentDistnace) < .01f)
             return;
-        
-        transposer.m_CameraDistance =
+
+        composer.CameraDistance =
             Mathf.Lerp(currentDistnace, targetCameraDistance, distanceChangeRate * Time.deltaTime);
     }
 
@@ -61,7 +61,12 @@ public class CameraManager : MonoBehaviour
     public void ChangeCameraTarget(Transform target,float cameraDistance = 10,float newLookAheadTime = 0)
     {
         virtualCamera.Follow = target;
-        transposer.m_LookaheadTime = newLookAheadTime;
+
+        LookaheadSettings lookahead = composer.Lookahead;
+        lookahead.Time = newLookAheadTime;
+        lookahead.Enabled = newLookAheadTime > 0f;
+        composer.Lookahead = lookahead;
+
         ChangeCameraDistance(cameraDistance);
     }
 
