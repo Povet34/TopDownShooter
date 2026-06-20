@@ -130,14 +130,62 @@
 - **남은 결정(추후)**: 시드 지속성(씬 저자 vs 런타임 저장) — 미래 "반출" 메타 설계 시 확정.
 
 ### 진행 상태
-- ✅ **Phase A** — 시드 기반 그리드 `MapGenerator` + "맵만 있는 씬" **완료·검증**
+- ✅ **Phase A** — 시드 기반 그리드 `MapGenerator` + "맵만 있는 씬" **완료·검증** (커밋 `cf61244`)
   - `Assets/Scripts/LevelGeneration/MapGenerator.cs` + `MapConfig.cs`(SO, `TDS/Map/Map Config`).
-  - `Assets/Scenes/Map_Generated.unity` — 루트 3개만(Light·Camera·MapGenerator). 시드 7로 바닥+경계벽+장애물26+엄폐12, 중앙 스폰존 비움, **NavMesh 베이크 확인**(collectObjects=Children).
-  - 결정성: 전용 `System.Random(seed)`로 모든 무작위 처리(전역 Random 비오염). 프리팹 비면 프리미티브 폴백.
-  - 남은 다듬기→Phase B: 실제 프리팹 주입, recipe-only 저장 여부, 시드 결정성 EditMode 테스트.
-- 🔧 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
+  - `Assets/Scenes/Map_Generated.unity` — 루트 3개만. 시드 7로 바닥+경계벽+장애물26+엄폐12, 중앙 스폰존 비움, **NavMesh 베이크 확인**.
+  - 결정성: 전용 `System.Random(seed)`. 프리팹 비면 프리미티브 폴백.
+- 🔧 **Phase 0** — **기존 코드 실용적 디커플링** (B/C보다 먼저 — 결정 D5) ← **현재 작업**
+- 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
 - 📋 Phase C — `MonsterDef`/`SpawnTable`/`MonsterSpawner` 데이터 스폰
-- ⏸️ Phase D — 사운드 (보류) · 트레일 수정(소슬라이스로 끼워넣기 가능)
+- ⏸️ Phase D — 사운드 (보류) · 트레일 수정
+
+### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)
+기존 코드를 새 맵/스폰 시스템에 얹기 전에 **점진 디커플링**(게임 동작 유지하며). 풀 SOLID 재작성 아님.
+
+---
+
+## 7. Phase 0 — 실용적 디커플링 (상세)
+
+### 7.1 왜 (결합도 스캔 결과)
+| 지표 | 수치 |
+|---|---|
+| 전역 싱글톤(`public static instance`) | **9** — GameManager·UI·AudioManager·CameraManager·ControlsManager·MissionManager·TimeManager·ObjectPool·LevelGenerator |
+| `.instance` 전역 참조 | **91곳 / 31파일** (UI.instance 11곳, GameManager 7곳…) |
+| 런타임 씬 스크래핑(`FindObjectOfType`) | GameManager→Player, Cover→Player, 미션들→씬 오브젝트, UI→버튼 등 |
+
+→ **맵 씬을 독립 실행 불가** (싱글톤·씬오브젝트 부재 시 NullRef). 새 시스템이 전역상태와 충돌. **선(先)디커플링 필요.**
+
+### 7.2 단계 (각 단계 후 게임 동작 검증)
+- **0.1 시스템 부트스트랩 = 영속 프리팹 + ensure-exists (키스톤, 결정 D6)**:
+  전역 시스템을 **`Systems` 프리팹**(DontDestroyOnLoad)으로 만들고, **어느 씬에 진입하든** 엔트리포인트가
+  "있으면 재사용 / 없으면 생성"(멱등)으로 보장. → **Boot 씬은 선택**이고, `Map_Generated` 등 아무 씬이나
+  단독 Play 가능 → **씬별 단독 테스트 지원**(개발 진입점 자유). 미래 "동굴=맵 씬 교체"·"전리품 반출=시스템 영속"에 직결.
+  - 트리거: (a) 씬마다 `SceneEntryPoint` 컴포넌트(명시적) 또는 **(b) `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` 자동(권장)**.
+  - **분리**: 전역 로직 매니저(GameManager·ObjectPool·TimeManager·ControlsManager·Audio·Mission)만 Systems 프리팹.
+    **씬 종속 프레젠테이션(UI Canvas·카메라 Cinemachine)은 씬에 두고** 부트스트랩이 배선. (LevelGenerator는 맵 시스템으로 교체 예정.)
+- **0.2 컴포지션 루트**: `GameBootstrap`이 `Systems` 프리팹 보장 + 레지스트리 노출 + 씬 종속물 배선(SpawntableGenerator `HudBootstrap` 패턴).
+- **0.3 서비스 접근 시임**: `.instance` 직접호출 → `ServiceRegistry`/인터페이스 경유로 점진 교체(테스트·교체 가능). 싱글톤은 호환 위해 당분간 유지.
+- **0.4 맵/스폰 경계 디커플**: `MapGenerator.onGenerated` 구독으로 스포너·플레이어 배치(이미 이벤트 기반).
+
+> **D6 (확정 2026-06-20)**: Boot 씬 강제 ❌ → **영속 Systems 프리팹 + ensure-exists 엔트리포인트** ✅.
+> 이유: 각 씬 단독 진입/테스트 가능해야 함. 멱등 보장으로 중복 초기화 방지.
+
+> **위험관리**: 0.1은 동작 게임을 건드리므로 작은 단위로 쪼개 매 단계 플레이검증(콘솔 0에러). 매니저 이동 전후로 커밋.
+
+### 7.3 TDD 하니스 (✅ 구축 — 테스트=명세)
+형제 프로젝트 워크플로우 도입. **테스트가 0.1a~c의 완료 기준(명세)이자 회귀 방지**.
+
+| 어셈블리 | 경로 | 용도 |
+|---|---|---|
+| `TDS.Core` | `Assets/Scripts/Core/` | 테스트 가능한 디커플링 원시 코드(`ServiceRegistry`·`BootSequence`). autoReferenced → 기존 Assembly-CSharp이 사용 가능, 역참조는 불가(DIP 강제) |
+| `TDS.Tests.EditMode` | `Assets/Tests/EditMode/` | 순수 로직 단위 테스트 |
+| `TDS.Tests.PlayMode` | `Assets/Tests/PlayMode/` | 씬/부트 통합 테스트 |
+
+- **현재 상태**: EditMode **6 green**(ServiceRegistry 4 + BootSequence 2), PlayMode **1 green**(하니스) + **3 Ignored = 0.1 명세**:
+  - `Bootstrap_registers_all_required_services` → 0.1a
+  - `Services_persist_after_map_scene_swap` → 0.1b
+  - `Map_scene_runs_standalone_without_nullrefs` → 0.1c
+- 구현하며 `[Ignore]`를 제거해 green으로 전환. 실행: MCP `run_tests(mode, assembly_names=["TDS.Tests.EditMode"])` 또는 Test Runner 창.
 
 ---
 
