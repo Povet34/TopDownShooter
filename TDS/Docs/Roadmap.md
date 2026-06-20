@@ -194,6 +194,19 @@
   - `Map_scene_runs_standalone_without_nullrefs` → 0.1c
 - 구현하며 `[Ignore]`를 제거해 green으로 전환. 실행: MCP `run_tests(mode, assembly_names=["TDS.Tests.EditMode"])` 또는 Test Runner 창.
 
+## 8. Phase 0.2 — Player 추출 + 부트 스폰 (분해, 각 시임 독립 TDD)
+
+> 원칙(사용자): **각 조각이 독립적으로 동작 → 문제 나면 그 조각만 대응.** 빅뱅 추출 금지.
+> Player 생태계 결합: `ControlsManager.instance`(✅Systems가 제공)·`UI.instance`(❌맵에 없음, OnEnable NullRef)·`Camera.main`+Cinemachine 리그(❌)·직렬참조 `aim`/`cameraTarget`/`aimLaser`/`aimLaserEnd`(❌씬 오브젝트).
+
+- **0.2.1 순수 시임 ✅**: `AimRotation.FaceHorizontal`(0벡터 가드 → "Look rotation" 경고도 해결), `PlayerSpawnPoint.Resolve`. EditMode 5 green.
+  - 후속: `Player_Movement.ApplyRotation`을 `AimRotation` 사용으로 교체(경고 제거, 작은 독립 변경).
+- **0.2.2 Player 회복력**: Player/Player_AimController가 `UI.instance`·`Camera.main` 없이도 안 죽도록 guard(각 guard 독립, ControlsManager 패턴).
+- **0.2.3 Player 프리팹 추출**: Player 생태계(Player+모델+aim리그+aim타겟+카메라팔로우타겟)를 프리팹화, 외부 직렬참조 정리.
+- **0.2.4 카메라 리그**: Cinemachine(Brain+vcam+CameraManager)을 맵 씬/시스템에 제공.
+- **0.2.5 PlayerSpawner**: 맵 생성 후 `PlayerSpawnPoint` 위치에 프리팹 스폰. PlayMode 테스트(스폰·위치·NullRef 0).
+- **IK**: 0.2.3에서 aim 리그 유지 시도. 포지션 잡기가 과하면 딜레이(탑다운이라 티 적음 — 사용자 동의).
+
 ---
 
 ## 6. 워크플로우 규칙
