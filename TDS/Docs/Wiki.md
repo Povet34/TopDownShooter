@@ -19,6 +19,12 @@
 
 **규칙**: 새 디커플링/데이터/순수로직은 `TDS.Core`. 새 파일 추가 후 테스트가 안 잡히면 `refresh scope:all`(에셋 임포트)로 디스커버리 갱신.
 
+### 폴더 레이아웃
+- **`Assets/Imports/`** — 임포트한 서드파티 팩(벤더). 현재: `Models`, `SciFi_Space_Soldier`, `JMO Assets`(CFXR), `MagicaCloth2`, `VolumetricFog2`. **게임 저작물과 분리.** (TextMesh Pro는 Unity 관리라 루트 유지.)
+- **게임 저작**: `Scripts`(TDS.Game) · `Tests` · `Input Manager`(TDS.Input) · `Data`/`GameData`(SO) · `Resources`(런타임 로드: Player/Systems/Spawn 테이블) · `Scenes` · `Prefab` · `Audio` · `Materials`/`Textures`/`Animations`/`Graphics` · `URP Settings`.
+- **이동 규칙**: 폴더 이동은 반드시 `AssetDatabase.MoveAsset`(GUID/참조 보존). 파일시스템 mv 금지.
+- **추후 — `TDS.Contents` (염두)**: 스킬/아이템 등 "기능"은 스크립트+모델+사운드+프리팹을 **기능 폴더 하나**에 몰고 자체 asmdef(`TDS.Contents.*`)로 분리할 계획. (수직 슬라이스형 콘텐츠 모듈.)
+
 ---
 
 ## 2. 부트스트랩 & 서비스 (TDS.Core)
