@@ -135,6 +135,8 @@
   - `Assets/Scenes/Map_Generated.unity` — 루트 3개만. 시드 7로 바닥+경계벽+장애물26+엄폐12, 중앙 스폰존 비움, **NavMesh 베이크 확인**.
   - 결정성: 전용 `System.Random(seed)`. 프리팹 비면 프리미티브 폴백.
 - 🔧 **Phase 0** — **기존 코드 실용적 디커플링** (B/C보다 먼저 — 결정 D5) ← **현재 작업**
+  - 0.1a 기반 ✅: `GameServices`(전역 레지스트리) + `SystemsEnsurer`(멱등) + `IClockService`. `TimeManager` 첫 배선(자기등록, `.instance` 유지). EditMode 11 green.
+  - 0.1a 남음: `Systems` 프리팹 + `GameBootstrap.EnsureSystems()`(Resources.Load) + 나머지 전역 매니저 5종 배선 → PlayMode 명세 `Bootstrap_registers_all_required_services` green.
 - 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
 - 📋 Phase C — `MonsterDef`/`SpawnTable`/`MonsterSpawner` 데이터 스폰
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정

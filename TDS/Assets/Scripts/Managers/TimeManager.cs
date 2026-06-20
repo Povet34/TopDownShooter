@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TDS.Core;
 
-public class TimeManager : MonoBehaviour
+public class TimeManager : MonoBehaviour, IClockService
 {
     public static TimeManager instance;
 
@@ -16,6 +17,7 @@ public class TimeManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        GameServices.Registry.Register<IClockService>(this);
     }
 
 
