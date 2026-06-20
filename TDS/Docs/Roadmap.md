@@ -135,6 +135,7 @@
   - `Assets/Scenes/Map_Generated.unity` — 루트 3개만. 시드 7로 바닥+경계벽+장애물26+엄폐12, 중앙 스폰존 비움, **NavMesh 베이크 확인**.
   - 결정성: 전용 `System.Random(seed)`. 프리팹 비면 프리미티브 폴백.
 - 🔧 **Phase 0** — **기존 코드 실용적 디커플링** (B/C보다 먼저 — 결정 D5) ← **현재 작업**
+  - **0.1 (a·b·c) ✅ 완료** — 명세 5종 전부 green(Ignored 0). `SceneEntryPoint`로 `Map_Generated`가 **단독 자가 부팅**(EnsureSystems→Systems 영속→5서비스 등록, NullRef 0) 실증. 전역 매니저 5종 디커플링(Audio만 남음, 사운드 작업과 함께).
   - 0.1a ✅: `GameServices`·`SystemsEnsurer`·`GameBootstrap.EnsureSystems()`(Resources/Systems 프리팹, 멱등·DontDestroyOnLoad).
     `IClockService`(TimeManager)·`IMissionService`(MissionManager) 배선(자기등록, `.instance` 유지). **EditMode 11 + PlayMode 3 green.**
   - GameManager(`IGameStateService`)·ObjectPool(`IObjectPoolService`, `Start` null-guard로 단독 안전화) 배선 ✅ → Systems 프리팹 4종, PlayMode **4 서비스 green**. SampleScene 회귀 없음 확인.
