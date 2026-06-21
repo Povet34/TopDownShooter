@@ -54,6 +54,7 @@ public class VisionMask : MonoBehaviour
 
         Shader.SetGlobalTexture(MaskId, maskRT);
         Shader.SetGlobalVector(CenterSizeId, new Vector4(worldCenter.x, worldCenter.y, worldSize, worldSize));
+        Shader.SetGlobalFloat("_VisionMaskFlipY", SystemInfo.graphicsUVStartsAtTop ? 1f : 0f); // RT는 D3D에서 Y 뒤집힘
 
         SetupVisMesh();
         SetupMatrixCamera();

@@ -64,6 +64,17 @@ public class FieldOfView : MonoBehaviour
         return !Physics.Raycast(eye, dir / dist, dist - 0.4f, occluderMask, QueryTriggerInteraction.Ignore);
     }
 
+    // 시야가 꺼지면(FoV Off 등) 숨겼던 적을 다시 보이게 한다.
+    private void OnDisable()
+    {
+        foreach (var kv in tracked)
+        {
+            if (kv.Value == null) continue;
+            foreach (var r in kv.Value)
+                if (r != null) r.enabled = true;
+        }
+    }
+
     private void Update()
     {
         var enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);

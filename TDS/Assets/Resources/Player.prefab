@@ -8448,7 +8448,7 @@ GameObject:
   - component: {fileID: 6593235688812514684}
   - component: {fileID: 2097140790422540589}
   - component: {fileID: 6580820327401140578}
-  - component: {fileID: 3949119007740585669}
+  - component: {fileID: 4741030913058729213}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -8558,6 +8558,7 @@ MonoBehaviour:
   camChangeRate: 5
   aim: {fileID: 79249628121498044}
   isAimingPrecisly: 0
+  minAimDistance: 2.5
   offsetChangeRate: 6
   preciseAim:
     serializedVersion: 2
@@ -8773,7 +8774,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0008834e73c8b3642bf17e7b5a94e38a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TDS.Game::Player_FieldOfView
---- !u!114 &3949119007740585669
+--- !u!114 &4741030913058729213
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8782,18 +8783,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5986155516868850622}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d6bf569bbc2f0d40ad95b772d43fda0, type: 3}
+  m_Script: {fileID: 11500000, guid: ddd35af2d45903a4188a209815c28c98, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TDS.Game::VisionMask
-  resolution: 160
-  regionSize: 48
-  framesPerMask: 4
-  followPlayer: 1
-  blur: 1
-  fogColor: {r: 0.04, g: 0.05, b: 0.07, a: 1}
-  maxDarkness: 0.8
-  fogQuadHeight: 0.05
-  fogQuadSize: 160
+  m_EditorClassIdentifier: TDS.Game::FovController
+  mode: 0
 --- !u!1 &6042130979088259364
 GameObject:
   m_ObjectHideFlags: 0

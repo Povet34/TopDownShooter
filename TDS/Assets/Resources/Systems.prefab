@@ -240,6 +240,7 @@ GameObject:
   - component: {fileID: 5105561581569892122}
   - component: {fileID: 8779715345661722756}
   - component: {fileID: 5723907881544539462}
+  - component: {fileID: 64072275030080393}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -296,3 +297,16 @@ MonoBehaviour:
   hitTrauma: 0.18
   killTrauma: 0.42
   killHitStop: 0.06
+--- !u!114 &64072275030080393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8496493374153201785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57f28d9a307579344bf53726ca596f80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TDS.Game::FullscreenToggle
+  toggleKey: 103

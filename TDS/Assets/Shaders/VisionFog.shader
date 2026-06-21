@@ -29,6 +29,7 @@ Shader "TDS/VisionFog"
             float4 _FogColor;
             float _MaxDarkness;
             float _BlurSize;
+            float _VisionMaskFlipY; // 1이면 V 뒤집기(GPU RT는 D3D에서 뒤집힘), CPU Texture2D는 0
 
             float SampleMaskBlur(float2 uv)
             {
@@ -61,9 +62,8 @@ Shader "TDS/VisionFog"
             half4 frag (Varyings IN) : SV_Target
             {
                 float2 uv = (IN.worldPos.xz - _VisionMaskCenterSize.xy) / _VisionMaskCenterSize.zw + 0.5;
-                #if UNITY_UV_STARTS_AT_TOP
-                uv.y = 1.0 - uv.y; // RT를 카메라로 렌더하면 D3D에서 Y가 뒤집힘 — 보정
-                #endif
+                if (_VisionMaskFlipY > 0.5)
+                    uv.y = 1.0 - uv.y; // GPU RT는 D3D에서 Y가 뒤집힘 — 보정 (CPU Texture2D는 0)
                 float m = SampleMaskBlur(uv);
                 // 마스크 영역 밖 = 시야 밖(어둡게)
                 if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) m = 0.0;

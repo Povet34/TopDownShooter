@@ -163,8 +163,9 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - 사운드(보류): 총소리·근접 swoosh 등. `AudioManager` 부트 + SFX 연결 시 자동 재생되도록 가드해 둠(melee swoosh 등).
 - 미래: 생존 루프 · 광역 스티칭 · 동굴(씬 전환) · 수송선 탈출/전리품 반출 · 인벤토리/파밍.
 
-### 6.6 플레이어 시야 / 전장의 안개 (FoV) — **구현 완료 (셰이더 마스크, 2026-06-21)**
+### 6.6 플레이어 시야 / 전장의 안개 (FoV) — **구현 완료, 현재 Off (셰이더 마스크, 2026-06-21)**
 > 시야 콘+사거리 안 + 가려지지 않은 곳만 밝게, 나머지는 회색(맵은 보이되 적은 안 보임). 발사 시 밝아짐.
+> **모드 선택** (`FovController`, 게임 시작 전 Inspector): **Off**(기본 — 시야 끔, 적 항상 보임) / **Realistic**(`VisionMaskCpu` — CPU 텍셀별, 사실적이나 느림) / **Fast**(`VisionMask` — GPU 폴리곤, 빠르나 일부 샘플링 이슈). 선택 모드만 Awake에서 동적 추가. fog 셰이더는 `_VisionMaskFlipY`(GPU RT는 D3D Y-flip=1, CPU Texture2D=0)로 공유. **현재 기본 Off**(가시성이 더 나아 끔; 추후 더 나은 FoV 에셋 검토). 콘이 너무 넓으면(특히 발사 Reveal +25°→190°) 플러드라이트처럼 됨 → 추후 튜닝.
 **구현**: 순수 `ViewCone`(콘+거리, EditMode 9) + `FieldOfView`(콘+사거리+눈높이 레이캐스트 차폐+nearRadius+Reveal, 적 renderer on/off, PlayMode 4) + `Player_FieldOfView`(조준 방향 구동·발사 시 Reveal). 비주얼 = `VisionMask`(**GPU**) + `Shaders/VisionFog`(지면 fog 쿼드, `alpha=(1-mask)*MaxDarkness`로 시야 밖 회색, 9-tap 블러로 소프트 엣지). occluder=Default|Environment(낮은 cover는 넘어 봄).
 - **GPU 마스크**: 플레이어에서 360° 레이로 가시성 폴리곤 메시 생성(콘 안=장애물까지 레이캐스트, 밖=nearRadius 작은 원) → 탑다운 직교 행렬로 **CommandBuffer가 메시를 512 RT에 직접 렌더**(URP 카메라/데칼 파이프라인 우회 — 추가 카메라는 DBuffer assert로 터짐). 비용 = 레이 ~rayCount개(콘 안만) + 메시 1장 → in-game 토글 시 fps 차이 거의 없음(이전 CPU 텍셀별 수천 레이캐스트/프레임을 대체). `Shaders/VisMesh`(흰색)로 폴리곤 렌더, fog 쿼드는 RT를 bilinear+블러 샘플(D3D Y-flip 보정). 검증: 폴리곤 정점(전방 멀리/후방 nearRadius·장애물에 잘림, PlayMode 2) + 마스크 텍셀(ReadMaskAt 전방 1.0/후방 0.0) + 명도 스크린샷.
 - 튜닝(Inspector): rtResolution·worldSize·rayCount·fogColor·maxDarkness·`_BlurSize` 등.
