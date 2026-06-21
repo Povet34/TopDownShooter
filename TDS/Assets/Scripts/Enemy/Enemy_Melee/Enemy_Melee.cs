@@ -105,6 +105,16 @@ public class Enemy_Melee : Enemy
         stateMachine.ChangeState(recoveryState);
     }
 
+    // 시야를 잃음 → 교전 종료, 순찰(idle)로 복귀.
+    public override void ExitBattleMode()
+    {
+        if (!inBattleMode)
+            return;
+
+        base.ExitBattleMode();
+        stateMachine.ChangeState(idleState);
+    }
+
     public override void AbilityTrigger()
     {
         base.AbilityTrigger();

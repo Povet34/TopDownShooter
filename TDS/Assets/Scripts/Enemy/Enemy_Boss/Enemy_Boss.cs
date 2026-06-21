@@ -84,10 +84,14 @@ public class Enemy_Boss : Enemy
 
         stateMachine.currentState.Update();
 
+        MeleeAttackCheck(damagePoints, attackCheckRadius, meleeAttackFx,meleeAttackDamage);
+    }
+
+    // 보스는 기존 거리 aggro 유지(시야 콘/이탈 없음) — 한번 붙으면 끝까지.
+    protected override void UpdateAggro()
+    {
         if (ShouldEnterBattleMode())
             EnterBattleMode();
-
-        MeleeAttackCheck(damagePoints, attackCheckRadius, meleeAttackFx,meleeAttackDamage);
     }
 
 

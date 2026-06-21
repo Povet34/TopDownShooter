@@ -203,6 +203,16 @@ public class Enemy_Range : Enemy
 
     }
 
+    // 시야를 잃음 → 교전 종료, 순찰(idle)로 복귀.
+    public override void ExitBattleMode()
+    {
+        if (!inBattleMode)
+            return;
+
+        base.ExitBattleMode();
+        stateMachine.ChangeState(idleState);
+    }
+
     #region Cover System
 
     public bool CanGetCover()

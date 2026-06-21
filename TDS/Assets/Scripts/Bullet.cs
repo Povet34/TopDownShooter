@@ -126,7 +126,16 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    protected void ReturnBulletToPool(float delay = 0) => ObjectPool.instance.ReturnObject(gameObject, delay);
+    protected void ReturnBulletToPool(float delay = 0)
+    {
+        // 씬/테스트 teardown으로 풀이 파괴됐으면(== null) 그냥 비활성화 — MissingReference 방지.
+        if (ObjectPool.instance == null)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+        ObjectPool.instance.ReturnObject(gameObject, delay);
+    }
 
 
     protected void CreateImpactFx()

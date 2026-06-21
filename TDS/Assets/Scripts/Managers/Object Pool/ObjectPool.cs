@@ -70,11 +70,19 @@ public class ObjectPool : MonoBehaviour, IObjectPoolService
 
     private void ReturnToPool(GameObject objectToReturn)
     {
-        GameObject originalPrefab = objectToReturn.GetComponent<PooledObject>().originalPrefab;
+        if (objectToReturn == null)
+            return;
+
+        var pooled = objectToReturn.GetComponent<PooledObject>();
+        GameObject originalPrefab = pooled != null ? pooled.originalPrefab : null;
 
         objectToReturn.SetActive(false);
         objectToReturn.transform.parent = transform;
-        
+
+        // 다른 풀 인스턴스(이전 씬/테스트)에서 온 객체면 이 풀에 해당 큐가 없을 수 있음 → 비활성만 하고 끝.
+        if (originalPrefab == null || poolDictionary.ContainsKey(originalPrefab) == false)
+            return;
+
         poolDictionary[originalPrefab].Enqueue(objectToReturn);
     }
 

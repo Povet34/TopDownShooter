@@ -15,7 +15,24 @@ public class Enemy : MonoBehaviour
     
     [Header("Idle data")]
     public float idleTime;
+    [Tooltip("시야 사거리(콘 안에서 이 거리까지 플레이어를 본다). §6.2 인지")]
     public float aggresionRange;
+
+    [Header("Perception (§6.2 시야)")]
+    [Tooltip("시야 콘 반각(도). 이 각도 안 + 사거리 안 + 가림 없을 때만 발각")]
+    [SerializeField] protected float viewHalfAngle = 70f;
+    [Tooltip("이 반경 안이면 콘 밖/뒤라도 인지(몰래 바로 옆 접근 차단)")]
+    [SerializeField] protected float senseRadius = 2f;
+    [SerializeField] protected float eyeHeight = 1.6f;
+    [Tooltip("시야를 가리는 환경 레이어(0이면 Default+Environment 자동)")]
+    [SerializeField] protected LayerMask viewOccluderMask = 0;
+    [Tooltip("교전 중 시야를 이 시간(초) 잃으면 경계로 내려가 마지막 위치 수색")]
+    [SerializeField] protected float loseSightSeconds = 3f;
+    [Tooltip("경계(수색)를 이 시간(초) 했는데 못 찾으면 순찰 복귀")]
+    [SerializeField] protected float investigateSeconds = 5f;
+
+    protected readonly TDS.Core.PerceptionFsm perception = new TDS.Core.PerceptionFsm();
+    public TDS.Core.PerceptionState PerceptionState => perception.State;
 
     [Header("Move data")]
     public float walkSpeed = 1.5f;
@@ -68,18 +85,69 @@ public class Enemy : MonoBehaviour
     {
         InitializePatrolPoints();
         audioManager = AudioManager.instance;
+
+        perception.LoseSightDuration = loseSightSeconds;
+        perception.InvestigateDuration = investigateSeconds;
+        if (viewOccluderMask == 0)
+            viewOccluderMask = LayerMask.GetMask("Default", "Environment");
     }
 
   
 
     protected virtual void Update()
     {
-        if (ShouldEnterBattleMode())
-            EnterBattleMode();
+        UpdateAggro();
 
         UpdateLocomotionAnimation();
         UpdateStuckRecovery();
     }
+
+    // §6.2/§6.3: 시야(콘+가림+근접) 기반 인지로 교전을 켜고, 시야를 잃으면 경계→순찰로 내려가며 교전을 끈다.
+    // Boss는 이 동작을 오버라이드해 기존 거리 aggro를 유지한다.
+    protected virtual void UpdateAggro()
+    {
+        var state = perception.Tick(SeesPlayer(), HeardNoise(), Time.deltaTime);
+
+        if (state == TDS.Core.PerceptionState.Engage)
+        {
+            if (!inBattleMode)
+                EnterBattleMode();
+        }
+        else if (inBattleMode)
+        {
+            ExitBattleMode();
+        }
+    }
+
+    /// <summary>플레이어가 시야 콘(각도+사거리) 안 + 가려지지 않음, 또는 아주 가까우면(근접) true.</summary>
+    public bool SeesPlayer()
+    {
+        if (player == null)
+            return false;
+
+        Vector3 self = transform.position;
+        Vector3 target = player.position;
+
+        Vector3 flat = target - self; flat.y = 0f;
+        if (flat.sqrMagnitude <= senseRadius * senseRadius)
+            return true; // 인접 자각
+
+        if (!TDS.Core.ViewCone.InView(self, transform.forward, target, viewHalfAngle, aggresionRange))
+            return false;
+
+        // 가림: 눈높이에서 대상까지 환경에 막히면 안 보임
+        Vector3 eye = self + Vector3.up * eyeHeight;
+        Vector3 t = target + Vector3.up * (eyeHeight * 0.7f);
+        Vector3 dir = t - eye;
+        float dist = dir.magnitude;
+        if (dist < 0.5f)
+            return true;
+
+        return !Physics.Raycast(eye, dir / dist, dist - 0.4f, viewOccluderMask, QueryTriggerInteraction.Ignore);
+    }
+
+    /// <summary>소음(총성 등) 인지 — 경계 진입 트리거. #21에서 소음원 연결 전까지 false.</summary>
+    protected virtual bool HeardNoise() => false;
 
     // §2: navmesh가 낮은 장애물 위로 베이크되거나 회피 교착으로 적이 끼는 문제 → 일정 시간 진전이 없으면
     // 가까운 navmesh 바닥으로 워프 + 재경로해서 빠져나오게 한다(원인 불문 안전망).
@@ -174,8 +242,17 @@ public class Enemy : MonoBehaviour
         inBattleMode = true;
     }
 
+    // 시야를 잃어 교전에서 빠질 때. 서브클래스가 순찰(idle)로 복귀시킨다.
+    public virtual void ExitBattleMode()
+    {
+        inBattleMode = false;
+        if (agent != null && agent.isOnNavMesh)
+            agent.isStopped = false; // 교전 중 멈춰있던 agent를 풀어 순찰 이동이 가능하게
+    }
+
     public virtual void GetHit(int damage)
     {
+        perception.ForceEngage(); // 뒤에서 맞아도 즉시 교전(시야 밖이라도) — 곧바로 이탈 방지
         EnterBattleMode();
         LastTimeDamaged = Time.time; // 최근 피격 → 회피 무빙 가중치↑ (§12 그레이스 피리어드)
         health.ReduceHealth(damage);

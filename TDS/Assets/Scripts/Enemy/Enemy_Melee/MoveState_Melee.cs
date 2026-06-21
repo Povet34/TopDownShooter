@@ -20,6 +20,7 @@ public class MoveState_Melee : EnemyState
     {
         base.Enter();
 
+        enemy.agent.isStopped = false; // 교전 상태에서 멈춰있던 agent를 순찰 진입 시 다시 풀어줌
         enemy.agent.speed = enemy.walkSpeed;
 
         destination = enemy.GetPatrolDestination();
