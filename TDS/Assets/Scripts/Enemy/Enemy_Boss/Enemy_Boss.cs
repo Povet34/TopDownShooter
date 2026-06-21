@@ -118,13 +118,17 @@ public class Enemy_Boss : Enemy
         {
             flamethrower.Stop();
             anim.SetTrigger("StopFlamethrower");
-            Debug.Log("flame stopped");
             return;
         }
 
-        var mainModule = flamethrower.main;
-        var extraModule = flamethrower.transform.GetChild(0).GetComponent<ParticleSystem>().main;
+        var extra = flamethrower.transform.GetChild(0).GetComponent<ParticleSystem>();
 
+        // duration은 재생 중에는 변경 불가(Unity Assert) → 먼저 완전 정지 후 설정.
+        flamethrower.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        extra.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        var mainModule = flamethrower.main;
+        var extraModule = extra.main;
         mainModule.duration = flamethrowDuration;
         extraModule.duration = flamethrowDuration;
 
