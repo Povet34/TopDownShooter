@@ -20,6 +20,9 @@ public class EnemyState
         this.animBoolName = animBoolName;
     }
 
+    /// <summary>navmesh로 이동하는 상태인지(이동 애니 재생속도를 실제 속도에 맞추기 위함). 이동 상태가 override.</summary>
+    public virtual bool IsLocomotion => false;
+
     public virtual void Enter()
     {
         enemyBase.anim.SetBool(animBoolName, true);

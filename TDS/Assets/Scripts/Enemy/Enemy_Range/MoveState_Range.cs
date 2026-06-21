@@ -12,6 +12,8 @@ public class MoveState_Range : EnemyState
         enemy = enemyBase as Enemy_Range;
     }
 
+    public override bool IsLocomotion => true;
+
     public override void Enter()
     {
         base.Enter();

@@ -68,6 +68,29 @@ public class Enemy : MonoBehaviour
     {
         if (ShouldEnterBattleMode())
             EnterBattleMode();
+
+        UpdateLocomotionAnimation();
+    }
+
+    /// <summary>
+    /// 이동 상태(IsLocomotion)에선 실제 평면 속도로 이동 애니 재생속도를 맞춰 제자리걸음/발 미끄러짐을 줄인다.
+    /// navmesh가 위치를 구동하므로(root motion off) 재생속도만 바뀐다. 그 외 상태는 정상 속도(1).
+    /// </summary>
+    private void UpdateLocomotionAnimation()
+    {
+        if (anim == null || agent == null)
+            return;
+
+        EnemyState state = stateMachine != null ? stateMachine.currentState : null;
+        if (state != null && state.IsLocomotion)
+        {
+            Vector3 v = agent.velocity; v.y = 0f;
+            anim.speed = LocomotionAnim.PlaybackSpeed(v.magnitude, agent.speed);
+        }
+        else if (anim.speed != 1f)
+        {
+            anim.speed = 1f;
+        }
     }
 
     protected virtual void InitializePerk()

@@ -14,6 +14,8 @@ public class MoveState_Melee : EnemyState
         enemy = enemyBase as Enemy_Melee;
     }
 
+    public override bool IsLocomotion => true;
+
     public override void Enter()
     {
         base.Enter();
