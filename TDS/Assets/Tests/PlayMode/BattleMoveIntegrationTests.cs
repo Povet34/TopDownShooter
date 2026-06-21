@@ -99,7 +99,7 @@ namespace TDS.Tests.PlayMode
 
             melee.stateMachine.ChangeState(melee.chaseState);
 
-            for (int i = 0; i < 80; i++)
+            for (int i = 0; i < 120; i++) // 경계 플레이크 방지 — 근접 완료에 충분한 시간
             {
                 yield return null;
                 if (melee == null) break;

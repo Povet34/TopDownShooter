@@ -78,6 +78,49 @@ public class Enemy : MonoBehaviour
             EnterBattleMode();
 
         UpdateLocomotionAnimation();
+        UpdateStuckRecovery();
+    }
+
+    // §2: navmesh가 낮은 장애물 위로 베이크되거나 회피 교착으로 적이 끼는 문제 → 일정 시간 진전이 없으면
+    // 가까운 navmesh 바닥으로 워프 + 재경로해서 빠져나오게 한다(원인 불문 안전망).
+    private readonly TDS.Core.StuckTracker stuckTracker = new TDS.Core.StuckTracker();
+    private Vector3 lastStuckRefPos;
+    private const float StuckSeconds = 1.5f;
+    private const float StuckProgressThreshold = 0.5f; // 이 시간 안에 이만큼 못 움직이면 끼임
+
+    private bool ShouldCheckStuck()
+    {
+        return agent != null && agent.isOnNavMesh && !agent.isStopped && !manualMovement
+            && agent.hasPath && !agent.pathPending
+            && !float.IsInfinity(agent.remainingDistance)
+            && agent.remainingDistance > agent.stoppingDistance + 0.3f;
+    }
+
+    private void UpdateStuckRecovery()
+    {
+        if (!ShouldCheckStuck())
+        {
+            stuckTracker.Reset();
+            lastStuckRefPos = transform.position;
+            return;
+        }
+
+        bool progressed = Vector3.Distance(transform.position, lastStuckRefPos) > StuckProgressThreshold;
+        if (progressed)
+            lastStuckRefPos = transform.position;
+
+        if (stuckTracker.Tick(progressed, Time.deltaTime, StuckSeconds))
+            RecoverFromStuck();
+    }
+
+    private void RecoverFromStuck()
+    {
+        Vector3 dest = agent.destination;
+        if (NavMesh.SamplePosition(transform.position, out var hit, 2.5f, NavMesh.AllAreas))
+            agent.Warp(hit.position); // 장애물 위/밖이면 가까운 navmesh 바닥으로 끌어내림
+        agent.ResetPath();
+        agent.SetDestination(dest);
+        lastStuckRefPos = transform.position;
     }
 
     /// <summary>

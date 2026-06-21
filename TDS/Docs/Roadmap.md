@@ -177,9 +177,14 @@
   - **검증 툴**: 생성된 맵의 각 cover가 range에 적당한지(도달 가능 cover point + 높이 분류) 확인하는 PlayMode 테스트(`CoverAuditTests`).
 - ✅ **BattleMover 2차** (strafe/backstep/flee 능력게이트 + 몹 간 소프트 간격): 순수 `EvasionPlanner`(EditMode 8) + `BattleMover.SpacingPenalty`(EditMode 4) + `Enemy.NearbyAllyPositions` 글루(멜레·원거리). 원거리 회피행동(체력/플래그 게이트), 멜레·원거리 겹침 완화(in-game 최소 쌍거리 7.7, 뭉침 없음). EditMode 122/PlayMode 30.
 - 📋 그 다음(사용자 우선순위, 2026-06-21):
-  1. **맵 오브젝트 용도/범위** — 적 끼임 방지(적절한 navmesh 범위) + 오브젝트 종류 분류: cover(은폐)·hide·**breakable**(피격 누적 시 파괴)·**movable**(총알/특정 공격에 밀림/배치 변동). md에 기획 정리 필요.
+  1. **맵 오브젝트 용도/범위** —
+     - ✅ **적 끼임 방지(안전망)**: 순수 `StuckTracker`(EditMode 5) + `Enemy.UpdateStuckRecovery` — 일정 시간(1.5s) 진전 없으면 가까운 navmesh 바닥으로 `agent.Warp` + 재경로. 원인(낮은 장애물 위 베이크/회피 교착) 불문. in-game: y=1.5로 올린 적을 y=0으로 복구. (참고: 낮은 cover/장애물은 cover 높이 작업 + navmesh 카빙으로 대부분 해소, 복구는 잔여 케이스 안전망.)
+     - 📋 **오브젝트 종류 분류(다음)**: cover(은폐)·hide·**breakable**(피격 누적 파괴)·**movable**(총알/특정 공격에 밀림). `MapObject`(역할 enum) 컴포넌트 + 맵 생성 시 부여 + breakable(Health+파편)·movable(Rigidbody+힘) 행동. 큰 슬라이스 — 별도 진행.
   2. **적 패트롤 + AI 고도화** (인지 §6.2 + FSM §6.3 + 패트롤 스폰).
   3. **FoV** (§6.6) — 시야 밖은 어둡게(적 안 보임, 맵은 회색), 발사 시 주변 밝아짐, 추후 인지력 연동. 고도화 기획은 md에 적어두고 추가 검토.
+- 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
+  - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
+  - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

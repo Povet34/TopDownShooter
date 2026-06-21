@@ -179,7 +179,7 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·AimDirection(조준 0벡터 가드)·RangedEngageDecision(엄폐/재배치 결정)·StrafeBlend(facing 기준 2D 블렌드)·**CoverEvaluation(높이→적합도)·CoverApproach(arrival/비비기 방지)·**EvasionPlanner(strafe/backstep/flee)·BattleMover 소프트 간격**. **122 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·AimDirection(조준 0벡터 가드)·RangedEngageDecision(엄폐/재배치 결정)·StrafeBlend(facing 기준 2D 블렌드)·**CoverEvaluation(높이→적합도)·CoverApproach(arrival/비비기 방지)·EvasionPlanner(strafe/backstep/flee)·BattleMover 소프트 간격·**StuckTracker(끼임 감지)**. **127 green.**
 - **PlayMode** (통합): 부트, Player(스폰·컨트롤·이동·무기·사격·피해), Enemy(피해→사망·**사망 후 래그돌 고정**), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도), BattleMove(**근접: 평소 근접/피격시 회피, 원거리: 피격시 재배치**), **CoverAudit(각 cover의 range 적합도 분류)**. **30 green.**
 - **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.
