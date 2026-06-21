@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: TDS.Game::MapConfig
   defaultSeed: 12345
   cellSize: 4
-  gridWidth: 16
-  gridHeight: 16
+  gridWidth: 26
+  gridHeight: 26
   wallHeight: 3
   obstacleDensity: 0.12
-  coverCount: 14
-  centerClearRadius: 6
+  coverCount: 20
+  centerClearRadius: 8
   floorPrefab: {fileID: 0}
   wallPrefab: {fileID: 0}
   obstaclePrefabs:
@@ -38,6 +38,11 @@ MonoBehaviour:
   - {fileID: 25590379544874509, guid: 9b0c7e945e66f7b4191b7ea6b6cc999e, type: 3}
   - {fileID: 4897850535604665809, guid: 95cc7113e8a853c40ae9042ad435ac57, type: 3}
   coverPrefab: {fileID: 1901341607259854596, guid: 4eeb021cdf0d2a444b697044db019b2c, type: 3}
+  lowCoverPrefab: {fileID: 0}
+  lowCoverRatio: 0.6
+  lowCoverHeight: 0.7
   coverPointPrefab: {fileID: 8085336480767451092, guid: 7e4fb28d054f1ad469b06aee210fe65f, type: 3}
   coverPointOffset: {x: 1.5, y: 2.8}
+  barrelCount: 10
+  barrelPrefab: {fileID: 0}
   floorMaterial: {fileID: 2100000, guid: 6c241723bbf2b5a4f92b5af6d7985941, type: 2}
