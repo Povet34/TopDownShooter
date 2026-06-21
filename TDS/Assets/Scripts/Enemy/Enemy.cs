@@ -33,6 +33,10 @@ public class Enemy : MonoBehaviour
     /// <summary>마지막으로 피해를 입은 시각(Time.time). 최근 피격 시 회피 무빙 가중치를 높이는 데 사용(§12).</summary>
     public float LastTimeDamaged { get; private set; } = -999f;
 
+    [Header("Death")]
+    [Tooltip("사망 후 이 시간(초) 뒤 래그돌을 고정해 끝없는 슬라이딩/꿈틀거림을 멈춤")]
+    [SerializeField] private float deadFreezeDelay = 5f;
+
     public Transform player {  get; private set; }
     public Animator anim { get; private set; }
     public NavMeshAgent agent { get; private set; }
@@ -151,9 +155,17 @@ public class Enemy : MonoBehaviour
         agent.enabled = false;
 
         ragdoll.RagdollActive(true);
+        StartCoroutine(FreezeRagdollAfterDelay()); // 일정 시간 뒤 고정 → 끝없이 안 움직이게
 
         MissionObject_HuntTarget huntTarget = GetComponent<MissionObject_HuntTarget>();
         huntTarget?.InvokeOnTargetKilled();
+    }
+
+    private IEnumerator FreezeRagdollAfterDelay()
+    {
+        yield return new WaitForSeconds(deadFreezeDelay);
+        if (ragdoll != null)
+            ragdoll.Freeze();
     }
 
     public virtual void MeleeAttackCheck(Transform[] damagePoints, float attackCheckRadius,GameObject fx,int damage)

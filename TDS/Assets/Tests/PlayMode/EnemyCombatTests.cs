@@ -74,5 +74,49 @@ namespace TDS.Tests.PlayMode
             yield return null;
             Assert.Less(hp.currentHealth, 0, "치명타 후에도 죽지 않음(체력 0 이상)");
         }
+
+        [UnityTest]
+        public IEnumerator Dead_enemy_ragdoll_freezes_after_delay()
+        {
+            GameServices.ResetForTests();
+            GameBootstrap.EnsureSystems();
+
+            var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.name = "TestFloor";
+            floor.transform.localScale = new Vector3(40f, 1f, 40f);
+            floor.transform.position = new Vector3(0f, -0.5f, 0f);
+            var surface = floor.AddComponent<Unity.AI.Navigation.NavMeshSurface>();
+            surface.collectObjects = Unity.AI.Navigation.CollectObjects.All;
+            surface.BuildNavMesh();
+            yield return null;
+
+            var player = Object.Instantiate(Resources.Load<GameObject>("Player"));
+            player.name = "Player";
+            yield return null;
+
+            var table = Resources.Load<SpawnTable>("ST_Basic");
+            var enemyGo = Object.Instantiate(table.entries[0].prefab, new Vector3(3f, 0f, 0f), Quaternion.identity);
+            yield return null;
+            yield return null;
+
+            var enemy = enemyGo.GetComponentInChildren<Enemy>();
+            var ragdoll = enemyGo.GetComponentInChildren<Ragdoll>();
+            Assert.IsNotNull(ragdoll, "Ragdoll 없음");
+
+            // 테스트를 빠르게: 고정 지연을 짧게(0.3s)
+            typeof(Enemy).GetField("deadFreezeDelay", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(enemy, 0.3f);
+
+            // 치명타 → 사망 → 래그돌 물리 활성(미고정)
+            enemyGo.GetComponentInChildren<IDamagable>().TakeDamage(99999);
+            yield return null;
+            Assert.IsFalse(ragdoll.IsFrozen, "사망 직후엔 래그돌이 물리 활성(미고정)이어야 함");
+
+            // 지연 경과 → 고정(정지). 히트스톱(timeScale 0) 고려해 프레임으로 대기.
+            for (int i = 0; i < 150 && !ragdoll.IsFrozen; i++)
+                yield return null;
+
+            Assert.IsTrue(ragdoll.IsFrozen, "지연 후 래그돌이 고정(정지)되지 않음");
+        }
     }
 }
