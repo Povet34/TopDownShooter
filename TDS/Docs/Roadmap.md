@@ -183,6 +183,16 @@
        - (잔여) 배럴이 다른 오브젝트와 겹쳐 스폰 시 물리로 튕겨 정착(시작 시 살짝 떠올랐다 내려옴) — 배치 겹침 회피는 추후 폴리시.
   2. ✅ **적 패트롤 + AI 고도화 (인지 §6.2 + FSM §6.3 + 패트롤 스폰)** (`1c0b8f0`·`805e5c6`, 2026-06-21): 거리 기반 aggro → **시야/소음 인지**로 전환. 순수 `PerceptionFsm`(순찰→경계→교전, 히스테리시스+ForceEngage, EditMode 14) + `NoiseModel`(EditMode 5). `Enemy.SeesPlayer`=ViewCone+LoS레이캐스트+근접반경, `UpdateAggro`가 FSM 구동(Engage=교전/그외=이탈, Melee/Range 순찰복귀, **Boss는 거리 aggro 격리**). 발사 시 `NoisePing` 발신 → 적이 총성 듣고 조사. 경계 진입 시 마지막목격/소음 위치로 수색 이동(MoveState 재사용) 후 순찰 복귀. **버그 수정**: 교전 중 멈춘 agent(`isStopped`)가 이탈 후 안 풀려 얼던 것; ObjectPool/Bullet teardown 가드(풀 파괴 후 접근 MissingReference/KeyNotFound). in-game: 연사 시 교전 3→10 수렴, 조용하면 순찰; 플레이어 시야차단 시 이탈→마지막위치 수색→순찰 사이클 검증. EditMode 166/PlayMode 38. **추후(§6.6 대칭)**: 광원 적 벽뒤 가시, 낮/밤 콘 스케일, 인지 confidence(거리 게이트 점진).
   3. ✅ **FoV** (§6.6, 셰이더 마스크) — 시야 콘+사거리+눈높이 차폐로 적 숨김(`ViewCone`/`FieldOfView`) + 지면 fog 쿼드(`VisionMask`+`VisionFog` 셰이더)로 시야 밖 회색, 발사 시 확대. EditMode 9 + PlayMode 5, 마스크 텍셀·명도 검증. **추후(별도, §6.6)**: 광원 보유 적(횃불) 벽 뒤 가시, 낮/밤 콘 스케일, 플레이어 소리 인지, 적 인지(§6.2) 대칭 통합, 마스크 성능 최적화(프레임 분산).
+  4. 🔧 **분대(Squad) 시스템** (`fd2d7ce`·`8cb0e21`·`bdc61cd`·`e858475`, 2026-06-21):
+     - ✅ **클러스터 스폰 + 공유 교전**: SpawnDirector가 웨이브를 5~9명 분대로 나눠 한 곳에 황금각 분산 스폰(바깥 경계). `Squad`가 의식 공유 — 한 명이 보거나 맞으면 전원 `SquadEngage`(ForceEngage). SquadTests(PlayMode).
+     - ✅ **분대 함께 순찰**: 공유 앵커 로밍(낙오자 대기) + 멤버 대형(`Enemy.GetPatrolDestination`이 `Squad.TryGetPatrolPoint` 우선). 퍼짐 11→7, 겹침 0.
+     - ✅ **경계상태 기즈모**: 적 머리 위 색 구슬(🟢순찰/🟠경계/🔴교전) + 시야 콘 + 라벨. 게임뷰 Gizmos 토글로 가시.
+     - ✅ **off-mesh 표면화**: live 적이 navmesh 밖이면 복귀 + rate-limited 경고(조용히 숨기지 않음 — `UpdateStuckRecovery`).
+     - ✅ **맵 확대 + 탄약**: MapConfig 64→104유닛, cover 14→20/배럴 6→10(런타임 재생성+navmesh 재베이크). 플레이어 예비탄 400.
+     - 📋 **인지 정교화 (기획 2026-06-21, 미착수)** — 분대가 "하나의 무리"처럼 움직이게:
+       1. **소음원 = 총알 임팩트 위치(발사자 아님)**: 현재 발사 시 `NoisePing`을 플레이어 위치에서 발신 → **총알이 충돌/피격한 지점**에서 발신으로 변경(`Bullet` 임팩트/`OnCollisionEnter`에서 Emit). 순찰 중 적은 "총소리(발사자 위치)"가 아니라 **"총알 맞은 곳"으로 조사**하러 가야 함(거기서도 소리가 나니까 + 플레이어 위치를 바로 알면 안 됨 — 스텔스 일관성).
+       2. **분대 공유 경계(Alert) — 같이 어그로**: 현재 `Squad`는 교전(시야/피격)만 공유, 경계(소음 조사)는 각자. → **소음을 들으면 분대 전원이 함께 조사하러 이동**(한 놈만 가는 게 아니라 분대 어그로). 분대 앵커를 소음 지점으로 redirect → 멤버가 대형 유지하며 같이 감.
+       3. **상태별 공유 정책 정리**: 순찰=함께(✅완료), **경계/조사=함께(추가 필요)**, 교전 진입=함께(✅완료). **단 교전(Engage)에 들어가면 각자 알아서 싸움**(기존 개별 전투 AI — chase/cover/strafe/엄폐 유지). 즉 무리 인지는 공유, 전투 실행은 개별.
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.
