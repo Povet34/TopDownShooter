@@ -89,6 +89,34 @@ namespace TDS.Tests.EditMode
         }
 
         [Test]
+        public void ViewAvoid_threatened_right_after_damage()
+        {
+            // 방금 피격(t=0) → threatened 가중치
+            Assert.AreEqual(1f, BattleMover.ViewAvoidWeight(0f, 2.5f, calmWeight: 0f, threatenedWeight: 1f), 1e-4f);
+        }
+
+        [Test]
+        public void ViewAvoid_calm_after_grace()
+        {
+            // 그레이스 경과 → calm(평소: 회피 안 함)
+            Assert.AreEqual(0f, BattleMover.ViewAvoidWeight(3f, 2.5f, calmWeight: 0f, threatenedWeight: 1f), 1e-4f);
+        }
+
+        [Test]
+        public void ViewAvoid_decays_within_grace()
+        {
+            // 절반 시점 → calm과 threatened의 중간
+            float w = BattleMover.ViewAvoidWeight(1.25f, 2.5f, calmWeight: 0f, threatenedWeight: 1f);
+            Assert.AreEqual(0.5f, w, 1e-3f);
+        }
+
+        [Test]
+        public void ViewAvoid_no_grace_is_calm()
+        {
+            Assert.AreEqual(0f, BattleMover.ViewAvoidWeight(0f, 0f, calmWeight: 0f, threatenedWeight: 1f), 1e-4f);
+        }
+
+        [Test]
         public void PickEngagePosition_empty_candidates_stays_put()
         {
             var ctx = Ctx(new Vector3(1, 0, 1));

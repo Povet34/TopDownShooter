@@ -48,6 +48,21 @@ namespace TDS.Core
             return (cosA - cosHalf) / (1f - cosHalf); // 콘 안: 가장자리 0 → 중심 1
         }
 
+        /// <summary>
+        /// 시야-회피 가중치(§12 그레이스 피리어드). 최근 피격일수록 정면 회피를 강하게.
+        /// timeSinceDamage가 0이면 threatened, grace 이상이면 calm, 그 사이는 선형 감쇠.
+        /// 평소(calm≈0)엔 회피하지 않고 그냥 근접 공격, 최근 피격 시에만 회피.
+        /// </summary>
+        public static float ViewAvoidWeight(float timeSinceDamage, float grace, float calmWeight, float threatenedWeight)
+        {
+            if (grace <= 0f || timeSinceDamage >= grace)
+                return calmWeight;
+            if (timeSinceDamage < 0f)
+                timeSinceDamage = 0f;
+
+            return Mathf.Lerp(threatenedWeight, calmWeight, timeSinceDamage / grace);
+        }
+
         /// <summary>후보 목적지 점수(높을수록 좋음). 모든 항은 페널티 → 음수 합.</summary>
         public static float Score(Vector3 candidate, in BattleMoveContext ctx)
         {

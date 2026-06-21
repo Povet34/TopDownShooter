@@ -48,6 +48,9 @@ public class Player_Movement : MonoBehaviour
         if (player.health.isDead)
             return;
 
+        if (player.controlsEnabled == false) // 컨트롤 비활성(UI/사망연출/탑승 등) → 이동·Move 호출 안 함
+            return;
+
         ApplyMovement();
         ApplyRotation();
         AnimatorControllers();

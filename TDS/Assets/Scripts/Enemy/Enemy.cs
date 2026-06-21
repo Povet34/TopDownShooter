@@ -30,6 +30,9 @@ public class Enemy : MonoBehaviour
     public bool inBattleMode { get; private set; }
     protected bool isMeleeAttackReady;
 
+    /// <summary>마지막으로 피해를 입은 시각(Time.time). 최근 피격 시 회피 무빙 가중치를 높이는 데 사용(§12).</summary>
+    public float LastTimeDamaged { get; private set; } = -999f;
+
     public Transform player {  get; private set; }
     public Animator anim { get; private set; }
     public NavMeshAgent agent { get; private set; }
@@ -126,6 +129,7 @@ public class Enemy : MonoBehaviour
     public virtual void GetHit(int damage)
     {
         EnterBattleMode();
+        LastTimeDamaged = Time.time; // 최근 피격 → 회피 무빙 가중치↑ (§12 그레이스 피리어드)
         health.ReduceHealth(damage);
 
         if (health.ShouldDie())

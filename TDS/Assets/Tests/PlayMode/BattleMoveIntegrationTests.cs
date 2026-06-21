@@ -7,8 +7,9 @@ using TDS.Core;
 namespace TDS.Tests.PlayMode
 {
     /// <summary>
-    /// §12 BattleMover 글루 통합 검증: 추격 중인 근접 적이 플레이어 시야 정면을 피하는 목적지를 고른다.
-    /// (직진이면 정면(노출 1)으로 향함. 시야-회피면 플랭크/뒤(낮은 노출)로 향함.)
+    /// §12 BattleMover 글루 통합 검증.
+    /// - 최근 피격(그레이스) 적: 플레이어 시야 정면을 피하는 목적지를 고른다.
+    /// - 평소(미피격) 적: 그냥 공격 사거리까지 근접한다(둘러싸서 때림).
     /// </summary>
     public class BattleMoveIntegrationTests
     {
@@ -24,11 +25,15 @@ namespace TDS.Tests.PlayMode
             if (GameBootstrap.Instance != null)
                 Object.DestroyImmediate(GameBootstrap.Instance.gameObject);
             GameServices.ResetForTests();
+            // 피격 FX(CFXR) 정리(루트 단위, null-safe)
+            var roots = new System.Collections.Generic.HashSet<GameObject>();
+            foreach (var fx in Object.FindObjectsByType<ParticleSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (fx != null && fx.transform.root.name.Contains("CFXR")) roots.Add(fx.transform.root.gameObject);
+            foreach (var r in roots) if (r != null) Object.DestroyImmediate(r);
             yield return null;
         }
 
-        [UnityTest]
-        public IEnumerator Chasing_melee_avoids_player_front()
+        private IEnumerator Setup(Vector3 playerForward, Vector3 enemyPos)
         {
             GameServices.ResetForTests();
             GameBootstrap.EnsureSystems();
@@ -42,36 +47,66 @@ namespace TDS.Tests.PlayMode
             surface.BuildNavMesh();
             yield return null;
 
-            // 플레이어: 원점, +z를 바라봄. (직접 인스턴스화 → controlsEnabled false → 회전 override 없음 → 방향 유지)
             player = Object.Instantiate(Resources.Load<GameObject>("Player"));
             player.name = "Player";
             player.transform.position = Vector3.zero;
-            player.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+            player.transform.rotation = Quaternion.LookRotation(playerForward);
             yield return null;
 
-            // 근접 적: 플레이어 정면(+z)에 배치 → 직진이면 계속 정면
             var table = Resources.Load<SpawnTable>("ST_Basic");
-            enemyGo = Object.Instantiate(table.entries[0].prefab, new Vector3(0f, 0f, 5f), Quaternion.identity);
+            enemyGo = Object.Instantiate(table.entries[0].prefab, enemyPos, Quaternion.identity);
             yield return null;
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Threatened_melee_avoids_player_front()
+        {
+            // 플레이어 +z 바라봄, 적은 정면(+z)에 배치
+            yield return Setup(Vector3.forward, new Vector3(0f, 0f, 5f));
 
             var melee = enemyGo.GetComponentInChildren<Enemy_Melee>();
-            Assert.IsNotNull(melee, "Enemy_Melee 없음");
+            Assert.IsNotNull(melee);
+
+            // 최근 피격 상태로 만듦 → 회피 활성
+            var dmg = enemyGo.GetComponentInChildren<IDamagable>();
+            Assert.IsNotNull(dmg, "히트박스 없음");
+            dmg.TakeDamage(2);
+
             melee.stateMachine.ChangeState(melee.chaseState);
 
-            // 목적지 갱신(0.25s throttle) + 이동 시간
-            float minExposureSeen = 1f;
+            float minExposure = 1f;
             for (int i = 0; i < 40; i++)
             {
                 yield return null;
                 if (melee == null || melee.agent == null) break;
-                Vector3 dest = melee.agent.destination;
-                float exp = BattleMover.FrontExposure(dest, player.transform.position, player.transform.forward, 60f);
-                if (exp < minExposureSeen) minExposureSeen = exp;
+                float exp = BattleMover.FrontExposure(melee.agent.destination, player.transform.position, player.transform.forward, 60f);
+                if (exp < minExposure) minExposure = exp;
             }
 
-            Assert.Less(minExposureSeen, 0.5f,
-                "추격 목적지가 플레이어 정면(높은 노출)에 머묾 — 시야-회피 플랭킹 미작동");
+            Assert.Less(minExposure, 0.5f, "피격 후에도 정면(높은 노출)으로 향함 — 회피 미작동");
+        }
+
+        [UnityTest]
+        public IEnumerator Calm_melee_closes_to_attack_range()
+        {
+            // 미피격. 멀리 둔 적이 그냥 근접해야 함
+            yield return Setup(Vector3.forward, new Vector3(0f, 0f, 8f));
+
+            var melee = enemyGo.GetComponentInChildren<Enemy_Melee>();
+            Assert.IsNotNull(melee);
+            float startDist = Vector3.Distance(melee.transform.position, player.transform.position);
+
+            melee.stateMachine.ChangeState(melee.chaseState);
+
+            for (int i = 0; i < 80; i++)
+            {
+                yield return null;
+                if (melee == null) break;
+            }
+
+            float endDist = Vector3.Distance(melee.transform.position, player.transform.position);
+            Assert.Less(endDist, startDist - 3f, $"평소 적이 근접하지 않음(거리 {startDist:0.0}→{endDist:0.0})");
         }
     }
 }
