@@ -18,6 +18,10 @@ public class Bullet : MonoBehaviour
     private float flyDistance;
     private bool bulletDisabled;
 
+    [Tooltip("이 시간이 지나면 무조건 풀로 반환(아무것도 안 맞고 떠다니며 쌓이는 것 방지)")]
+    [SerializeField] private float maxLifetime = 2f;
+    private float spawnTime;
+
     private LayerMask allyLayerMask;
 
 
@@ -42,11 +46,19 @@ public class Bullet : MonoBehaviour
         trailRenderer.Clear();
         trailRenderer.time = .25f;
         startPosition = transform.position;
+        spawnTime = Time.time;
         this.flyDistance = flyDistance + .5f; // magic number .5f is a length of tip of the laser ( Check method UpdateAimVisuals() on PlayerAim script) ;
     }
 
     protected virtual void Update()
     {
+        // 안전망: 무엇에도 안 맞고 떠다니는 총알이 쌓이지 않게 일정 시간 뒤 무조건 반환.
+        if (Time.time - spawnTime > maxLifetime)
+        {
+            ReturnBulletToPool();
+            return;
+        }
+
         FadeTrailIfNeeded();
         DisableBulletIfNeeded();
         ReturnToPoolIfNeeded();
@@ -81,7 +93,7 @@ public class Bullet : MonoBehaviour
             // Use a bitwise AND to check if the collsion layer is in the allyLayerMask
             if ((allyLayerMask.value & (1 << collision.gameObject.layer)) > 0)
             {
-                ReturnBulletToPool(10);
+                ReturnBulletToPool(); // 아군엔 피해 없이 즉시 반환(예전 10초 지연 → 총알 누적 원인)
                 return;
             }
         }
