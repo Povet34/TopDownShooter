@@ -55,7 +55,7 @@
 - **프리팹 `Resources/Player.prefab`** (SampleScene Player에서 추출, 비파괴). 태그 `Player`.
 - **`PlayerSpawner`**(Core): EnsureSystems 후 맵 중앙(`PlayerSpawnPoint`)에 스폰, 인스턴스명 `Player`(적 AI가 `Find("Player")`로 찾음).
 - **`PlayerMapBootstrap`**(Game 글루): 스폰된 플레이어에 컨트롤 활성화 + 기본무기(Pistol+AutoRifle) 부여 — UI 없이 빈 맵에서도 전투.
-- **카메라**: `CameraFollow`(Core)가 태그로 플레이어 추적(3/4 뷰) + `FollowPosition`(순수 시임). 추적 base와 별개로 `CameraShake`(순수) 오프셋·롤을 unscaled 시간으로 위에 더함(셰이크가 추적에 피드백 안 됨).
+- **카메라**: `CameraFollow`(Core)가 태그로 플레이어 추적(3/4 뷰) + `FollowPosition`(순수 시임). 추적 base와 별개로 `CameraShake`(순수) 오프셋·롤을 unscaled로 위에 더함(피드백 방지). 마우스 휠 줌(`CameraZoom` 순수 + `CameraZoomInput` 글루 → `offset×zoom`).
 - **전투 연출(손맛)**: 무기 비의존 `ICombatFeedbackService`(`CombatFeedback`, Systems). 적 피격(`Enemy.GetHit`)/사망(`Die`)·플레이어 피격(`Player_Health`)에서 호출 → 카메라 셰이크(`CameraShake`) + 처치 시 히트스톱(`HitStop`, Time.timeScale) + 피격 FX(CFXR). 순수 시임 2종은 EditMode 테스트.
 - **조준 IK**: aim 리그(`Head_Aim`/`Gun_Aim` MultiAimConstraint) source = 프리팹 내부 `Aim_Target`. `AimRotation.FaceHorizontal`(0벡터 가드).
 - **회복력 가드**: UI/Camera.main/CameraManager/currentWeapon/fogVolume null 컨텍스트에서도 안 죽도록 가드(맵 단독 실행).
@@ -139,7 +139,11 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ### 6.5 교전 이동 — 시야-회피 유틸리티 스코어링 `BattleMover` (사용자 §12)
 > **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨. 고정 슬롯 포위(균일) 아님 — 창발적.
-> **1차 완료** (`6d19f06`): 순수 `BattleMover`(FrontExposure·Score·PickEngagePosition, EditMode 9) + `ChaseState_Melee` 글루(근접권에선 시야 회피 플랭크 목적지, 멀면 직진, 0.25s throttle=관성). in-game 검증: melee 11마리가 정면 회피해 9/11 플랭크/뒤로 포위. **2차 남음:** strafe/backstep/flee(능력 게이트) + 몹 간 소프트 간격(겹침 회피) + 거리별 후보 + 원거리 적용.
+> **구현됨**: 순수 `BattleMover`(FrontExposure·Score·PickEngagePosition·**ViewAvoidWeight** 그레이스 게이트, EditMode 13).
+> - **근접(ChaseState_Melee)**: 평소엔 공격 사거리(`attackData.attackRange×0.85`)까지 **근접해 둘러싸 공격**(포위=근접). **최근 피격(그레이스 2.5s) 시에만** 강한 시야 회피로 안전 각 재배치. in-game: 9/10 근접 공격.
+> - **원거리(BattleState_Range)**: 평소 제자리 사격, **최근 피격 시 사거리 유지하며 시야 회피로 strafe 재배치**(이전 "굳어있음" 해소).
+> - 회피 강도 = `Enemy.LastTimeDamaged` 기반 `ViewAvoidWeight`(피격 직후 高 → 그레이스 동안 감쇠).
+> - **2차 남음:** strafe/backstep/flee 구분(능력 게이트) + 몹 간 소프트 간격(겹침 회피) + 거리별 후보.
 - **플레이어 "시야" 인식**: 현재 forward 콘 + 최근 공격 방향(감쇠) → "압박(pressure)" 점수.
 - **회피 행동(능력 게이트, 선호순)**: 시야콘 이탈 → strafe(좌우, 바라보는 방향과 이동 분리) → backstep → 저체력시 도주(도주 플래그 적만).
 - **유틸리티 스코어링**: 후보 목적지에 점수(시야콘 회피 ← 핵심 / 선호 교전거리 / 다른 몹과 소프트 간격(강제 아님) / 행동비용 / 관성·이력)를 매겨 최선 선택. 즉각 반응 X(점수+확률+이력).
@@ -163,12 +167,16 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - 순수 시임 TDD 가능: 콘 판정(각도+거리), 차폐 레이, 광원 가시성 규칙.
 - **우선순위 결정**: 적 AI 피벗(§6.2 인지 + §6.3 FSM + 패트롤 스폰) **이후**, 그리고 **낮/밤 시스템과 함께**(콘 스케일이 거기 의존). 기본 콘+차폐만은 그 전 독립 마일스톤으로도 가능하나, 게임 전체 체감을 바꾸므로 코어 AI 루프가 선 것 다음이 안전.
 
+### 6.7 카메라
+- **마우스 휠 줌 ✅**: `CameraZoom`(순수) + `CameraFollow.AddScroll` + `CameraZoomInput`(글루). 휠 위=줌인, 아래=줌아웃, clamp.
+- **무기별 에임-방향 오프셋 (추후)**: 우클릭(정밀 조준) 시 무기 타입에 따라 카메라를 **에임 방향으로** 이동 — 피스톨 ~3, 스나이퍼 ~10. 플레이어가 화면 중앙이 아니라 총구 방향 쪽으로 치우쳐 더 멀리 보게. `CameraFollow`에 에임-방향 오프셋 + 무기별 거리(Weapon 데이터) + 정밀조준 토글 연동. 줌과 합성.
+
 ---
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·**BattleMover(시야-회피 이동)**. **64 green.**
-- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도 추종), **BattleMove(추격 melee 정면 회피)**. **25 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피 이동/그레이스 회피)·**CameraZoom**. **73 green.**
+- **PlayMode** (통합): 부트, Player(스폰·컨트롤·이동·무기·사격·피해), Enemy(피해→사망·**사망 후 래그돌 고정**), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도), BattleMove(**근접: 평소 근접/피격시 회피, 원거리: 피격시 재배치**). **28 green.**
 - **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.
 - 한계: navmesh 의존 적 AI 테스트는 테스트 씬에 navmesh 베이크 필요(`EnemyCombatTests` 참고).

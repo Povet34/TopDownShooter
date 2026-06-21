@@ -160,7 +160,11 @@
 - 🐛 **GameOver NullRef 수정** (`d4cfe55`): 플레이어 사망 시 `GameManager.GameOver`가 맵에 없는 `UI.instance`/`CameraManager.instance` 호출 → 가드. 사망 시 NullRef 0 + MapHUD DEFEATED 정상.
 - ✅ **이동 애니 폴리시(제자리걸음 제거)** (`d4361c4`): 순수 `LocomotionAnim.PlaybackSpeed`(평면속도/기준속도→재생속도, EditMode 5) + `EnemyState.IsLocomotion` + `Enemy.Update` 구동. 이동 클립 재생속도가 실제 agent 속도 추종(정지 0.15, 풀런 ~1, 공격 1.0). PlayMode 1. in-game 확인.
 - ✅ **BattleMover 1차 — 시야-회피 교전 이동** (`6d19f06`): 순수 `BattleMover`(FrontExposure·Score·PickEngagePosition, EditMode 9) + `ChaseState_Melee` 글루. in-game: melee가 플레이어 정면 회피 → 창발 포위(9/11 플랭크/뒤). PlayMode 1.
-- 📋 **다음: 적 AI 피벗 (WAVE→패트롤)** — 합의 우선순위: 크로스헤어 ✅ → 이동 애니 ✅ → BattleMover 1차 ✅ → **BattleMover 2차(strafe/backstep/flee + 소프트 간격) 또는 인지(§6.2)+FSM(§6.3)+패트롤 스폰**. 플레이어 FoV(§6.6)는 그 이후+낮밤. 설계는 Wiki §6.
+- ✅ **BattleMover 멜레 수정 + 원거리 적용** (`feature/enemy-engage-movement`: `13d981f`·`3f535ac`): 근접은 **공격 사거리까지 근접해 둘러싸 공격**(포위=근접), **최근 피격(그레이스) 시에만** 시야 회피 재배치. 원거리는 **피격 시 사거리 유지하며 strafe 재배치**(굳어있음 해소). `Enemy.LastTimeDamaged` + `BattleMover.ViewAvoidWeight`. `Player_Movement` controlsEnabled 가드(Move on inactive controller 수정).
+- ✅ **죽은 적 고정** (`72b8f5d`): 사망 5s 뒤 `Ragdoll.Freeze`(끝없는 슬라이딩 방지).
+- ✅ **마우스 휠 줌** (`e61a135`): `CameraZoom`(순수) + `CameraZoomInput`. 무기별 에임-방향 카메라 오프셋은 Wiki §6.7 추후.
+- 📋 **main 병합 완료** (FF: 45커밋). 이후 작업은 `feature/enemy-engage-movement`.
+- 📋 **다음**: BattleMover 2차(strafe/backstep/flee + 소프트 간격) 또는 인지(§6.2)+FSM(§6.3)+패트롤 스폰. 플레이어 FoV(§6.6)·무기 카메라(§6.7)는 그 이후. 설계는 Wiki §6.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)
