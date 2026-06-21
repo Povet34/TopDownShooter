@@ -29,4 +29,6 @@ public class MapConfig : ScriptableObject
     public List<GameObject> obstaclePrefabs = new List<GameObject>();
     [Tooltip("Cover 컴포넌트가 미리 붙은 엄폐물 프리팹(권장). 비우면 프리미티브 큐브로 대체")]
     public GameObject coverPrefab;
+    [Tooltip("엄폐 지점 마커 프리팹(CoverPoint 컴포넌트). 프리미티브 폴백 엄폐물에 런타임 부착용 — Prefab/Enemy_CoverSystem/CoverPoint 권장")]
+    public GameObject coverPointPrefab;
 }

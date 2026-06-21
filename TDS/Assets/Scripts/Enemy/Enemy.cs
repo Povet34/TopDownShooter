@@ -172,7 +172,11 @@ public class Enemy : MonoBehaviour
 
     public void FaceTarget(Vector3 target,float turnSpeed = 0)
     {
-        Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
+        Vector3 directionToTarget = target - transform.position;
+        if (directionToTarget.sqrMagnitude < 0.0001f)
+            return; // 대상이 현재 위치와 거의 같음 → 회전 불필요(LookRotation zero-vector 경고 방지)
+
+        Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
 
         Vector3 currentEulerAngels = transform.rotation.eulerAngles;
 

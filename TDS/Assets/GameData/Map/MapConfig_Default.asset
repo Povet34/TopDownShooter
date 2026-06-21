@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 015666e874a68504e8afacfacf515b5e, type: 3}
+  m_Name: MapConfig_Default
+  m_EditorClassIdentifier: TDS.Game::MapConfig
+  defaultSeed: 12345
+  cellSize: 4
+  gridWidth: 16
+  gridHeight: 16
+  wallHeight: 3
+  obstacleDensity: 0.12
+  coverCount: 14
+  centerClearRadius: 6
+  floorPrefab: {fileID: 0}
+  wallPrefab: {fileID: 0}
+  obstaclePrefabs: []
+  coverPrefab: {fileID: 0}
+  coverPointPrefab: {fileID: 8085336480767451092, guid: 7e4fb28d054f1ad469b06aee210fe65f, type: 3}

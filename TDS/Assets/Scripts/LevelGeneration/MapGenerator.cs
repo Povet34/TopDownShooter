@@ -198,12 +198,19 @@ public class MapGenerator : MonoBehaviour
             {
                 go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.transform.SetParent(mapRoot, false);
-                go.transform.localScale = new Vector3(cell * 0.8f, 1.2f, cell * 0.4f);
+                go.transform.localScale = new Vector3(2f, 1.2f, 2f); // 엄폐 지점(±1.5)이 박스 밖에 놓이도록 정사각 풋프린트
             }
             go.name = "Cover";
             Vector3 p = pos; p.y = go.transform.localScale.y * 0.5f;
             go.transform.localPosition = p;
             go.transform.localRotation = Quaternion.Euler(0f, rng.Next(4) * 90f, 0f);
+
+            // 엄폐 기능 배선: Cover 컴포넌트 보장(프리팹에 이미 있으면 유지) + 엄폐 지점 마커(Start 전 Configure)
+            if (go.GetComponent<Cover>() == null)
+            {
+                var cover = go.AddComponent<Cover>();
+                cover.Configure(config != null ? config.coverPointPrefab : null, 1.5f, 1.5f);
+            }
             placed++;
         }
     }
