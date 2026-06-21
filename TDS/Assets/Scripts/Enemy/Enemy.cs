@@ -213,8 +213,28 @@ public class Enemy : MonoBehaviour
             && agent.remainingDistance > agent.stoppingDistance + 0.3f;
     }
 
+    private float lastOffMeshWarn = -999f;
+
     private void UpdateStuckRecovery()
     {
+        // 살아있는데 agent가 navmesh 밖으로 빠짐 = 진짜 navmesh 문제. 조용히 두지(얼어붙음) 말고
+        // 가까운 navmesh로 복귀시키고, 자주 일어나면 알 수 있게 경고로 표면화(rate-limited).
+        bool alive = health == null || health.currentHealth > 0;
+        if (alive && agent != null && agent.enabled && !agent.isOnNavMesh)
+        {
+            if (NavMesh.SamplePosition(transform.position, out var back, 6f, NavMesh.AllAreas))
+            {
+                agent.Warp(back.position);
+                lastStuckRefPos = back.position;
+            }
+            if (Time.time - lastOffMeshWarn > 3f)
+            {
+                lastOffMeshWarn = Time.time;
+                Debug.LogWarning($"[Enemy] '{name}'이(가) NavMesh 밖으로 빠져 복귀시킴 @{transform.position:0.0} — navmesh 커버리지/스폰/넉백 확인 필요", this);
+            }
+            return;
+        }
+
         if (!ShouldCheckStuck())
         {
             stuckTracker.Reset();
@@ -472,6 +492,55 @@ public class Enemy : MonoBehaviour
     public bool IsPlayerInAgrresionRange() => Vector3.Distance(transform.position, player.position) < aggresionRange;
     protected virtual void OnDrawGizmos()
     {
-        Gizmos.DrawWireSphere(transform.position, aggresionRange);
+        DrawPerceptionGizmo();
+    }
+
+    // 적이 지금 어떤 인지 상태인지 한눈에: 머리 위 색 구슬(초록=순찰/주황=경계/빨강=교전) + 시야 콘 + 근접 반경.
+    // 게임뷰 우상단 Gizmos 토글을 켜면 플레이 중에도 보인다.
+    private void DrawPerceptionGizmo()
+    {
+        Color c;
+        switch (PerceptionState)
+        {
+            case TDS.Core.PerceptionState.Engage: c = Color.red; break;
+            case TDS.Core.PerceptionState.Alert: c = new Color(1f, 0.55f, 0f); break; // 주황
+            default: c = Color.green; break;
+        }
+
+        Vector3 head = transform.position + Vector3.up * 2.3f;
+        Gizmos.color = c;
+        Gizmos.DrawSphere(head, 0.22f);
+
+        // 시야 콘(수평): 전방 ±viewHalfAngle, 사거리 aggresionRange
+        Vector3 fwd = transform.forward; fwd.y = 0f;
+        if (fwd.sqrMagnitude > 1e-4f)
+        {
+            fwd.Normalize();
+            Vector3 eye = transform.position + Vector3.up * 0.5f;
+            Gizmos.color = new Color(c.r, c.g, c.b, 0.5f);
+            Vector3 prev = eye + (Quaternion.AngleAxis(-viewHalfAngle, Vector3.up) * fwd) * aggresionRange;
+            Gizmos.DrawLine(eye, prev);
+            const int seg = 14;
+            for (int i = 1; i <= seg; i++)
+            {
+                float ang = Mathf.Lerp(-viewHalfAngle, viewHalfAngle, (float)i / seg);
+                Vector3 p = eye + (Quaternion.AngleAxis(ang, Vector3.up) * fwd) * aggresionRange;
+                Gizmos.DrawLine(prev, p);
+                prev = p;
+            }
+            Gizmos.DrawLine(prev, eye);
+        }
+
+        // 근접 인지 반경(콘 밖/뒤라도 이 안이면 발각)
+        Gizmos.color = new Color(c.r, c.g, c.b, 0.25f);
+        Gizmos.DrawWireSphere(transform.position, senseRadius);
+
+#if UNITY_EDITOR
+        var style = new GUIStyle { fontSize = 11 };
+        style.normal.textColor = c;
+        string label = PerceptionState.ToString();
+        if (Squad != null) label += "  [분대]";
+        UnityEditor.Handles.Label(head + Vector3.up * 0.35f, label, style);
+#endif
     }
 }
