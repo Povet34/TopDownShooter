@@ -43,6 +43,7 @@ public class BattleState_Range : EnemyState
         base.Exit();
         enemy.agent.updateRotation = true; // 다음 상태(이동/엄폐주행)는 이동방향을 바라봄
         StopRepositioning();
+        enemy.anim.SetBool("Strafing", false);
     }
 
 
@@ -60,6 +61,7 @@ public class BattleState_Range : EnemyState
             stateMachine.ChangeState(enemy.advancePlayerState);
 
         SeekCoverOrReposition();
+        UpdateStrafeAnimation();
 
         if (stateTimer > 0)
             return;
@@ -132,6 +134,22 @@ public class BattleState_Range : EnemyState
             case RangedEngageAction.Hold:
                 if (repositioning) StopRepositioning();
                 break;
+        }
+    }
+
+    // 재배치(strafe) 중엔 다리 애니를 이동 방향(플레이어 기준)에 맞춰 2D 블렌드로 구동(사선뛰기). 정지 시 해제.
+    private void UpdateStrafeAnimation()
+    {
+        if (repositioning)
+        {
+            Vector2 blend = StrafeBlend.Compute(enemy.agent.velocity, enemy.transform.forward);
+            enemy.anim.SetBool("Strafing", true);
+            enemy.anim.SetFloat("StrafeX", blend.x, 0.1f, Time.deltaTime);
+            enemy.anim.SetFloat("StrafeY", blend.y, 0.1f, Time.deltaTime);
+        }
+        else
+        {
+            enemy.anim.SetBool("Strafing", false);
         }
     }
 

@@ -145,7 +145,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 > - **원거리(BattleState_Range)**: 기본적으로 **피격당하거나 시야로 발각되면 근처 엄폐 우선 시도**(`RunToCoverState`로 숨음), 적절한 엄폐가 없으면 **BattleMover로 사거리 유지 strafe 재배치**(폴백). 결정은 순수 `RangedEngageDecision.Decide`(threatened·inDanger·coverAllowed·coverAvailable → TakeCover/Reposition/Hold, EditMode 6). 전투 중 `agent.updateRotation=false`로 플레이어를 보며 이동(strafe). `Enemy_Range`/`Sniper` prefab `coverPerk=CanTakeAndChangeCover` 기본화.
 > - **엄폐 도달 견고화**: 엄폐점이 navmesh에서 살짝 벗어나(PathPartial) 정확히 못 닿으면 `RunToCoverState`가 무한 대기하던 버그 → "더 못 가고 정지하면 도착 간주"로 전이.
 > - 회피 강도 = `Enemy.LastTimeDamaged` 기반 `ViewAvoidWeight`(피격 직후 高 → 그레이스 동안 감쇠).
-> - **2차 남음:** strafe/backstep/flee 구분(능력 게이트) + 몹 간 소프트 간격(겹침 회피) + 거리별 후보. **사선뛰기 애니**(Pro Rifle Pack 방향 달리기 → 2D 블렌드)는 팩이 Generic이라 Humanoid 재임포트 + 블렌드 트리 필요(미착수).
+> - **사선뛰기 애니 (완료)**: BattleMover 재배치(엄폐 없는 폴백) 중 적이 **플레이어를 조준한 채 다리만 옆/대각으로 달림**. Pro Rifle Pack 방향 달리기 8종(Mixamo, Humanoid 재임포트)을 `Enemy_Range.controller`의 2D 블렌드(`Strafe`, FreeformCartesian, StrafeX/Y)로. 순수 `StrafeBlend.Compute(velocity, facing)`(EditMode 10)가 속도→블렌드 파라미터, `BattleState_Range`가 `Strafing` bool + 파라미터 구동. 상체 조준은 Rifle 레이어가 유지.
+> - **2차 남음:** strafe/backstep/flee 구분(능력 게이트) + 몹 간 소프트 간격(겹침 회피) + 거리별 후보.
 - **플레이어 "시야" 인식**: 현재 forward 콘 + 최근 공격 방향(감쇠) → "압박(pressure)" 점수.
 - **회피 행동(능력 게이트, 선호순)**: 시야콘 이탈 → strafe(좌우, 바라보는 방향과 이동 분리) → backstep → 저체력시 도주(도주 플래그 적만).
 - **유틸리티 스코어링**: 후보 목적지에 점수(시야콘 회피 ← 핵심 / 선호 교전거리 / 다른 몹과 소프트 간격(강제 아님) / 행동비용 / 관성·이력)를 매겨 최선 선택. 즉각 반응 X(점수+확률+이력).
@@ -177,7 +178,7 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·AimDirection(조준 0벡터 가드)·**RangedEngageDecision(엄폐/재배치 결정)**. **88 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·AimDirection(조준 0벡터 가드)·RangedEngageDecision(엄폐/재배치 결정)·**StrafeBlend(facing 기준 2D 블렌드 파라미터)**. **98 green.**
 - **PlayMode** (통합): 부트, Player(스폰·컨트롤·이동·무기·사격·피해), Enemy(피해→사망·**사망 후 래그돌 고정**), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도), BattleMove(**근접: 평소 근접/피격시 회피, 원거리: 피격시 재배치**). **29 green.**
 - **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.

@@ -166,7 +166,7 @@
 - 📋 **main 병합 완료** (FF: 45커밋). 이후 작업은 `feature/enemy-engage-movement`.
 - ✅ **🐛 총 팽글팽글 + 이상한 사격 수정** (`fefbb14`): 탑다운에서 무기 LookAt이 발밑 조준 시 거의 수직→up 모호성으로 회전 + BulletDirection 0/랜덤. `AimDirection.ResolveHorizontal`(수평+0벡터 가드)로 무기·총알 수평화 + 프리팹 `isAimingPrecisly` 기본 false. EditMode 9 + PlayMode 1, in-game 검증.
 - ✅ **원거리 엄폐 행동** (`ffa7cdd`): 피격/발각 시 근처 coverPoint 우선→없으면 BattleMover strafe 폴백. 순수 `RangedEngageDecision`(EditMode 6) + `BattleState_Range` 통합(전투 중 `updateRotation=false`로 플레이어 보며 이동) + `coverPerk` 기본화(Range·Sniper) + `RunToCoverState` PathPartial 무한대기 버그 수정. in-game 검증(피격→엄폐 주행→사격).
-- 📋 **다음: 원거리 사선뛰기 애니** — Pro Rifle Pack 방향 달리기(run forward/back left/right)로 2D strafe 블렌드. **선결: 팩 FBX가 Generic → 적 Humanoid 아바타(`character_enemy@Avatar`) 리타게팅 위해 Humanoid 재임포트** + `Enemy_Range.controller`에 블렌드 트리/파라미터(StrafeX·Y) + 코드로 속도→파라미터 구동. 리타게팅 품질 리스크 있어 에디터 작업 비중 큼.
+- ✅ **원거리 사선뛰기 애니 (풀 strafe 블렌드, TDD)**: 엄폐 없는 BattleMover 재배치 중 적이 **플레이어 조준한 채 다리만 옆/대각 달림**. 순수 `StrafeBlend.Compute(velocity, facing)`(EditMode 10) + `BattleState_Range`가 `Strafing`/StrafeX/Y 구동 + `Enemy_Range.controller`에 2D 블렌드(`Strafe`, FreeformCartesian) 코드 구축. Pro Rifle Pack 방향 달리기 8종 Humanoid 재임포트(Mixamo→적 아바타 리타게팅, in-game 포즈 검증 OK). 상체 조준은 Rifle 레이어 유지.
 - 📋 그 다음 **BattleMover 2차**(strafe/backstep/flee 능력게이트 + 몹 간 소프트 간격), 인지(§6.2)+FSM(§6.3)+패트롤 스폰. FoV(§6.6)·무기 카메라(§6.7)는 이후.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
