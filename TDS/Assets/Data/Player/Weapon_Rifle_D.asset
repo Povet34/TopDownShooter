@@ -15,9 +15,9 @@ MonoBehaviour:
   weaponName: Stinger 97
   bulletDamage: 80
   bulletSpeed: 200
-  bulletsInMagazine: 12
-  magazineCapacity: 12
-  totalReserveAmmo: 54
+  bulletsInMagazine: 18
+  magazineCapacity: 18
+  totalReserveAmmo: 400
   shootType: 0
   bulletsPerShot: 1
   fireRate: 1.5

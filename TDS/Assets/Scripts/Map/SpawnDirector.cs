@@ -24,6 +24,11 @@ public class SpawnDirector : MonoBehaviour
     [SerializeField] private List<WaveDef> waves = new List<WaveDef>();
     [SerializeField] private float minRadius = 8f;
     [SerializeField] private float maxRadius = 20f;
+    [Header("분대 (한 곳에 뭉쳐 스폰 + 공유 인지)")]
+    [Tooltip("분대 인원 범위(min,max). 웨이브 count를 이 크기 분대들로 나눠 한 곳씩 뭉쳐 스폰")]
+    [SerializeField] private Vector2Int squadSize = new Vector2Int(5, 9);
+    [Tooltip("분대원이 분대 중심 주변에 뭉치는 반경")]
+    [SerializeField] private float squadClusterRadius = 5f;
     [SerializeField] private int seed = 1;
     [SerializeField] private bool requirePlayer = true;
     [SerializeField] private bool autoStart = true;
@@ -96,23 +101,51 @@ public class SpawnDirector : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < wave.count; i++)
+        // 웨이브 인원을 분대들로 나눠, 각 분대를 한 곳에 뭉쳐 스폰(흩뿌리지 않음). 분대원은 인지를 공유.
+        int remaining = wave.count;
+        while (remaining > 0)
         {
-            var def = wave.table.Pick((float)rng.NextDouble());
-            if (def == null || def.prefab == null)
-                continue;
+            // 남은 인원이 한 분대에 다 들어가면 통째로(자투리 1인 분대 방지), 아니면 랜덤 분대 크기.
+            int size = remaining <= squadSize.y
+                ? remaining
+                : Mathf.Clamp(rng.Next(squadSize.x, squadSize.y + 1), 1, remaining);
+            remaining -= size;
 
-            double ang = rng.NextDouble() * System.Math.PI * 2.0;
-            float dist = Mathf.Lerp(minRadius, maxRadius, (float)rng.NextDouble());
-            Vector3 pos = transform.position + new Vector3(Mathf.Cos((float)ang) * dist, 0f, Mathf.Sin((float)ang) * dist);
+            // 분대 중심(링 위 한 점)
+            double cAng = rng.NextDouble() * System.Math.PI * 2.0;
+            float cDist = Mathf.Lerp(minRadius, maxRadius, (float)rng.NextDouble());
+            Vector3 center = transform.position + new Vector3(Mathf.Cos((float)cAng) * cDist, 0f, Mathf.Sin((float)cAng) * cDist);
 
-            if (NavMesh.SamplePosition(pos, out var hit, 8f, NavMesh.AllAreas))
-                pos = hit.position;
+            var squadGo = new GameObject("Squad");
+            squadGo.transform.position = center;
+            var squad = squadGo.AddComponent<Squad>();
 
-            var go = Instantiate(def.prefab, pos, Quaternion.identity);
-            var enemy = go.GetComponentInChildren<Enemy>();
-            if (enemy != null)
-                currentWave.Add(enemy);
+            for (int i = 0; i < size; i++)
+            {
+                var def = wave.table.Pick((float)rng.NextDouble());
+                if (def == null || def.prefab == null)
+                    continue;
+
+                // 분대 중심 주변에 황금각 나선으로 균등 분산(겹쳐 쌓이지 않게)
+                float ga = i * 2.39996323f; // 황금각(rad)
+                float r = squadClusterRadius * Mathf.Sqrt((i + 0.5f) / size);
+                Vector3 pos = center + new Vector3(Mathf.Cos(ga) * r, 0f, Mathf.Sin(ga) * r);
+
+                if (NavMesh.SamplePosition(pos, out var hit, 3f, NavMesh.AllAreas))
+                    pos = hit.position; // 작은 샘플 반경 — 멀리 있는 한 점으로 뭉치지 않게
+
+                // 바깥(중심에서 멀어지는 방향)을 보게 → 분대가 사방을 경계(어느 각도든 플레이어 포착)
+                Vector3 facing = pos - center; facing.y = 0f;
+                Quaternion rot = facing.sqrMagnitude > 0.01f ? Quaternion.LookRotation(facing) : Quaternion.identity;
+
+                var go = Instantiate(def.prefab, pos, rot);
+                var enemy = go.GetComponentInChildren<Enemy>();
+                if (enemy != null)
+                {
+                    squad.Register(enemy);
+                    currentWave.Add(enemy);
+                }
+            }
         }
     }
 }

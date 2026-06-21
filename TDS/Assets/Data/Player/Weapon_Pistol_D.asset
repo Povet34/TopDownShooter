@@ -15,9 +15,9 @@ MonoBehaviour:
   weaponName: Heaven 567
   bulletDamage: 18
   bulletSpeed: 75
-  bulletsInMagazine: 15
-  magazineCapacity: 15
-  totalReserveAmmo: 56
+  bulletsInMagazine: 23
+  magazineCapacity: 23
+  totalReserveAmmo: 400
   shootType: 0
   bulletsPerShot: 1
   fireRate: 6

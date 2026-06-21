@@ -15,9 +15,9 @@ MonoBehaviour:
   weaponName: Bolt R-7
   bulletDamage: 35
   bulletSpeed: 150
-  bulletsInMagazine: 6
-  magazineCapacity: 6
-  totalReserveAmmo: 32
+  bulletsInMagazine: 9
+  magazineCapacity: 9
+  totalReserveAmmo: 400
   shootType: 0
   bulletsPerShot: 1
   fireRate: 2.5

@@ -110,6 +110,19 @@ public class Enemy : MonoBehaviour
     /// <summary>NavMesh 명령을 내려도 안전한가(살아있고 활성이고 navmesh 위). 죽었거나 끼어 빠진 적은 false.</summary>
     public bool AgentReady => agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh;
 
+    /// <summary>소속 분대(있으면). 분대원 중 한 명이라도 발각/피격되면 전원 교전 공유. null이면 단독.</summary>
+    public Squad Squad { get; set; }
+
+    /// <summary>분대 공유 트리거 — 시야 밖이라도 즉시 교전 + 시야상실 타이머 리셋(교전 유지).</summary>
+    public void SquadEngage()
+    {
+        if (!AgentReady)
+            return;
+        perception.ForceEngage();
+        if (!inBattleMode)
+            EnterBattleMode();
+    }
+
     protected virtual void UpdateAggro()
     {
         // 죽었거나 navmesh 밖이면 인지/교전 전환 금지(StuckRecovery가 복구) — 비활성 agent 명령 에러 방지.
@@ -290,6 +303,7 @@ public class Enemy : MonoBehaviour
     {
         perception.ForceEngage(); // 뒤에서 맞아도 즉시 교전(시야 밖이라도) — 곧바로 이탈 방지
         EnterBattleMode();
+        Squad?.OnMemberHit(); // 분대 공유: 한 명이 맞으면 전원 교전 (§6.2 그룹 인지)
         LastTimeDamaged = Time.time; // 최근 피격 → 회피 무빙 가중치↑ (§12 그레이스 피리어드)
         health.ReduceHealth(damage);
 

@@ -15,9 +15,9 @@ MonoBehaviour:
   weaponName: Blaster K-567
   bulletDamage: 12
   bulletSpeed: 125
-  bulletsInMagazine: 32
-  magazineCapacity: 32
-  totalReserveAmmo: 107
+  bulletsInMagazine: 48
+  magazineCapacity: 48
+  totalReserveAmmo: 400
   shootType: 1
   bulletsPerShot: 1
   fireRate: 8
