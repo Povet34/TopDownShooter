@@ -8554,7 +8554,7 @@ MonoBehaviour:
   regularAimCamDist: 7
   camChangeRate: 5
   aim: {fileID: 79249628121498044}
-  isAimingPrecisly: 1
+  isAimingPrecisly: 0
   offsetChangeRate: 6
   preciseAim:
     serializedVersion: 2

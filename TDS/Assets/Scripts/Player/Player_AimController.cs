@@ -98,8 +98,13 @@ public class Player_AimController : MonoBehaviour
 
         WeaponModel weaponModel = player.weaponVisuals.CurrentWeaponModel();
 
-        weaponModel.transform.LookAt(aim);
-        weaponModel.gunPoint.LookAt(aim);
+        // 탑다운: 무기·총구를 조준점 방향으로 '수평' 회전. 땅(아래)을 향하면 거의 수직→up 모호성으로
+        // 마구 회전(팽글팽글)하므로 수평 방향만 사용 + 발밑이면 fallback(현재 forward) 유지.
+        Vector3 modelDir = TDS.Core.AimDirection.ResolveHorizontal(weaponModel.transform.position, aim.position, weaponModel.transform.forward);
+        weaponModel.transform.rotation = Quaternion.LookRotation(modelDir);
+
+        Vector3 gunDir = TDS.Core.AimDirection.ResolveHorizontal(weaponModel.gunPoint.position, aim.position, weaponModel.gunPoint.forward);
+        weaponModel.gunPoint.rotation = Quaternion.LookRotation(gunDir);
 
 
         Transform gunPoint = player.weapon.GunPoint();

@@ -229,13 +229,13 @@ public class Player_WeaponController : MonoBehaviour
     public Vector3 BulletDirection()
     {
         Transform aim = player.aim.Aim();
+        Transform gunPoint = GunPoint();
 
-        Vector3 direction = (aim.position - GunPoint().position).normalized;
+        // 정밀조준이면 3D, 아니면 수평. 어느 쪽이든 조준점이 총구와 겹치면 총구 전방으로 대체(랜덤 발사 방지).
+        if (player.aim.CanAimPrecisly())
+            return TDS.Core.AimDirection.Resolve(gunPoint.position, aim.position, gunPoint.forward);
 
-        if (player.aim.CanAimPrecisly() == false)
-            direction.y = 0;
-
-        return direction;
+        return TDS.Core.AimDirection.ResolveHorizontal(gunPoint.position, aim.position, gunPoint.forward);
     }
 
     public bool HasOnlyOneWeapon() => weaponSlots.Count <= 1;

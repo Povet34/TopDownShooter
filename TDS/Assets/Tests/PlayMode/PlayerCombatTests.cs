@@ -163,5 +163,34 @@ namespace TDS.Tests.PlayMode
 
             Assert.Greater(after, before, "사격 시 총알이 스폰되지 않음");
         }
+
+        [UnityTest]
+        public IEnumerator BulletDirection_is_stable_when_aiming_at_own_feet()
+        {
+            GameServices.ResetForTests();
+            var player = SpawnPlayer();
+            yield return null;
+            player.SetControlsEnabledTo(true);
+
+            var wc = player.weapon;
+            var defaults = typeof(Player_WeaponController).GetField("defaultWeaponData", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(wc) as List<Weapon_Data>;
+            wc.SetDefaultWeapon(defaults);
+            for (int i = 0; i < 5; i++) yield return null;
+            wc.SetWeaponReady(true);
+
+            var ac = player.aim;
+            // 비정밀(수평) 조준 강제
+            typeof(Player_AimController).GetField("isAimingPrecisly", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(ac, false);
+
+            var gunPoint = wc.GunPoint();
+            // 조준점(aim transform)을 총구 바로 아래(XZ 동일, y=0)로 = 발밑. 같은 프레임에 즉시 호출(UpdateAimPosition이 덮기 전).
+            ac.Aim().position = new Vector3(gunPoint.position.x, 0f, gunPoint.position.z);
+
+            Vector3 dir = wc.BulletDirection();
+            // 가드 전: (0,-Δy,0)→y=0→(0,0,0) zero/랜덤. 가드 후: 안정된 단위 수평 벡터.
+            Assert.AreEqual(1f, dir.magnitude, 0.02f, "발밑 조준 시 발사 방향이 0/랜덤(가드 실패)");
+            Assert.AreEqual(0f, dir.y, 1e-3f, "비정밀 조준 발사는 수평이어야");
+            yield return null;
+        }
     }
 }
