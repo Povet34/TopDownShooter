@@ -58,6 +58,7 @@
 - **카메라**: `CameraFollow`(Core)가 태그로 플레이어 추적(3/4 뷰) + `FollowPosition`(순수 시임). 추적 base와 별개로 `CameraShake`(순수) 오프셋·롤을 unscaled로 위에 더함(피드백 방지). 마우스 휠 줌(`CameraZoom` 순수 + `CameraZoomInput` 글루 → `offset×zoom`).
 - **전투 연출(손맛)**: 무기 비의존 `ICombatFeedbackService`(`CombatFeedback`, Systems). 적 피격(`Enemy.GetHit`)/사망(`Die`)·플레이어 피격(`Player_Health`)에서 호출 → 카메라 셰이크(`CameraShake`) + 처치 시 히트스톱(`HitStop`, Time.timeScale) + 피격 FX(CFXR). 순수 시임 2종은 EditMode 테스트.
 - **조준 IK**: aim 리그(`Head_Aim`/`Gun_Aim` MultiAimConstraint) source = 프리팹 내부 `Aim_Target`. `AimRotation.FaceHorizontal`(0벡터 가드).
+- **무기 조준(탑다운)**: 무기·총구·총알 방향은 **수평**(`AimDirection.ResolveHorizontal`) — 조준점이 무기 바로 아래(발밑)면 거의 수직→`LookRotation` up-모호성으로 **무기가 팽글팽글 도는** 버그가 있어 수평+0벡터 가드로 해결. 프리팹 `isAimingPrecisly` 기본 false(정밀조준은 우클릭 홀드 기능).
 - **회복력 가드**: UI/Camera.main/CameraManager/currentWeapon/fogVolume null 컨텍스트에서도 안 죽도록 가드(맵 단독 실행).
 - **망토(cape)**: 메시/본은 프리팹에 있으나 `MagicaCloth`(천 시뮬) 비활성 — 의존성 삭제로 크래시. 정리/복원은 추후.
 
@@ -175,7 +176,7 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피 이동/그레이스 회피)·**CameraZoom**. **73 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·**AimDirection(조준 0벡터 가드)**. **82 green.**
 - **PlayMode** (통합): 부트, Player(스폰·컨트롤·이동·무기·사격·피해), Enemy(피해→사망·**사망 후 래그돌 고정**), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도), BattleMove(**근접: 평소 근접/피격시 회피, 원거리: 피격시 재배치**). **28 green.**
 - **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.

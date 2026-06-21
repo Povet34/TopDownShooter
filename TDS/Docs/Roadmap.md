@@ -164,7 +164,8 @@
 - ✅ **죽은 적 고정** (`72b8f5d`): 사망 5s 뒤 `Ragdoll.Freeze`(끝없는 슬라이딩 방지).
 - ✅ **마우스 휠 줌** (`e61a135`): `CameraZoom`(순수) + `CameraZoomInput`. 무기별 에임-방향 카메라 오프셋은 Wiki §6.7 추후.
 - 📋 **main 병합 완료** (FF: 45커밋). 이후 작업은 `feature/enemy-engage-movement`.
-- 📋 **다음**: BattleMover 2차(strafe/backstep/flee + 소프트 간격) 또는 인지(§6.2)+FSM(§6.3)+패트롤 스폰. 플레이어 FoV(§6.6)·무기 카메라(§6.7)는 그 이후. 설계는 Wiki §6.
+- ✅ **🐛 총 팽글팽글 + 이상한 사격 수정** (`fefbb14`): 탑다운에서 무기 LookAt이 발밑 조준 시 거의 수직→up 모호성으로 회전 + BulletDirection 0/랜덤. `AimDirection.ResolveHorizontal`(수평+0벡터 가드)로 무기·총알 수평화 + 프리팹 `isAimingPrecisly` 기본 false. EditMode 9 + PlayMode 1, in-game 검증.
+- 📋 **다음: 원거리 엄폐 행동** — 피격/시야 발각 시 근처 적절한 coverPoint를 찾아 숨고, 없으면 BattleMover식 무빙. **Pro Rifle Pack**(추가됨)의 사선뛰기 애니 활용. → 그 다음 **BattleMover 2차**(strafe/backstep/flee + 소프트 간격), 인지(§6.2)+FSM(§6.3)+패트롤 스폰. FoV(§6.6)·무기 카메라(§6.7)는 이후.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

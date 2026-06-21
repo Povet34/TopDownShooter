@@ -21,7 +21,7 @@ run_tests(mode="EditMode", assembly_names=["TDS.Tests.EditMode"], include_failed
 run_tests(mode="PlayMode", assembly_names=["TDS.Tests.PlayMode"], init_timeout=120000, include_failed_tests=true)
 get_test_job(job_id, wait_timeout=60)   # 폴링
 ```
-또는 에디터 Test Runner 창. **현재 baseline: EditMode 73 / PlayMode 28 green (총 101).**
+또는 에디터 Test Runner 창. **현재 baseline: EditMode 82 / PlayMode 29 green (총 111).**
 
 > 새 테스트 파일을 추가하면 **`refresh_unity` 후 `editor/state`로 컴파일 완료 확인** → 그래야 Test Runner가 발견한다. (스크립트만 refresh로는 새 파일 import가 안 될 때가 있어 풀 refresh 권장.)
 
