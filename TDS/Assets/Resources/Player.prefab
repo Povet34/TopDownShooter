@@ -8785,11 +8785,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d6bf569bbc2f0d40ad95b772d43fda0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TDS.Game::VisionMask
-  resolution: 64
-  worldCenter: {x: 0, y: 0}
-  worldSize: 80
-  updateInterval: 0.07
+  resolution: 160
+  regionSize: 48
+  framesPerMask: 4
+  followPlayer: 1
+  blur: 1
+  fogColor: {r: 0.04, g: 0.05, b: 0.07, a: 1}
+  maxDarkness: 0.8
   fogQuadHeight: 0.05
+  fogQuadSize: 160
 --- !u!1 &6042130979088259364
 GameObject:
   m_ObjectHideFlags: 0
