@@ -175,7 +175,11 @@
     - **0.8 상한**: 땅에 붙은 단상 높이가 0.8을 넘으면 총구가 cover에 박혀 못 쏨 → 단상은 ≤0.8.
   - **구현(TDD)**: 순수 `CoverEvaluation`(높이·도달성 → ShootFrom/HideOnly/Unusable) + `CoverApproach`(arrival/stall로 비비기 방지) + cover point **NavMesh 샘플**(도달 보장) + RunToCover 견고화 + range가 낮은 cover 선호 + 맵 생성에 낮은 cover 배치 + **strafe 게이트**(이동 안 하면 제자리뛰기 금지).
   - **검증 툴**: 생성된 맵의 각 cover가 range에 적당한지(도달 가능 cover point + 높이 분류) 확인하는 PlayMode 테스트(`CoverAuditTests`).
-- 📋 그 다음 **BattleMover 2차**(strafe/backstep/flee 능력게이트 + 몹 간 소프트 간격), 인지(§6.2)+FSM(§6.3)+패트롤 스폰. FoV(§6.6)·무기 카메라(§6.7)는 이후.
+- ✅ **BattleMover 2차** (strafe/backstep/flee 능력게이트 + 몹 간 소프트 간격): 순수 `EvasionPlanner`(EditMode 8) + `BattleMover.SpacingPenalty`(EditMode 4) + `Enemy.NearbyAllyPositions` 글루(멜레·원거리). 원거리 회피행동(체력/플래그 게이트), 멜레·원거리 겹침 완화(in-game 최소 쌍거리 7.7, 뭉침 없음). EditMode 122/PlayMode 30.
+- 📋 그 다음(사용자 우선순위, 2026-06-21):
+  1. **맵 오브젝트 용도/범위** — 적 끼임 방지(적절한 navmesh 범위) + 오브젝트 종류 분류: cover(은폐)·hide·**breakable**(피격 누적 시 파괴)·**movable**(총알/특정 공격에 밀림/배치 변동). md에 기획 정리 필요.
+  2. **적 패트롤 + AI 고도화** (인지 §6.2 + FSM §6.3 + 패트롤 스폰).
+  3. **FoV** (§6.6) — 시야 밖은 어둡게(적 안 보임, 맵은 회색), 발사 시 주변 밝아짐, 추후 인지력 연동. 고도화 기획은 md에 적어두고 추가 검토.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

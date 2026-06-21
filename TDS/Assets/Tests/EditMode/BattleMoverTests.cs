@@ -122,5 +122,55 @@ namespace TDS.Tests.EditMode
             var ctx = Ctx(new Vector3(1, 0, 1));
             Assert.AreEqual(new Vector3(1, 0, 1), BattleMover.PickEngagePosition(ctx, 0));
         }
+
+        // ---- §12 2차: 소프트 간격(겹침 회피) ----
+
+        [Test]
+        public void Spacing_penalty_zero_when_no_allies()
+        {
+            var ctx = Ctx(Vector3.zero);
+            Assert.AreEqual(0f, BattleMover.SpacingPenalty(new Vector3(0, 0, 3), ctx), 1e-6f);
+        }
+
+        [Test]
+        public void Spacing_penalty_higher_when_ally_is_closer()
+        {
+            var ctx = Ctx(Vector3.zero);
+            ctx.wSpacing = 1f;
+            ctx.spacingRadius = 4f;
+            ctx.allies = new[] { new Vector3(0, 0, 3) };
+
+            float near = BattleMover.SpacingPenalty(new Vector3(0, 0, 3.5f), ctx); // 아군 0.5 거리
+            float far = BattleMover.SpacingPenalty(new Vector3(0, 0, 0f), ctx);    // 아군 3 거리
+            Assert.Greater(near, far, "아군에 가까운 후보가 더 큰 페널티여야 함");
+        }
+
+        [Test]
+        public void Spacing_penalty_zero_outside_radius()
+        {
+            var ctx = Ctx(Vector3.zero);
+            ctx.wSpacing = 1f;
+            ctx.spacingRadius = 4f;
+            ctx.allies = new[] { new Vector3(0, 0, 3) };
+            Assert.AreEqual(0f, BattleMover.SpacingPenalty(new Vector3(0, 0, -10f), ctx), 1e-6f);
+        }
+
+        [Test]
+        public void PickEngagePosition_spreads_away_from_clustered_allies()
+        {
+            // 적이 플레이어 뒤(-z), 아군들이 -z 한쪽에 뭉쳐 있음 → 다른 쪽 플랭크를 고르게 됨
+            var ctx = Ctx(new Vector3(0, 0, -3), wView: 0.3f, wInertia: 0.05f);
+            ctx.wSpacing = 2f;
+            ctx.spacingRadius = 4f;
+            ctx.allies = new[] { new Vector3(0, 0, -3), new Vector3(0.5f, 0, -3f) };
+
+            Vector3 pick = BattleMover.PickEngagePosition(ctx);
+
+            // 뭉친 아군(-z)에서 떨어진 곳(아군과의 최소 거리가 spacingRadius에 근접하거나 그 이상)
+            float minAllyDist = Mathf.Min(
+                Vector3.Distance(pick, ctx.allies[0]),
+                Vector3.Distance(pick, ctx.allies[1]));
+            Assert.Greater(minAllyDist, 2f, "뭉친 아군 근처를 골라 겹침");
+        }
     }
 }

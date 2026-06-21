@@ -17,6 +17,11 @@ namespace TDS.Core
         public float wView;    // 시야 정면 회피
         public float wDist;    // 선호 교전거리 유지
         public float wInertia; // 적게 움직이기(관성/이력 → 떨림 방지·자연 분산)
+
+        // §12 2차: 몹 간 소프트 간격(겹침 회피). allies는 자신을 제외한 다른 적 위치(null 가능).
+        public Vector3[] allies;
+        public float wSpacing;      // 아군 근접 페널티 가중치
+        public float spacingRadius; // 이 반경 안의 아군이 페널티(밖이면 0)
     }
 
     /// <summary>
@@ -74,7 +79,26 @@ namespace TDS.Core
             Vector3 move = candidate - ctx.enemyPos; move.y = 0f;
             float moveCost = move.magnitude;
 
-            return -(ctx.wView * exposure + ctx.wDist * distErr + ctx.wInertia * moveCost);
+            float spacing = SpacingPenalty(candidate, in ctx);
+
+            return -(ctx.wView * exposure + ctx.wDist * distErr + ctx.wInertia * moveCost + ctx.wSpacing * spacing);
+        }
+
+        /// <summary>아군이 spacingRadius 안에 있을수록 커지는 페널티(겹침/뭉침 회피). 밖이면 0.</summary>
+        public static float SpacingPenalty(Vector3 candidate, in BattleMoveContext ctx)
+        {
+            if (ctx.allies == null || ctx.wSpacing <= 0f || ctx.spacingRadius <= 0f)
+                return 0f;
+
+            float penalty = 0f;
+            for (int i = 0; i < ctx.allies.Length; i++)
+            {
+                Vector3 d = candidate - ctx.allies[i]; d.y = 0f;
+                float dist = d.magnitude;
+                if (dist < ctx.spacingRadius)
+                    penalty += 1f - dist / ctx.spacingRadius; // 가까울수록 1, 반경 경계 0
+            }
+            return penalty;
         }
 
         /// <summary>

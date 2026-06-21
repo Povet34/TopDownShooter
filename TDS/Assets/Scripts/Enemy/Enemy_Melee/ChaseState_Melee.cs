@@ -52,6 +52,7 @@ public class ChaseState_Melee : EnemyState
     private const float DamageGrace = 2.5f;
     private const float CalmViewWeight = 0f;          // 평소: 회피 안 함
     private const float ThreatenedViewWeight = 1.2f;  // 최근 피격: 강한 회피
+    private const float SpacingRadius = 2.2f;          // §12 2차: 이 반경 안 아군과 겹침 회피
 
     private Vector3 EngageDestination()
     {
@@ -76,6 +77,9 @@ public class ChaseState_Melee : EnemyState
             wView = wView,
             wDist = 1f,        // 공격 사거리 유지(근접 강제)
             wInertia = 0.1f,
+            allies = enemy.NearbyAllyPositions(SpacingRadius), // §12 2차: 둘러쌀 때 겹침 완화
+            wSpacing = 0.6f,
+            spacingRadius = SpacingRadius,
         };
         return BattleMover.PickEngagePosition(ctx);
     }

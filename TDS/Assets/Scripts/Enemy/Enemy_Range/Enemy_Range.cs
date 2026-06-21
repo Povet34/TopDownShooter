@@ -31,6 +31,12 @@ public class Enemy_Range : Enemy
     public float advanceStoppingDistance;
     public float advanceDuration = 2.5f;
 
+    [Header("Evasion (§12 2차)")]
+    public bool canStrafe = true;
+    public bool canBackstep = true;
+    public bool canFlee = false;
+    [Range(0f, 1f)] public float fleeHealthFraction = 0.25f;
+
     [Header("Cover system")]
     public float minCoverTime;
     public float safeDistance;

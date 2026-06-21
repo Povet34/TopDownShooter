@@ -156,6 +156,8 @@ public class BattleState_Range : EnemyState
         }
     }
 
+    private const float SpacingRadius = 3.5f;
+
     private void UpdateBattleMoverReposition()
     {
         repositionTimer -= Time.deltaTime;
@@ -163,17 +165,28 @@ public class BattleState_Range : EnemyState
         {
             repositionTimer = RepositionInterval;
 
-            float range = Mathf.Max(4f, Vector3.Distance(enemy.transform.position, enemy.player.position));
+            float preferredRange = Mathf.Max(6f, enemy.advanceStoppingDistance);
+            float distToPlayer = Vector3.Distance(enemy.transform.position, enemy.player.position);
+
+            // §12 2차: 회피 행동(능력 게이트) → 목표 거리(strafe 유지 / backstep·flee 멀리)
+            float healthFrac = enemy.health.maxHealth > 0 ? (float)enemy.health.currentHealth / enemy.health.maxHealth : 1f;
+            var abilities = new EvasionAbilities { canStrafe = enemy.canStrafe, canBackstep = enemy.canBackstep, canFlee = enemy.canFlee };
+            EvasionAction action = EvasionPlanner.Decide(true, healthFrac, abilities, distToPlayer, preferredRange, enemy.fleeHealthFraction);
+            float targetDistance = EvasionPlanner.TargetDistance(action, preferredRange);
+
             var ctx = new BattleMoveContext
             {
                 playerPos = enemy.player.position,
                 playerForward = enemy.player.forward,
                 enemyPos = enemy.transform.position,
-                preferredDistance = range,   // 현재 사거리 유지하며 안전한 각으로
+                preferredDistance = targetDistance,
                 viewHalfAngleDeg = 60f,
                 wView = 1f,                  // 정면 회피
-                wDist = 0.6f,                // 사거리 유지
+                wDist = 0.6f,                // 목표 거리 유지
                 wInertia = 0.1f,
+                allies = enemy.NearbyAllyPositions(SpacingRadius), // §12 2차: 몹 간 겹침 회피
+                wSpacing = 0.8f,
+                spacingRadius = SpacingRadius,
             };
             repositionDest = BattleMover.PickEngagePosition(ctx);
             enemy.agent.isStopped = false;

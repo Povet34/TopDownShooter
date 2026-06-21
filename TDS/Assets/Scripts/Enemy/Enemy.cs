@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Collections.Generic;
 using TDS.Core;
 
 public enum EnemyType { Melee, Range, Boss ,Random}
@@ -233,7 +234,21 @@ public class Enemy : MonoBehaviour
         transform.rotation = Quaternion.Euler(currentEulerAngels.x, yRotation, currentEulerAngels.z);
     }
 
-    
+    // §12 2차 소프트 간격용: 주변 같은 편 적 위치(자신 제외, 적 단위 중복 제거).
+    private static readonly Collider[] allyHitBuffer = new Collider[32];
+    public Vector3[] NearbyAllyPositions(float radius)
+    {
+        int count = Physics.OverlapSphereNonAlloc(transform.position, radius, allyHitBuffer);
+        var seen = new HashSet<Enemy>();
+        var list = new List<Vector3>();
+        for (int i = 0; i < count; i++)
+        {
+            var e = allyHitBuffer[i].GetComponentInParent<Enemy>();
+            if (e != null && e != this && seen.Add(e))
+                list.Add(e.transform.position);
+        }
+        return list.ToArray();
+    }
 
     #region Animation events
     public void ActivateManualMovement(bool manualMovement) => this.manualMovement = manualMovement;
