@@ -8448,6 +8448,7 @@ GameObject:
   - component: {fileID: 6593235688812514684}
   - component: {fileID: 2097140790422540589}
   - component: {fileID: 6580820327401140578}
+  - component: {fileID: 3949119007740585669}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -8753,6 +8754,7 @@ MonoBehaviour:
   halfAngle: 70
   range: 18
   eyeHeight: 1.2
+  nearRadius: 2.5
   occluderMask:
     serializedVersion: 2
     m_Bits: 129
@@ -8771,6 +8773,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0008834e73c8b3642bf17e7b5a94e38a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TDS.Game::Player_FieldOfView
+--- !u!114 &3949119007740585669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5986155516868850622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d6bf569bbc2f0d40ad95b772d43fda0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TDS.Game::VisionMask
+  resolution: 64
+  worldCenter: {x: 0, y: 0}
+  worldSize: 80
+  updateInterval: 0.07
+  fogQuadHeight: 0.05
 --- !u!1 &6042130979088259364
 GameObject:
   m_ObjectHideFlags: 0

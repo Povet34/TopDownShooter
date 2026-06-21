@@ -163,8 +163,9 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - 사운드(보류): 총소리·근접 swoosh 등. `AudioManager` 부트 + SFX 연결 시 자동 재생되도록 가드해 둠(melee swoosh 등).
 - 미래: 생존 루프 · 광역 스티칭 · 동굴(씬 전환) · 수송선 탈출/전리품 반출 · 인벤토리/파밍.
 
-### 6.6 플레이어 시야 / 전장의 안개 (FoV) — **구현 중 (방식 확정: 셰이더 마스크, 2026-06-21)**
+### 6.6 플레이어 시야 / 전장의 안개 (FoV) — **구현 완료 (셰이더 마스크, 2026-06-21)**
 > 시야 콘+사거리 안 + 가려지지 않은 곳만 밝게, 나머지는 회색(맵은 보이되 적은 안 보임). 발사 시 밝아짐.
+**구현**: 순수 `ViewCone`(콘+거리, EditMode 9) + `FieldOfView`(콘+사거리+눈높이 레이캐스트 차폐+nearRadius+Reveal, 적 renderer on/off, PlayMode 4) + `Player_FieldOfView`(조준 방향 구동·발사 시 Reveal). 비주얼 = `VisionMask`(맵 전체 가시성을 텍셀에 구워 Texture2D 마스크, 3x3 블러로 부드럽게, 글로벌 `_VisionMask`/`_VisionMaskCenterSize`) + `Shaders/VisionFog`(지면 위 fog 쿼드, `alpha=(1-mask)*MaxDarkness`로 시야 밖 회색, PlayMode 1). occluder=Default|Environment(낮은 cover는 넘어 봄). in-game·마스크 텍셀(전방 1.0/후방 0.0)·명도 검증.
 
 **방식**: **가시성 마스크 RenderTexture** + **지면 셰이더** (`color = lerp(어두운 회색, 원색, mask)`).
 - **마스크 생성**: 플레이어에서 시야 콘 범위로 레이캐스트 → 가려지는 지점은 0, 보이는 지점은 1. 탑다운 직교 카메라가 가시성 폴리곤 메시(플레이어 중심 부채꼴, 정점=레이 끝/장애물 모서리)를 마스크 RT에 흰색으로 렌더 → 차폐가 폴리곤을 잘라 자연 occlusion.

@@ -182,7 +182,7 @@
      - ✅ **오브젝트 종류 분류 (구현 완료)**: 순수 `MapObjectClassifier`(높이·속성→역할 플래그, EditMode 4) + `MapObjectRole`(Blocking/Cover/Hide/Breakable/Movable). `MapObject` 태그(Cover가 측정 높이로 자동 분류, 맵 생성이 장애물·배럴 태깅). **breakable**=`Breakable`(IDamagable, 순수 `BreakableHealth` EditMode 4, 누적 피해→파편+제거), **movable**=`Movable`(Rigidbody+NavMeshObstacle carving, Bullet이 밀기). 맵 생성에 배럴(movable+breakable) 추가. PlayMode 2(파괴/밀림). in-game: 배럴 +4.9 밀림 + 누적 45피해 파괴, 분류 Cover11/Hide3/Breakable6/Movable6.
        - (잔여) 배럴이 다른 오브젝트와 겹쳐 스폰 시 물리로 튕겨 정착(시작 시 살짝 떠올랐다 내려옴) — 배치 겹침 회피는 추후 폴리시.
   2. **적 패트롤 + AI 고도화** (인지 §6.2 + FSM §6.3 + 패트롤 스폰).
-  3. **FoV** (§6.6) — 시야 밖은 어둡게(적 안 보임, 맵은 회색), 발사 시 주변 밝아짐, 추후 인지력 연동. 고도화 기획은 md에 적어두고 추가 검토.
+  3. ✅ **FoV** (§6.6, 셰이더 마스크) — 시야 콘+사거리+눈높이 차폐로 적 숨김(`ViewCone`/`FieldOfView`) + 지면 fog 쿼드(`VisionMask`+`VisionFog` 셰이더)로 시야 밖 회색, 발사 시 확대. EditMode 9 + PlayMode 5, 마스크 텍셀·명도 검증. **추후(별도, §6.6)**: 광원 보유 적(횃불) 벽 뒤 가시, 낮/밤 콘 스케일, 플레이어 소리 인지, 적 인지(§6.2) 대칭 통합, 마스크 성능 최적화(프레임 분산).
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.
