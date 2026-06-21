@@ -143,7 +143,9 @@
   - ControlsManager(`IControlsService`, `Start` null-guard) 배선 ✅ → Systems 프리팹 **5종**, PlayMode **5 서비스 green**.
   - 0.1a 남음: **AudioManager** — `Start`가 bgm 소스에 의존 + 사운드 작업(Phase D, 보류)과 묶임 → 후속. 그 외 전역 매니저는 모두 배선됨.
   - **다음 큰 작업 = 0.2 컴포지션 루트**: ControlsManager/GameManager가 "플레이어/UI 준비 시" 실제 배선되도록(현재는 guard로 스킵). 맵 씬 진입점에서 `EnsureSystems()` 호출 연결.
-- 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
+- ✅ **Phase B — 맵 비주얼 + 엄폐 실작동** (2026-06-21):
+  - **엄폐 배선** (`d87ace3`): `MapGenerator`가 엄폐물에 `Cover` 컴포넌트 + `CoverPoint` 마커 자동 부착. `Cover.cs` 회복력(플레이어 지연 조회). **Cover 변형 prefab의 coverPerk가 Unavalible였던 것**을 `CanTakeAndChangeCover`로 활성화(엄폐 시스템 코드는 있었으나 한 번도 안 켜짐). `Enemy.FaceTarget` 0벡터 가드, CoverPoint 디버그 렌더러 비활성. → 원거리 적이 실제로 엄폐로 달려가 사격(in-game 검증).
+  - **사막 비주얼** (`7731074`): 회색 박스 → 임포트 사막 아트(`MapConfig_Default`). 장애물 풀(차/탱크/바위/돌/선인장), 엄폐=sea_container, 바닥=`Mat_DesertSand`. 프리팹 y=0 배치, 정적 MeshCollider convex=false. navmesh 정상 베이크(적 4/4 onNavMesh), 콘솔 클린.
 - 🔧 **Phase C — 몬스터 스폰 (동작)**: `SpawnSelection`(순수 가중선택, EditMode 5 green) + `MonsterDef`/`SpawnTable` SO + `MonsterSpawner`(플레이어 생성 후 navmesh 링에 시드 스폰). 데이터 `MD_Melee`/`MD_Range`/`ST_Basic`. Map_Generated에서 **적 5마리 스폰 확인**(가중치 반영, navmesh 위, 크래시 0). `PlayerSpawner`가 인스턴스를 "Player"로 명명(적 AI `Find("Player")`), `Player.playerBody`=Bip001 Spine2 배선(Range 조준).
   - **전투 루프 검증 ✅**: `EnemyCombatTests` — 적 히트박스 `IDamagable.TakeDamage`(총알이 호출하는 경로)→`GetHit`→체력감소→**사망**. navmesh 베이크한 테스트 환경. `Enemy.Die`의 off-navmesh `agent.isStopped` 가드. (ST_Basic은 테스트 로드용으로 Resources 이동). **PlayMode 14 green.**
   - **in-game 전투 검증 ✅ (2026-06-21)**: Map_Generated Play → 총알 명중 시 적 사망+랙돌, 총알 임팩트 확인. 빗나감은 적이 접근해 옛 위치로 발사된 것(조준=마우스).
