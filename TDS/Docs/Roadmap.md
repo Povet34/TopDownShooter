@@ -156,6 +156,9 @@
 - ✅ **Phase D1 — 맵 HUD + 승리/패배 + 재시작** (`2d5a28c`, 2026-06-21): `MapHUD`(자족형, 캔버스/TMP 코드 생성) — 체력/탄약/웨이브 표시, 승리(전 웨이브)·패배(체력0) 종료 패널 + R 재시작. 씬 빌드세팅 등록. **재시작 노출 버그 수정**: 플레이어가 영속 `ControlsManager.controls`에 람다 구독만 하고 해제 안 해 리로드마다 죽은 콜백 누적 → `IControlsService.RecreateControls()`(PlayerSpawner가 재스폰 전 호출). 2회 리로드 MissingRef 0, 중복 0.
 - ✅ **테스트 하네스 강화** (2026-06-21): 커버리지 감사 후 갭 충원 — `GameOutcome`(HUD 승패 순수 추출, EditMode 7), `MapGenerator`(결정성/중앙비움/경계, PlayMode 4), `Cover`(엄폐 획득, PlayMode 1), `ControlsManager.RecreateControls`(PlayMode 1). **EditMode 39 / PlayMode 21 green.** TDD 하네스 문서 [Testing.md](Testing.md) + 작업 루프 [Workflow.md](Workflow.md) 추가(작업 전 읽는 가이드).
 - ✅ **전투 연출 심화(손맛)** (`3f72711`, 2026-06-21): 순수 시임 `HitStop`(타임스케일, EditMode 5) + `CameraShake`(trauma 모델, EditMode 6) → 글루 `CombatFeedback`(Systems, `ICombatFeedbackService`) + `CameraFollow` 셰이크 통합. 트리거: `Enemy.GetHit/Die`·`Player_Health.ReduceHealth`. 피격 FX=CFXR. 처치 시 히트스톱+강한 셰이크, 피격 시 약한 셰이크. **EditMode 50 / PlayMode 23 green.** in-game: 처치 시 trauma 0→0.42 + FX 스폰 확인. (sandrock convex 경고도 프리팹에서 근본 수정 `ad7ab32`.)
+- ✅ **조준 크로스헤어 + 월드 레티클** (`7447ea7`, 2026-06-21): `AimReticle` — 시스템 커서 숨김 대체(마우스 스크린 크로스헤어) + 에임 타겟 바닥 링. in-game 확인.
+- 🐛 **GameOver NullRef 수정** (`d4cfe55`): 플레이어 사망 시 `GameManager.GameOver`가 맵에 없는 `UI.instance`/`CameraManager.instance` 호출 → 가드. 사망 시 NullRef 0 + MapHUD DEFEATED 정상.
+- 📋 **다음: 적 AI 피벗 (WAVE→패트롤)** — 합의 우선순위: 크로스헤어 ✅ → 이동 애니 폴리시(제자리걸음) → **BattleMover(시야-회피 유틸리티 이동, Wiki §6.5)** → 인지(§6.2)+FSM(§6.3)+패트롤 스폰. 설계는 Wiki §6 참조.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

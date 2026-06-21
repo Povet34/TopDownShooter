@@ -43,7 +43,8 @@
 - **`MapGenerator`** + **`MapConfig`**(SO): 시드 결정적 그리드. 바닥/경계벽/장애물/엄폐물 + NavMesh 베이크. 프리팹 비면 프리미티브 폴백. 전용 `System.Random(seed)`(전역 Random 비오염).
 - **데이터 기반 콘텐츠** (`Assets/GameData/Map/MapConfig_Default`): 사막 황무지 테마 — 바닥 머티리얼(`Mat_DesertSand`), 장애물 풀(부서진 차/연료탱크/콘크리트관/사막바위/돌/선인장), 엄폐물(`sea_container`). 임포트 프리팹은 바닥(y=0) 배치, 정적 MeshCollider는 `convex=false`(navmesh 카빙 + 충돌).
 - **엄폐 실작동**: 배치된 엄폐물에 `Cover` 컴포넌트 + `CoverPoint` 4지점(오프셋 `coverPointOffset`로 풋프린트 밖). 원거리 적(coverPerk)이 `OverlapSphere`로 찾아 엄폐 → §4 적 AI와 연결. CoverPoint 마커 렌더러는 비활성(디버그용).
-- **씬 `Assets/Scenes/Map_Generated.unity`**: "맵만 있는 씬" — Light/Camera(+CameraFollow)/MapGenerator/EntryPoint/PlayerSpawner/PlayerMapBootstrap/**SpawnDirector**(5웨이브)/**HUD**.
+- **씬 `Assets/Scenes/Map_Generated.unity`**: "맵만 있는 씬" — Light/Camera(+CameraFollow)/MapGenerator/EntryPoint/PlayerSpawner/PlayerMapBootstrap/**SpawnDirector**(5웨이브)/**HUD**/**AimReticle**.
+- **`AimReticle`**(TDS.Game): 조준 시각화. `Player_AimController`가 시스템 커서를 숨겨 조준 위치가 안 보이던 문제 해결 — 마우스 위치 스크린 크로스헤어 + 에임 타겟(`player.aim.Aim()` 월드 히트) 바닥 링. 캔버스/도형 코드 생성.
 - **`MapHUD`**(TDS.Game): 자족형 미니 HUD. 캔버스/TMP를 코드로 생성(UI 프리팹·기존 UI 싱글톤 의존 X). 체력·현재무기 탄약(탄창/예비)·웨이브 표시. **승리**(전 웨이브 클리어)/**패배**(체력 0) → 종료 패널 + **R 재시작**(Input System). 재시작은 씬 리로드(빌드세팅 등록됨); `PlayerSpawner`가 재스폰 직전 `IControlsService.RecreateControls()`로 옛 입력 구독 누수 차단.
 - 같은 시드 → 같은 맵. `MapGenerator.onGenerated` 이벤트로 후속(스포너/카메라) 연동.
 
@@ -105,7 +106,13 @@
 
 ## 6. 추후 구현 (설계 확정, 미구현) — ⏳
 
-> 원본 설계: `SpawntableGenerator/Docs/SpawnSystem-Design.md`. **맵 수정 후 빠르게 진행 예정.**
+> 원본 설계: `SpawntableGenerator/Docs/SpawnSystem-Design.md`.
+>
+> **방향 전환(확정): WAVE → 패트롤.** WAVE(`SpawnDirector`)는 임시 골격. 목표는 **스폰테이블로 묶인 패트롤
+> 그룹(3~15)이 순찰하다 플레이어를 발각하면 추격**(§6.2 인지 + §6.3 FSM). 현재 적엔 idle↔move 순찰 +
+> 거리기반 감지→chase 골격만 있음(시야·그룹조율·유틸리티 이동 전무 — 코드 감사로 확인).
+>
+> **합의 우선순위:** ① 크로스헤어 ✅ → ② 이동 애니 폴리시(제자리걸음) → ③ **§6.5 BattleMover**(가장 원하는 "지능", 교전 이동 레이어라 자족적) → ④ §6.2 인지 + §6.3 FSM + 패트롤 스폰(웨이브 대체).
 
 ### 6.1 긴장도(intensity) 기반 스폰 페이싱 — `SpawnDirector`
 ```
@@ -129,6 +136,15 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - 멤버는 각자 콘으로 감지(분산 센서). 한 놈이라도 발각 → 공용 칠판 `knownPlayerPosition`에 기록 → **전원 교전**.
 - 전원 시야 상실 + T초 경과 → 위치 낡음 → 경계(마지막 위치 수색) → 순찰 복귀.
 - 구현 시 순수 `PackFsm`(전이 규칙, 테스트) + MonsterPack 통합.
+
+### 6.5 교전 이동 — 시야-회피 유틸리티 스코어링 `BattleMover` (사용자 §12)
+> **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨.
+> 고정 슬롯 포위(균일) 아님 — 창발적. 코드에 **현재 전무**(직진 추격 + reactive dodge뿐).
+- **플레이어 "시야" 인식**: 현재 forward 콘 + 최근 공격 방향(감쇠) → "압박(pressure)" 점수.
+- **회피 행동(능력 게이트, 선호순)**: 시야콘 이탈 → strafe(좌우, 바라보는 방향과 이동 분리) → backstep → 저체력시 도주(도주 플래그 적만).
+- **유틸리티 스코어링**: 후보 목적지에 점수(시야콘 회피 ← 핵심 / 선호 교전거리 / 다른 몹과 소프트 간격(강제 아님) / 행동비용 / 관성·이력)를 매겨 최선 선택. 즉각 반응 X(점수+확률+이력).
+- **거리 레짐**: 멀면 스코어링 끄고 직진, 근접권에서만 스코어링, 원거리몹은 선호 사거리 유지.
+- 구현: 순수 `BattleMover`(후보 점수화 → 목적지, EditMode) + 글루(Enemy battle 상태가 매 틱 목적지 받음). 가중치는 per-monster 설정 + 튜닝.
 
 ### 6.4 기타 추후
 - 군집(Pack) 가상 앵커 + boids, navmesh "군집당 1경로"(성능), 화면 밖 스폰(절두체 후보점).
