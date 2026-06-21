@@ -21,7 +21,7 @@ run_tests(mode="EditMode", assembly_names=["TDS.Tests.EditMode"], include_failed
 run_tests(mode="PlayMode", assembly_names=["TDS.Tests.PlayMode"], init_timeout=120000, include_failed_tests=true)
 get_test_job(job_id, wait_timeout=60)   # 폴링
 ```
-또는 에디터 Test Runner 창. **현재 baseline: EditMode 50 / PlayMode 23 green (총 73).**
+또는 에디터 Test Runner 창. **현재 baseline: EditMode 55 / PlayMode 24 green (총 79).**
 
 > 새 테스트 파일을 추가하면 **`refresh_unity` 후 `editor/state`로 컴파일 완료 확인** → 그래야 Test Runner가 발견한다. (스크립트만 refresh로는 새 파일 import가 안 될 때가 있어 풀 refresh 권장.)
 
@@ -43,7 +43,7 @@ get_test_job(job_id, wait_timeout=60)   # 폴링
 
 ## 5. 현재 커버리지 맵
 
-✅ 커버됨: ServiceRegistry·GameServices·SystemsEnsurer·BootSequence·GameBootstrap·SceneEntryPoint·AimRotation·FollowPosition·PlayerSpawnPoint·SpawnSelection·WaveSequencer·GameOutcome(승패)·**HitStop·CameraShake(전투 연출)**·Player(스폰/컨트롤/이동/무기/사격/피해)·Enemy(피해→사망)·SpawnDirector(웨이브 진행)·MapGenerator(결정성/중앙비움/경계)·Cover(엄폐 획득)·ControlsManager.RecreateControls·**CombatFeedback(서비스 등록·처치 히트스톱)**.
+✅ 커버됨: ServiceRegistry·GameServices·SystemsEnsurer·BootSequence·GameBootstrap·SceneEntryPoint·AimRotation·FollowPosition·PlayerSpawnPoint·SpawnSelection·WaveSequencer·GameOutcome(승패)·HitStop·CameraShake(전투 연출)·**LocomotionAnim(이동 재생속도)**·Player(스폰/컨트롤/이동/무기/사격/피해)·Enemy(피해→사망)·SpawnDirector(웨이브 진행)·MapGenerator(결정성/중앙비움/경계)·Cover(엄폐 획득)·ControlsManager.RecreateControls·CombatFeedback(서비스 등록·처치 히트스톱)·**Locomotion(anim 속도 추종)**.
 
 ## 6. 갭 백로그 (우선순위순) — 채우면 체크
 
