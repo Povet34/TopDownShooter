@@ -8446,6 +8446,8 @@ GameObject:
   - component: {fileID: 7438225203417924373}
   - component: {fileID: 3274318407951806017}
   - component: {fileID: 6593235688812514684}
+  - component: {fileID: 2097140790422540589}
+  - component: {fileID: 6580820327401140578}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -8736,6 +8738,39 @@ MonoBehaviour:
   rightFoot: {fileID: 5070382726857713387}
   checkRadius: 0.061
   rayDist: 0
+--- !u!114 &2097140790422540589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5986155516868850622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bdbedf970b417d4fbd48a016ee696c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TDS.Game::FieldOfView
+  halfAngle: 70
+  range: 18
+  eyeHeight: 1.2
+  occluderMask:
+    serializedVersion: 2
+    m_Bits: 129
+  revealDuration: 0.4
+  revealRangeBoost: 6
+  revealAngleBoost: 25
+--- !u!114 &6580820327401140578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5986155516868850622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0008834e73c8b3642bf17e7b5a94e38a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TDS.Game::Player_FieldOfView
 --- !u!1 &6042130979088259364
 GameObject:
   m_ObjectHideFlags: 0

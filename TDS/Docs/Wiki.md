@@ -163,15 +163,18 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - 사운드(보류): 총소리·근접 swoosh 등. `AudioManager` 부트 + SFX 연결 시 자동 재생되도록 가드해 둠(melee swoosh 등).
 - 미래: 생존 루프 · 광역 스티칭 · 동굴(씬 전환) · 수송선 탈출/전리품 반출 · 인벤토리/파밍.
 
-### 6.6 플레이어 시야 / 전장의 안개 (FoV) — 추후 (적 §6.2 인지의 대칭, 플레이어가 "보는" 쪽)
-> 플레이어 시야 콘 안만 보이고, 건물/물체에 가려진 뒤편은 안 보임(occlusion). 스텔스/탐색 핵심.
-- **FoV 콘**: 시야각 + 사거리 안에 든 적만 보임. 밖은 미표시(전장의 안개).
-- **차폐(occlusion)**: 건물/장애물에 가리면 뒤편 안 보임 → 맵 형상 기반 레이캐스트/시야 폴리곤(섀도 메시). 맵 구성을 알아야 함.
-- **낮/밤 연동**: 낮 = 넓고 긺, 밤 = 좁고 짧음. (낮/밤 시스템 선행 필요.)
-- **광원 예외**: 적이 횃불/조명을 들면 — 일정 거리 + 조명 보유 시 **벽 뒤라도 보임**(빛은 차폐 무시).
-- **소리 인지(더 추후)**: 플레이어 소리 인지 범위.
-- 순수 시임 TDD 가능: 콘 판정(각도+거리), 차폐 레이, 광원 가시성 규칙.
-- **우선순위 결정**: 적 AI 피벗(§6.2 인지 + §6.3 FSM + 패트롤 스폰) **이후**, 그리고 **낮/밤 시스템과 함께**(콘 스케일이 거기 의존). 기본 콘+차폐만은 그 전 독립 마일스톤으로도 가능하나, 게임 전체 체감을 바꾸므로 코어 AI 루프가 선 것 다음이 안전.
+### 6.6 플레이어 시야 / 전장의 안개 (FoV) — **구현 중 (방식 확정: 셰이더 마스크, 2026-06-21)**
+> 시야 콘+사거리 안 + 가려지지 않은 곳만 밝게, 나머지는 회색(맵은 보이되 적은 안 보임). 발사 시 밝아짐.
+
+**방식**: **가시성 마스크 RenderTexture** + **지면 셰이더** (`color = lerp(어두운 회색, 원색, mask)`).
+- **마스크 생성**: 플레이어에서 시야 콘 범위로 레이캐스트 → 가려지는 지점은 0, 보이는 지점은 1. 탑다운 직교 카메라가 가시성 폴리곤 메시(플레이어 중심 부채꼴, 정점=레이 끝/장애물 모서리)를 마스크 RT에 흰색으로 렌더 → 차폐가 폴리곤을 잘라 자연 occlusion.
+- **지면 셰이더**: 월드 XZ → 마스크 UV(마스크 카메라 직교 영역)로 샘플 → 밝기 보간. 부드러운 falloff로 2D 느낌 억제.
+- **적 숨김(게임플레이)**: 적 위치를 순수 `ViewCone.InView`(각도+거리) + 레이캐스트 차폐로 판정 → 안 보이면 renderer off. (마스크와 별개로 정밀 판정.)
+- **발사 시 밝아짐**: 발사 직후 콘 각/사거리 일시 확대(또는 주변 원형 플래시) → 마스크에 반영.
+
+**추후(별도)**: 광원 보유 적(횃불) = 벽 뒤라도 마스크에 가산 스폿 → 보임 · 낮/밤으로 콘 각/사거리 스케일 · 플레이어 소리 인지 범위 · 적 인지(§6.2)와 대칭 통합.
+
+**정밀 검증**: 순수 `ViewCone` 단위테스트(각도/거리 경계) + PlayMode(콘 안=보임, 차폐 뒤=숨김, 사거리 밖=숨김) + **마스크 RT 텍셀 샘플링**(아는 좌표 가시/비가시 값) + 화면 명도 샘플링(밝음/어둠 수치).
 
 ### 6.7 카메라
 - **마우스 휠 줌 ✅**: `CameraZoom`(순수) + `CameraFollow.AddScroll` + `CameraZoomInput`(글루). 휠 위=줌인, 아래=줌아웃, clamp.
@@ -181,7 +184,7 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·AimDirection(조준 0벡터 가드)·RangedEngageDecision(엄폐/재배치 결정)·StrafeBlend(facing 기준 2D 블렌드)·**CoverEvaluation(높이→적합도)·CoverApproach(arrival/비비기 방지)·EvasionPlanner(strafe/backstep/flee)·BattleMover 소프트 간격·StuckTracker(끼임 감지)·**BreakableHealth·MapObjectClassifier**. **135 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·BattleMover(시야-회피/그레이스 회피)·CameraZoom·AimDirection(조준 0벡터 가드)·RangedEngageDecision(엄폐/재배치 결정)·StrafeBlend(facing 기준 2D 블렌드)·**CoverEvaluation(높이→적합도)·CoverApproach(arrival/비비기 방지)·EvasionPlanner(strafe/backstep/flee)·BattleMover 소프트 간격·StuckTracker(끼임 감지)·BreakableHealth·MapObjectClassifier·**ViewCone(시야 콘)**. **144 green.**
 - **PlayMode** (통합): 부트, Player(스폰·컨트롤·이동·무기·사격·피해), Enemy(피해→사망·**사망 후 래그돌 고정**), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도), BattleMove(**근접: 평소 근접/피격시 회피, 원거리: 피격시 재배치**), **CoverAudit(각 cover의 range 적합도 분류)**. **30 green.**
 - **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.
