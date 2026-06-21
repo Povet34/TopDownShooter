@@ -8433,16 +8433,16 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3934909495193360276}
+  - component: {fileID: 8449886310543895008}
+  - component: {fileID: 6351911576159481806}
   - component: {fileID: 4022495599483676840}
   - component: {fileID: 8025575530366573411}
   - component: {fileID: 5535285681741723290}
   - component: {fileID: 9015491585020932887}
   - component: {fileID: 6804358807869815993}
-  - component: {fileID: 8449886310543895008}
   - component: {fileID: 5564753229269815358}
   - component: {fileID: 8102539668259311521}
   - component: {fileID: 3741406414769477420}
-  - component: {fileID: 6351911576159481806}
   - component: {fileID: 7438225203417924373}
   - component: {fileID: 3274318407951806017}
   - component: {fileID: 6593235688812514684}
@@ -8473,6 +8473,39 @@ Transform:
   - {fileID: 1480286430448432614}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &8449886310543895008
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5986155516868850622}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.2
+  m_Radius: 0.2
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.66, z: 0}
+--- !u!81 &6351911576159481806
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5986155516868850622}
+  m_Enabled: 1
 --- !u!114 &4022495599483676840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8600,31 +8633,6 @@ MonoBehaviour:
     magazineCapacity: 12
     totalReserveAmmo: 18
   weaponPickupPrefab: {fileID: 8396333148451498682, guid: 69c7326fdde85914a85f03d1501aca1c, type: 3}
---- !u!143 &8449886310543895008
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5986155516868850622}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 1.2
-  m_Radius: 0.2
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.66, z: 0}
 --- !u!114 &5564753229269815358
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8678,14 +8686,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ragdollParent: {fileID: 3934909495193360276}
---- !u!81 &6351911576159481806
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5986155516868850622}
-  m_Enabled: 1
 --- !u!114 &7438225203417924373
 MonoBehaviour:
   m_ObjectHideFlags: 0
