@@ -193,6 +193,16 @@
        1. **소음원 = 총알 임팩트 위치(발사자 아님)**: 현재 발사 시 `NoisePing`을 플레이어 위치에서 발신 → **총알이 충돌/피격한 지점**에서 발신으로 변경(`Bullet` 임팩트/`OnCollisionEnter`에서 Emit). 순찰 중 적은 "총소리(발사자 위치)"가 아니라 **"총알 맞은 곳"으로 조사**하러 가야 함(거기서도 소리가 나니까 + 플레이어 위치를 바로 알면 안 됨 — 스텔스 일관성).
        2. **분대 공유 경계(Alert) — 같이 어그로**: 현재 `Squad`는 교전(시야/피격)만 공유, 경계(소음 조사)는 각자. → **소음을 들으면 분대 전원이 함께 조사하러 이동**(한 놈만 가는 게 아니라 분대 어그로). 분대 앵커를 소음 지점으로 redirect → 멤버가 대형 유지하며 같이 감.
        3. **상태별 공유 정책 정리**: 순찰=함께(✅완료), **경계/조사=함께(추가 필요)**, 교전 진입=함께(✅완료). **단 교전(Engage)에 들어가면 각자 알아서 싸움**(기존 개별 전투 AI — chase/cover/strafe/엄폐 유지). 즉 무리 인지는 공유, 전투 실행은 개별.
+     - 📋 **분대 순찰 생애주기 + 다중 분대 (기획 2026-06-21, 미착수)** — 맵에 여러 순찰대가 끊임없이 돌게:
+       - **(버그) 순찰이 안 움직임**: 분대 함께 순찰이 멤버를 가만히 세워둠 → 실제로 앵커-대형 따라 **걷게** 고쳐야(MoveState 구동/idle 타이밍 확인).
+       - **다중 분대 동시 스폰**: 분대 1개가 아니라 **여러 개**가 맵에 동시 존재. 동시 분대 수 상한 `maxSquads` 설정 가능.
+       - **스폰 = 맵 가장자리 무작위(맵 밖 금지)**: 맵 둘레에서 무작위 한 점(margin만큼 안쪽). 순수 시임 `SquadSpawning.EdgePosition(rand, center, size, margin)` → EditMode: 결과가 항상 bounds 안 + 가장자리.
+       - **초기 순찰 = (스폰 시점) 플레이어 방향으로 횡단**: `SquadSpawning.InitialPatrolDirection(spawn, playerPos, center)` → 플레이어 쪽 수평 방향. 그 방향으로 맵을 가로지르며 순찰. 도중 소리 들으면 경계, 플레이어 보면 교전.
+       - **(Req1) 교전/이탈 공유**: 교전 전까진 분대가 함께 이동. **하나라도 교전이면 분대 전원이 플레이어 위치 공유**. **분대 전원이 플레이어에서 leash 거리보다 멀어지면** → 경계로 내려가 **마지막 목격/마지막 소리 위치 수색** → 없으면 순찰 복귀. 순수 시임 `SquadLeash.AllBeyond(members, player, leash)` → EditMode.
+       - **(Req2) 횡단 완료 → 디스폰 + 리스폰**: 순찰로 **스폰한 반대쪽 맵 끝 도달**(플레이어 못 찾았거나 다시 순찰로 복귀)하면 그 분대 디스폰 + 새 분대 생성. 순수 시임 `SquadRoam.ReachedFarSide(spawn, current, center, margin)` → EditMode.
+       - **(Req3) 최대 순찰대 수**: 디렉터가 `maxSquads` 유지 — `SquadSpawning.ShouldSpawn(active, max)`. 분대가 죽거나 디스폰되면 보충 스폰.
+       - **테스트 계획**: 순수 시임 EditMode(EdgePosition·InitialPatrolDirection·AllBeyond·ReachedFarSide·ShouldSpawn) + PlayMode 통합(다중 분대 스폰·동시 이동·공유 경계·횡단 디스폰/리스폰·maxSquads 상한). **MCP 세션에서 작성→컴파일→실행→난전 검증**(적 AI라 그린 테스트만으론 부족 — [[verify-with-chaotic-playtest]]).
+- 📋 **🆕 MapGenerator 시작 전 수치 설정 (기획 2026-06-21)** — 맵 넓이·복잡도를 시작 전에 숫자로. 이미 `MapConfig`에 있음: 넓이=`gridWidth`/`gridHeight`(×cellSize), 복잡도=`obstacleDensity`·`coverCount`·`barrelCount`. → Inspector 노출 확인 + 필요 시 "복잡도" 단일 슬라이더로 묶어 한 번에 조절.
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.
