@@ -467,6 +467,13 @@ public class Enemy : MonoBehaviour
     #region Patrol logic
     public Vector3 GetPatrolDestination()
     {
+        // 분대 소속이면 분대 공유 앵커 주변 대형 위치로 — 흩어지지 않고 함께 로밍(§6.2 그룹).
+        if (Squad != null && Squad.TryGetPatrolPoint(this, out var squadPoint))
+            return squadPoint;
+
+        if (patrolPointsPosition == null || patrolPointsPosition.Length == 0)
+            return transform.position; // 순찰점 없는 스폰 적은 제자리(크래시 방지)
+
         Vector3 destination = patrolPointsPosition[currentPatrolIndex];
 
         currentPatrolIndex++;
