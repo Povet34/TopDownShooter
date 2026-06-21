@@ -159,7 +159,8 @@
 - ✅ **조준 크로스헤어 + 월드 레티클** (`7447ea7`, 2026-06-21): `AimReticle` — 시스템 커서 숨김 대체(마우스 스크린 크로스헤어) + 에임 타겟 바닥 링. in-game 확인.
 - 🐛 **GameOver NullRef 수정** (`d4cfe55`): 플레이어 사망 시 `GameManager.GameOver`가 맵에 없는 `UI.instance`/`CameraManager.instance` 호출 → 가드. 사망 시 NullRef 0 + MapHUD DEFEATED 정상.
 - ✅ **이동 애니 폴리시(제자리걸음 제거)** (`d4361c4`): 순수 `LocomotionAnim.PlaybackSpeed`(평면속도/기준속도→재생속도, EditMode 5) + `EnemyState.IsLocomotion` + `Enemy.Update` 구동. 이동 클립 재생속도가 실제 agent 속도 추종(정지 0.15, 풀런 ~1, 공격 1.0). PlayMode 1. in-game 확인.
-- 📋 **다음: 적 AI 피벗 (WAVE→패트롤)** — 합의 우선순위: 크로스헤어 ✅ → 이동 애니 폴리시 ✅ → **③ BattleMover(시야-회피 유틸리티 이동, Wiki §6.5)** ← 다음 → 인지(§6.2)+FSM(§6.3)+패트롤 스폰. 플레이어 FoV(§6.6)는 그 이후+낮밤. 설계는 Wiki §6 참조.
+- ✅ **BattleMover 1차 — 시야-회피 교전 이동** (`6d19f06`): 순수 `BattleMover`(FrontExposure·Score·PickEngagePosition, EditMode 9) + `ChaseState_Melee` 글루. in-game: melee가 플레이어 정면 회피 → 창발 포위(9/11 플랭크/뒤). PlayMode 1.
+- 📋 **다음: 적 AI 피벗 (WAVE→패트롤)** — 합의 우선순위: 크로스헤어 ✅ → 이동 애니 ✅ → BattleMover 1차 ✅ → **BattleMover 2차(strafe/backstep/flee + 소프트 간격) 또는 인지(§6.2)+FSM(§6.3)+패트롤 스폰**. 플레이어 FoV(§6.6)는 그 이후+낮밤. 설계는 Wiki §6.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

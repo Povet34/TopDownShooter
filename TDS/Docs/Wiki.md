@@ -138,8 +138,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - 구현 시 순수 `PackFsm`(전이 규칙, 테스트) + MonsterPack 통합.
 
 ### 6.5 교전 이동 — 시야-회피 유틸리티 스코어링 `BattleMover` (사용자 §12)
-> **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨.
-> 고정 슬롯 포위(균일) 아님 — 창발적. 코드에 **현재 전무**(직진 추격 + reactive dodge뿐).
+> **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨. 고정 슬롯 포위(균일) 아님 — 창발적.
+> **1차 완료** (`6d19f06`): 순수 `BattleMover`(FrontExposure·Score·PickEngagePosition, EditMode 9) + `ChaseState_Melee` 글루(근접권에선 시야 회피 플랭크 목적지, 멀면 직진, 0.25s throttle=관성). in-game 검증: melee 11마리가 정면 회피해 9/11 플랭크/뒤로 포위. **2차 남음:** strafe/backstep/flee(능력 게이트) + 몹 간 소프트 간격(겹침 회피) + 거리별 후보 + 원거리 적용.
 - **플레이어 "시야" 인식**: 현재 forward 콘 + 최근 공격 방향(감쇠) → "압박(pressure)" 점수.
 - **회피 행동(능력 게이트, 선호순)**: 시야콘 이탈 → strafe(좌우, 바라보는 방향과 이동 분리) → backstep → 저체력시 도주(도주 플래그 적만).
 - **유틸리티 스코어링**: 후보 목적지에 점수(시야콘 회피 ← 핵심 / 선호 교전거리 / 다른 몹과 소프트 간격(강제 아님) / 행동비용 / 관성·이력)를 매겨 최선 선택. 즉각 반응 X(점수+확률+이력).
@@ -167,8 +167,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·**LocomotionAnim**. **55 green.**
-- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(서비스 등록·처치 히트스톱), **Locomotion(이동 anim 속도 추종)**. **24 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·GameOutcome·HitStop·CameraShake·LocomotionAnim·**BattleMover(시야-회피 이동)**. **64 green.**
+- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망), SpawnDirector(웨이브), MapGenerator(결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls, CombatFeedback(처치 히트스톱), Locomotion(anim 속도 추종), **BattleMove(추격 melee 정면 회피)**. **25 green.**
 - **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.
 - 한계: navmesh 의존 적 AI 테스트는 테스트 씬에 navmesh 베이크 필요(`EnemyCombatTests` 참고).
