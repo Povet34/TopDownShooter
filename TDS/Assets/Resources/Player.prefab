@@ -8616,6 +8616,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 709851603379088992, guid: 5d6f9576cecc23b428a0b635b90998be, type: 3}
   bulletSpeed: 15
   fireEffectLight: {fileID: 1147583651394888376}
+  gunshotNoiseRadius: 18
   weaponHolder: {fileID: 744513161581605566}
   tacticalLight: {fileID: 8410122562628821243}
   maxSlots: 2
