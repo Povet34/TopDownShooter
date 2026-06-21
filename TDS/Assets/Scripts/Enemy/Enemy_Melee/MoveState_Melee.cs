@@ -20,6 +20,9 @@ public class MoveState_Melee : EnemyState
     {
         base.Enter();
 
+        if (!enemy.AgentReady)
+            return; // navmesh 밖이면 이동 명령 스킵(StuckRecovery가 복구 후 재진입)
+
         enemy.agent.isStopped = false; // 교전 상태에서 멈춰있던 agent를 순찰 진입 시 다시 풀어줌
         enemy.agent.speed = enemy.walkSpeed;
 
@@ -38,6 +41,9 @@ public class MoveState_Melee : EnemyState
     public override void Update()
     {
         base.Update();
+
+        if (!enemy.AgentReady)
+            return; // navmesh 밖이면 회전/도착판정 스킵(StuckRecovery가 복구)
 
         enemy.FaceTarget(GetNextPathPoint());
 

@@ -342,12 +342,18 @@ public class Enemy_Range : Enemy
 
     public void UpdateAimPosition()
     {
+        if (aim == null || playersBody == null)
+            return; // 사망 시 aim이 파괴됐을 수 있음(MissingReference 방지)
+
         float aimSpeed = IsAimOnPlayer() ? fastAim : slowAim;
         aim.position = Vector3.MoveTowards(aim.position, playersBody.position, aimSpeed * Time.deltaTime);
     }
 
     public bool IsAimOnPlayer()
     {
+        if (aim == null || player == null)
+            return false; // 파괴된 aim 참조 방지
+
         float distnaceAimToPlayer = Vector3.Distance(aim.position, player.position);
 
         return distnaceAimToPlayer < 2;

@@ -26,9 +26,12 @@ public class RunToCoverState_Range : EnemyState
 
         enemy.visuals.EnableIK(true,false);
 
-        enemy.agent.isStopped = false;
-        enemy.agent.speed = enemy.runSpeed;
-        enemy.agent.SetDestination(destination);
+        if (enemy.AgentReady)
+        {
+            enemy.agent.isStopped = false;
+            enemy.agent.speed = enemy.runSpeed;
+            enemy.agent.SetDestination(destination);
+        }
 
         lastProgressTime = Time.time;
         bestRemaining = float.MaxValue;
@@ -44,6 +47,9 @@ public class RunToCoverState_Range : EnemyState
     public override void Update()
     {
         base.Update();
+
+        if (!enemy.AgentReady)
+            return; // navmesh 밖이면 회전/진전판정 스킵(StuckRecovery가 복구)
 
         enemy.FaceTarget(GetNextPathPoint());
 

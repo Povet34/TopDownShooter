@@ -107,8 +107,15 @@ public class Enemy : MonoBehaviour
     private Vector3 lastKnownPlayerPos;
     private const float NoiseMaxAge = 0.3f;
 
+    /// <summary>NavMesh 명령을 내려도 안전한가(살아있고 활성이고 navmesh 위). 죽었거나 끼어 빠진 적은 false.</summary>
+    public bool AgentReady => agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh;
+
     protected virtual void UpdateAggro()
     {
+        // 죽었거나 navmesh 밖이면 인지/교전 전환 금지(StuckRecovery가 복구) — 비활성 agent 명령 에러 방지.
+        if (!AgentReady)
+            return;
+
         bool sees = SeesPlayer();
         if (sees)
             lastKnownPlayerPos = player.position;
@@ -367,8 +374,11 @@ public class Enemy : MonoBehaviour
     public void FaceTarget(Vector3 target,float turnSpeed = 0)
     {
         Vector3 directionToTarget = target - transform.position;
-        if (directionToTarget.sqrMagnitude < 0.0001f)
-            return; // 대상이 현재 위치와 거의 같음 → 회전 불필요(LookRotation zero-vector 경고 방지)
+        directionToTarget.y = 0f; // 수평 회전만 — 수직 성분이 LookRotation을 깨뜨리지 않게
+
+        // off-mesh 경로점 등으로 NaN/Inf가 들어오거나 거의 0이면 회전 스킵(LookRotation/Euler assert 방지).
+        if (!IsFiniteVector(directionToTarget) || directionToTarget.sqrMagnitude < 0.0001f)
+            return;
 
         Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
 
@@ -382,6 +392,10 @@ public class Enemy : MonoBehaviour
 
         transform.rotation = Quaternion.Euler(currentEulerAngels.x, yRotation, currentEulerAngels.z);
     }
+
+    private static bool IsFiniteVector(Vector3 v)
+        => !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z)
+          || float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
 
     // §12 2차 소프트 간격용: 주변 같은 편 적 위치(자신 제외, 적 단위 중복 제거).
     private static readonly Collider[] allyHitBuffer = new Collider[32];

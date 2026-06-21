@@ -97,6 +97,10 @@ namespace TDS.Tests.PlayMode
             Assert.IsNotNull(melee);
             float startDist = Vector3.Distance(melee.transform.position, player.transform.position);
 
+            // 인지 모델(시야 기반): 적이 플레이어를 보게 하고 먼저 교전 진입 → 추격 중 perception이
+            // 재교전(recovery)으로 yank하거나 시야상실로 이탈하지 않게 한다(결정적 근접).
+            melee.transform.rotation = Quaternion.LookRotation(player.transform.position - melee.transform.position);
+            melee.EnterBattleMode();
             melee.stateMachine.ChangeState(melee.chaseState);
 
             for (int i = 0; i < 120; i++) // 경계 플레이크 방지 — 근접 완료에 충분한 시간

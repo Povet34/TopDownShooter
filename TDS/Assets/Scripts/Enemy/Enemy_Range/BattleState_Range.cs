@@ -29,8 +29,11 @@ public class BattleState_Range : EnemyState
         base.Enter();
         SetupValuesForFirstAttack();
 
-        enemy.agent.isStopped = true;
-        enemy.agent.velocity = Vector3.zero;
+        if (enemy.AgentReady)
+        {
+            enemy.agent.isStopped = true;
+            enemy.agent.velocity = Vector3.zero;
+        }
         enemy.agent.updateRotation = false; // 전투 중엔 이동방향이 아니라 플레이어를 바라봄(사선/strafe 이동을 위해)
 
         enemy.visuals.EnableIK(true, true);
@@ -189,8 +192,11 @@ public class BattleState_Range : EnemyState
                 spacingRadius = SpacingRadius,
             };
             repositionDest = BattleMover.PickEngagePosition(ctx);
-            enemy.agent.isStopped = false;
-            enemy.agent.SetDestination(repositionDest);
+            if (enemy.AgentReady)
+            {
+                enemy.agent.isStopped = false;
+                enemy.agent.SetDestination(repositionDest);
+            }
             repositioning = true;
         }
 
@@ -200,8 +206,11 @@ public class BattleState_Range : EnemyState
 
     private void StopRepositioning()
     {
-        enemy.agent.isStopped = true;
-        enemy.agent.velocity = Vector3.zero;
+        if (enemy.AgentReady) // 죽거나 navmesh 밖이면(Exit/Die 경로) 명령 스킵
+        {
+            enemy.agent.isStopped = true;
+            enemy.agent.velocity = Vector3.zero;
+        }
         repositioning = false;
     }
 
