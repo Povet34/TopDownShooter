@@ -209,6 +209,10 @@ public class Enemy_Range : Enemy
 
         foreach (Cover cover in CollectNearByCovers())
         {
+            // 교전 중엔 낮은(사격 가능) cover만 — 높은 cover는 그 위로 못 쏘므로 은폐 전용(여기선 제외).
+            if (cover.IsShootable == false)
+                continue;
+
             collectedCoverPoints.AddRange(cover.GetValidCoverPoints(transform));
         }
 

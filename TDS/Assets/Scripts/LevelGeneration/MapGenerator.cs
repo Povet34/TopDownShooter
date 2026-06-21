@@ -203,21 +203,41 @@ public class MapGenerator : MonoBehaviour
             Vector3 pos = CellCenter(x, z, cell, origin);
             if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue;
 
-            bool usingPrefab = config != null && config.coverPrefab != null;
+            // 낮은 단상(사격 가능) vs 높은 cover(은폐 전용)를 섞어 배치.
+            float lowRatio = config != null ? config.lowCoverRatio : 0.6f;
+            bool makeLow = rng.NextDouble() < lowRatio;
+
             GameObject go;
-            if (usingPrefab)
+            float pivotY;
+            if (makeLow)
             {
-                go = Instantiate(config.coverPrefab, mapRoot);
+                GameObject lowPrefab = config != null ? config.lowCoverPrefab : null;
+                if (lowPrefab != null) { go = Instantiate(lowPrefab, mapRoot); pivotY = 0f; }
+                else
+                {
+                    float h = Mathf.Min(0.8f, config != null ? config.lowCoverHeight : 0.7f);
+                    go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    go.transform.SetParent(mapRoot, false);
+                    go.transform.localScale = new Vector3(1.6f, h, 1.6f); // 작은 풋프린트(엄폐점 ±1.5가 밖) + 낮은 높이
+                    pivotY = h * 0.5f;
+                }
             }
             else
             {
-                go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                go.transform.SetParent(mapRoot, false);
-                go.transform.localScale = new Vector3(2f, 1.2f, 2f); // 엄폐 지점(±1.5)이 박스 밖에 놓이도록 정사각 풋프린트
+                bool usingPrefab = config != null && config.coverPrefab != null;
+                if (usingPrefab) { go = Instantiate(config.coverPrefab, mapRoot); pivotY = 0f; }
+                else
+                {
+                    go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    go.transform.SetParent(mapRoot, false);
+                    go.transform.localScale = new Vector3(2f, 2f, 2f);
+                    pivotY = 1f;
+                }
             }
+
             go.name = "Cover";
             Vector3 p = pos;
-            p.y = usingPrefab ? 0f : go.transform.localScale.y * 0.5f; // 프리팹은 베이스 피벗 → 바닥
+            p.y = pivotY;
             go.transform.localPosition = p;
             go.transform.localRotation = Quaternion.Euler(0f, rng.Next(4) * 90f, 0f);
 

@@ -7,6 +7,9 @@ public class RunToCoverState_Range : EnemyState
     private Enemy_Range enemy;
     private Vector3 destination;
 
+    private float lastProgressTime;
+    private float bestRemaining;
+
     public float lastTimeTookCover { get; private set; }
 
     public RunToCoverState_Range(Enemy enemyBase, EnemyStateMachine stateMachine, string animBoolName) : base(enemyBase, stateMachine, animBoolName)
@@ -26,6 +29,9 @@ public class RunToCoverState_Range : EnemyState
         enemy.agent.isStopped = false;
         enemy.agent.speed = enemy.runSpeed;
         enemy.agent.SetDestination(destination);
+
+        lastProgressTime = Time.time;
+        bestRemaining = float.MaxValue;
     }
 
     public override void Exit()
@@ -41,16 +47,22 @@ public class RunToCoverState_Range : EnemyState
 
         enemy.FaceTarget(GetNextPathPoint());
 
-        bool arrived = Vector3.Distance(enemy.transform.position, destination) < .8f;
+        // 진전 추적: 남은 거리가 의미있게 줄면 진전 시각 갱신, 안 줄면(못 닿아 비빔) 누적된다.
+        if (!enemy.agent.pathPending)
+        {
+            float remaining = enemy.agent.remainingDistance;
+            if (!float.IsInfinity(remaining) && remaining < bestRemaining - 0.1f)
+            {
+                bestRemaining = remaining;
+                lastProgressTime = Time.time;
+            }
+        }
 
-        // 엄폐점이 navmesh에서 약간 벗어나 경로가 부분(PathPartial)이면 정확히 못 닿아 멈춘다 →
-        // 더 못 가고 정지했으면 도착으로 간주(BattleState 전이, 무한 대기 방지).
-        bool cannotGetCloser = enemy.agent.hasPath
-            && !enemy.agent.pathPending
-            && enemy.agent.remainingDistance <= enemy.agent.stoppingDistance + 0.15f
-            && enemy.agent.velocity.sqrMagnitude < 0.05f;
+        float dist = Vector3.Distance(enemy.transform.position, destination);
+        float sinceProgress = Time.time - lastProgressTime;
 
-        if (arrived || cannotGetCloser)
+        // 도달 반경 안이거나 일정 시간 진전이 없으면(비빔) 도착으로 간주 → 사격 시작(무한 grinding 방지).
+        if (TDS.Core.CoverApproach.ShouldEngage(dist, sinceProgress))
             stateMachine.ChangeState(enemy.battleState);
     }
 }

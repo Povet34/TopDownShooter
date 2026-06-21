@@ -27,8 +27,16 @@ public class MapConfig : ScriptableObject
     public GameObject floorPrefab;
     public GameObject wallPrefab;
     public List<GameObject> obstaclePrefabs = new List<GameObject>();
-    [Tooltip("Cover 컴포넌트가 미리 붙은 엄폐물 프리팹(권장). 비우면 프리미티브 큐브로 대체")]
+    [Tooltip("높은 엄폐물(은폐 전용) 프리팹. Cover 컴포넌트가 미리 붙은 것 권장. 비우면 프리미티브 큐브로 대체")]
     public GameObject coverPrefab;
+    [Tooltip("낮은 단상(range가 그 위로 사격) 프리팹 — 높이 ≤0.8 권장. 비우면 프리미티브 큐브로 대체")]
+    public GameObject lowCoverPrefab;
+    [Range(0f, 1f)]
+    [Tooltip("전체 cover 중 낮은 단상(사격 가능) 비율. 나머지는 높은 은폐용")]
+    public float lowCoverRatio = 0.6f;
+    [Range(0.2f, 0.8f)]
+    [Tooltip("프리미티브 낮은 단상 높이(상한 0.8 — 넘으면 총구가 cover에 박혀 못 쏨)")]
+    public float lowCoverHeight = 0.7f;
     [Tooltip("엄폐 지점 마커 프리팹(CoverPoint 컴포넌트). 프리미티브 폴백 엄폐물에 런타임 부착용 — Prefab/Enemy_CoverSystem/CoverPoint 권장")]
     public GameObject coverPointPrefab;
     [Tooltip("엄폐 지점 오프셋(x=좌우, y=전후). 엄폐물 풋프린트에 맞춰 4지점이 박스 '밖'에 놓이도록. 예: sea_container ≈ (1.5, 2.8)")]

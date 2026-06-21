@@ -53,11 +53,11 @@ namespace TDS.Tests.PlayMode
             cpPrefab = new GameObject("CP_Prefab");
             cpPrefab.AddComponent<CoverPoint>();
 
-            // 엄폐물 (6,0,0)
+            // 엄폐물 (6,0,0) — 낮은 단상(≤0.8, 사격 가능)이라야 교전용 cover로 선택됨
             coverGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             coverGo.name = "TestCover";
-            coverGo.transform.position = new Vector3(6f, 0.6f, 0f);
-            coverGo.transform.localScale = new Vector3(2f, 1.2f, 2f);
+            coverGo.transform.position = new Vector3(6f, 0.35f, 0f);
+            coverGo.transform.localScale = new Vector3(1.6f, 0.7f, 1.6f);
             var cover = coverGo.AddComponent<Cover>();
             cover.Configure(cpPrefab, 1.5f, 1.5f);
             yield return null; // Cover.Start → 4 지점 생성

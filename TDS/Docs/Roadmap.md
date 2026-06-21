@@ -167,6 +167,14 @@
 - ✅ **🐛 총 팽글팽글 + 이상한 사격 수정** (`fefbb14`): 탑다운에서 무기 LookAt이 발밑 조준 시 거의 수직→up 모호성으로 회전 + BulletDirection 0/랜덤. `AimDirection.ResolveHorizontal`(수평+0벡터 가드)로 무기·총알 수평화 + 프리팹 `isAimingPrecisly` 기본 false. EditMode 9 + PlayMode 1, in-game 검증.
 - ✅ **원거리 엄폐 행동** (`ffa7cdd`): 피격/발각 시 근처 coverPoint 우선→없으면 BattleMover strafe 폴백. 순수 `RangedEngageDecision`(EditMode 6) + `BattleState_Range` 통합(전투 중 `updateRotation=false`로 플레이어 보며 이동) + `coverPerk` 기본화(Range·Sniper) + `RunToCoverState` PathPartial 무한대기 버그 수정. in-game 검증(피격→엄폐 주행→사격).
 - ✅ **원거리 사선뛰기 애니 (풀 strafe 블렌드, TDD)**: 엄폐 없는 BattleMover 재배치 중 적이 **플레이어 조준한 채 다리만 옆/대각 달림**. 순수 `StrafeBlend.Compute(velocity, facing)`(EditMode 10) + `BattleState_Range`가 `Strafing`/StrafeX/Y 구동 + `Enemy_Range.controller`에 2D 블렌드(`Strafe`, FreeformCartesian) 코드 구축. Pro Rifle Pack 방향 달리기 8종 Humanoid 재임포트(Mixamo→적 아바타 리타게팅, in-game 포즈 검증 OK). 상체 조준은 Rifle 레이어 유지.
+- ✅ **🆕 기획 변경: Cover 높이 가중치 (2026-06-21, 구현 완료)** — BattleMover 2차 전 처리. 순수 `CoverEvaluation`(EditMode 7)+`CoverApproach`(EditMode 5) + cover point NavMesh 샘플(도달 보장) + RunToCover 견고화(비비기→BattleState) + range가 낮은 cover만 교전용으로 선택 + 맵 생성 낮은/높은 cover 혼합 + strafe 게이트 + 검증 툴 `CoverAuditTests`(PlayMode). in-game: 낮은 11/높은 3, 비비기 0.
+  - **문제**: range 적이 cover에 제대로 못 닿고 그 자리에서 비빔(처음부터). 원인 = cover point가 도달 불가 위치(긴 container 안쪽/navmesh 밖) + RunToCover arrival이 grinding을 못 잡음. 또 cover가 전부 고층 container라 적이 그 위로 못 쏨.
+  - **기획**: cover를 **높이로 분류**:
+    - **낮은 cover(단상, 높이 ≤ 0.8)** = *shoot-from-cover*. 적이 뒤에 서서 그 위로 조준·사격. **교전 시 선호**(가중치 높음, 낮을수록 선호).
+    - **높은 cover(container 등)** = *full-hide*. 적도 못 쏨. "공격도 안 하고 공격도 안 받고 싶을 때"(완전 은폐) 의도일 때만 선택.
+    - **0.8 상한**: 땅에 붙은 단상 높이가 0.8을 넘으면 총구가 cover에 박혀 못 쏨 → 단상은 ≤0.8.
+  - **구현(TDD)**: 순수 `CoverEvaluation`(높이·도달성 → ShootFrom/HideOnly/Unusable) + `CoverApproach`(arrival/stall로 비비기 방지) + cover point **NavMesh 샘플**(도달 보장) + RunToCover 견고화 + range가 낮은 cover 선호 + 맵 생성에 낮은 cover 배치 + **strafe 게이트**(이동 안 하면 제자리뛰기 금지).
+  - **검증 툴**: 생성된 맵의 각 cover가 range에 적당한지(도달 가능 cover point + 높이 분류) 확인하는 PlayMode 테스트(`CoverAuditTests`).
 - 📋 그 다음 **BattleMover 2차**(strafe/backstep/flee 능력게이트 + 몹 간 소프트 간격), 인지(§6.2)+FSM(§6.3)+패트롤 스폰. FoV(§6.6)·무기 카메라(§6.7)는 이후.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 

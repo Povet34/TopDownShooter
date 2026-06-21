@@ -137,10 +137,13 @@ public class BattleState_Range : EnemyState
         }
     }
 
-    // 재배치(strafe) 중엔 다리 애니를 이동 방향(플레이어 기준)에 맞춰 2D 블렌드로 구동(사선뛰기). 정지 시 해제.
+    private const float StrafeMinSpeed = 0.4f;
+
+    // 재배치(strafe) 중엔 다리 애니를 이동 방향(플레이어 기준)에 맞춰 2D 블렌드로 구동(사선뛰기).
+    // 단, 실제로 이동 중일 때만 — 못 움직이는데 달리는 클립이 돌면 '제자리 뛰기'가 됨.
     private void UpdateStrafeAnimation()
     {
-        if (repositioning)
+        if (repositioning && enemy.agent.velocity.magnitude > StrafeMinSpeed)
         {
             Vector2 blend = StrafeBlend.Compute(enemy.agent.velocity, enemy.transform.forward);
             enemy.anim.SetBool("Strafing", true);
