@@ -41,9 +41,10 @@ public class GameManager : MonoBehaviour, IGameStateService
     }
     public void GameOver()
     {
-        TimeManager.instance.SlowMotionFor(1.5f);
-        UI.instance.ShowGameOverUI();
-        CameraManager.instance.ChangeCameraDistance(5);
+        // 맵 단독 씬엔 UI/CameraManager 싱글톤이 없음(MapHUD가 DEFEATED 처리) → 가드.
+        if (TimeManager.instance != null) TimeManager.instance.SlowMotionFor(1.5f);
+        if (UI.instance != null) UI.instance.ShowGameOverUI();
+        if (CameraManager.instance != null) CameraManager.instance.ChangeCameraDistance(5);
     }
 
     private void SetDefaultWeaponsForPlayer()
