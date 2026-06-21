@@ -74,5 +74,28 @@ namespace TDS.Tests.EditMode
             Assert.AreEqual(0f, d.y, 1e-6f);
             Assert.AreEqual(1f, d.magnitude, 1e-4f);
         }
+
+        [Test]
+        public void ClampMinDistance_keeps_far_aim_unchanged()
+        {
+            Vector3 aim = new Vector3(0, 1, 10);
+            Assert.AreEqual(aim, AimDirection.ClampMinDistance(Vector3.zero, aim, 3f, Vector3.forward));
+        }
+
+        [Test]
+        public void ClampMinDistance_pushes_near_aim_out_to_min()
+        {
+            Vector3 c = AimDirection.ClampMinDistance(Vector3.zero, new Vector3(0, 1, 1), 3f, Vector3.forward);
+            Vector3 flat = c; flat.y = 0;
+            Assert.AreEqual(3f, flat.magnitude, 1e-3f, "최소 거리로 밀려야");
+            Assert.AreEqual(1f, c.y, 1e-4f, "y는 유지");
+        }
+
+        [Test]
+        public void ClampMinDistance_at_player_uses_fallback_forward()
+        {
+            Vector3 c = AimDirection.ClampMinDistance(Vector3.zero, new Vector3(0, 1, 0), 3f, Vector3.forward);
+            Assert.AreEqual(new Vector3(0, 1, 3), c);
+        }
     }
 }

@@ -20,6 +20,8 @@ public class Player_AimController : MonoBehaviour
     [Header("Aim Setup")]
     [SerializeField] private Transform aim;
     [SerializeField] private bool isAimingPrecisly;
+    [Tooltip("조준 타깃이 플레이어에 이보다 가까우면 밀어냄(리그 Gun_Aim 빙글빙글 방지)")]
+    [SerializeField] private float minAimDistance = 2.5f;
     [SerializeField] float offsetChangeRate = 6;
     float offsetY;
 
@@ -134,6 +136,9 @@ public class Player_AimController : MonoBehaviour
 
         Vector3 newPosition = isAimingPrecisly ? aim.position : transform.position;
         aim.position = new Vector3(aim.position.x, newPosition.y + AdjustedOffsetY(), aim.position.z);
+
+        // 조준 타깃이 플레이어/총에 너무 붙으면 리그 Aim 제약이 빙글빙글 돈다 → 최소 거리 유지(발밑 조준 안정화).
+        aim.position = TDS.Core.AimDirection.ClampMinDistance(transform.position, aim.position, minAimDistance, transform.forward);
     }
 
     float AdjustedOffsetY()

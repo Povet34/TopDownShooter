@@ -114,6 +114,16 @@ public class Enemy_Range : Enemy
 
         if (stateMachine.currentState != deadState)
             stateMachine.ChangeState(deadState);
+
+        // 분리된(aim.parent=null) 조준 타깃이 사망 후에도 맵에 남아 누적되는 누수 방지.
+        if (aim != null)
+            Destroy(aim.gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        if (aim != null)
+            Destroy(aim.gameObject);
     }
 
     public bool CanThrowGrenade()

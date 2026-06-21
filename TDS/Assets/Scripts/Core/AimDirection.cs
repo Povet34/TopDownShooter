@@ -35,5 +35,30 @@ namespace TDS.Core
             }
             return d.normalized;
         }
+
+        /// <summary>
+        /// 조준 타깃이 from(총/플레이어)에 너무 붙으면(발밑 조준) 리그 Aim 제약(Gun_Aim 등)이 0벡터로
+        /// 마구 돌아 팔·무기가 빙글빙글 돈다 → 수평 거리를 최소 minDist로 밀어내 안정화. y는 유지.
+        /// </summary>
+        public static Vector3 ClampMinDistance(Vector3 from, Vector3 aim, float minDist, Vector3 fallbackForward)
+        {
+            Vector3 flat = aim - from; flat.y = 0f;
+            float d = flat.magnitude;
+            if (d >= minDist)
+                return aim;
+
+            Vector3 dir;
+            if (d > 1e-4f)
+                dir = flat / d;
+            else
+            {
+                dir = fallbackForward; dir.y = 0f;
+                dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
+            }
+
+            Vector3 clamped = from + dir * minDist;
+            clamped.y = aim.y;
+            return clamped;
+        }
     }
 }
