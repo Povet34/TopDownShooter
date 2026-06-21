@@ -31,4 +31,10 @@ public class MapConfig : ScriptableObject
     public GameObject coverPrefab;
     [Tooltip("엄폐 지점 마커 프리팹(CoverPoint 컴포넌트). 프리미티브 폴백 엄폐물에 런타임 부착용 — Prefab/Enemy_CoverSystem/CoverPoint 권장")]
     public GameObject coverPointPrefab;
+    [Tooltip("엄폐 지점 오프셋(x=좌우, y=전후). 엄폐물 풋프린트에 맞춰 4지점이 박스 '밖'에 놓이도록. 예: sea_container ≈ (1.5, 2.8)")]
+    public Vector2 coverPointOffset = new Vector2(1.5f, 1.5f);
+
+    [Header("바닥 머티리얼 (프리미티브 바닥용)")]
+    [Tooltip("프리미티브 바닥에 입힐 머티리얼(사막 모래 등). 비우면 기본 흰색")]
+    public Material floorMaterial;
 }

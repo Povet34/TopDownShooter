@@ -108,6 +108,12 @@ public class MapGenerator : MonoBehaviour
         prim.transform.SetParent(mapRoot, false);
         prim.transform.localPosition = new Vector3(0f, -0.1f, 0f);
         prim.transform.localScale = new Vector3(worldW, 0.2f, worldL);
+
+        if (config != null && config.floorMaterial != null)
+        {
+            var rend = prim.GetComponent<Renderer>();
+            if (rend != null) rend.sharedMaterial = config.floorMaterial;
+        }
     }
 
     private void BuildPerimeterWalls(float worldW, float worldL, float cell, float wallH)
@@ -159,8 +165,9 @@ public class MapGenerator : MonoBehaviour
 
     private void SpawnObstacle(Vector3 localPos, float cell, float wallH, System.Random rng)
     {
+        bool usingPrefab = config != null && config.obstaclePrefabs != null && config.obstaclePrefabs.Count > 0;
         GameObject go;
-        if (config != null && config.obstaclePrefabs != null && config.obstaclePrefabs.Count > 0)
+        if (usingPrefab)
         {
             var prefab = config.obstaclePrefabs[rng.Next(config.obstaclePrefabs.Count)];
             go = Instantiate(prefab, mapRoot);
@@ -174,8 +181,15 @@ public class MapGenerator : MonoBehaviour
             go.transform.localScale = new Vector3(s, wallH, s);
         }
         go.name = "Obstacle";
-        Vector3 p = localPos; p.y = go.transform.localScale.y * 0.5f;
+        Vector3 p = localPos;
+        // 임포트 프리팹은 베이스 피벗 → 바닥(y=0). 프리미티브는 절반 높이만큼 올림.
+        p.y = usingPrefab ? 0f : go.transform.localScale.y * 0.5f;
         go.transform.localPosition = p;
+
+        // 정적 장애물은 convex 불필요 → 복잡 메시(>256 poly) convex 변환 경고 방지 + 전체 메시 충돌
+        if (usingPrefab)
+            foreach (var mc in go.GetComponentsInChildren<MeshCollider>())
+                mc.convex = false;
     }
 
     private void PlaceCover(int gw, int gh, float cell, Vector3 origin,
@@ -189,8 +203,9 @@ public class MapGenerator : MonoBehaviour
             Vector3 pos = CellCenter(x, z, cell, origin);
             if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue;
 
+            bool usingPrefab = config != null && config.coverPrefab != null;
             GameObject go;
-            if (config != null && config.coverPrefab != null)
+            if (usingPrefab)
             {
                 go = Instantiate(config.coverPrefab, mapRoot);
             }
@@ -201,7 +216,8 @@ public class MapGenerator : MonoBehaviour
                 go.transform.localScale = new Vector3(2f, 1.2f, 2f); // 엄폐 지점(±1.5)이 박스 밖에 놓이도록 정사각 풋프린트
             }
             go.name = "Cover";
-            Vector3 p = pos; p.y = go.transform.localScale.y * 0.5f;
+            Vector3 p = pos;
+            p.y = usingPrefab ? 0f : go.transform.localScale.y * 0.5f; // 프리팹은 베이스 피벗 → 바닥
             go.transform.localPosition = p;
             go.transform.localRotation = Quaternion.Euler(0f, rng.Next(4) * 90f, 0f);
 
@@ -209,7 +225,8 @@ public class MapGenerator : MonoBehaviour
             if (go.GetComponent<Cover>() == null)
             {
                 var cover = go.AddComponent<Cover>();
-                cover.Configure(config != null ? config.coverPointPrefab : null, 1.5f, 1.5f);
+                Vector2 off = config != null ? config.coverPointOffset : new Vector2(1.5f, 1.5f);
+                cover.Configure(config != null ? config.coverPointPrefab : null, off.x, off.y);
             }
             placed++;
         }
