@@ -39,7 +39,13 @@ public class Enemy_AnimationEvents : MonoBehaviour
     public void BeginMeleeAttackCheck()
     {
         enemy?.EnableMeleeAttackCheck(true);
-        enemy?.audioManager.PlaySFX(enemyMelee?.meleeSFX.swoosh, true);
+
+        // 사운드는 보류(씬에 AudioManager 싱글톤 없음) → audioManager/meleeSFX null 가드.
+        // AudioManager 부트 + meleeSFX 할당되면 그대로 재생됨.
+        AudioManager am = enemy != null ? enemy.audioManager : null;
+        Enemy_MeleeSFX melee = enemyMelee != null ? enemyMelee.meleeSFX : null;
+        if (am != null && melee != null)
+            am.PlaySFX(melee.swoosh, true);
     }
 
     public void FinishMeleeAttackCheck()
