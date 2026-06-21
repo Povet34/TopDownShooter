@@ -239,6 +239,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5105561581569892122}
   - component: {fileID: 8779715345661722756}
+  - component: {fileID: 5723907881544539462}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -278,3 +279,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52f372ba54a6ba4488942b51d41224d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TDS.Core::TDS.Core.GameBootstrap
+--- !u!114 &5723907881544539462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8496493374153201785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1af7898786dbb8344b7f668664736794, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TDS.Game::CombatFeedback
+  hitFx: {fileID: 4021103657954561961, guid: 5c755f9bc5253ea418e919994537dcc7, type: 3}
+  hitFxLifetime: 2
+  hitTrauma: 0.18
+  killTrauma: 0.42
+  killHitStop: 0.06

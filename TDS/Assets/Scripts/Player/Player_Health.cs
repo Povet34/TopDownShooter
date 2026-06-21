@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TDS.Core;
 
 public class Player_Health : HealthController
 {
@@ -18,6 +19,8 @@ public class Player_Health : HealthController
     public override void ReduceHealth(int damage)
     {
         base.ReduceHealth(damage);
+
+        GameServices.Registry.Resolve<ICombatFeedbackService>()?.ReportHit(transform.position + Vector3.up, 1.4f);
 
         if (ShouldDie())
             Die();

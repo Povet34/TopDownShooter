@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using TDS.Core;
 
 public enum EnemyType { Melee, Range, Boss ,Random}
 
@@ -106,10 +107,14 @@ public class Enemy : MonoBehaviour
 
         if (health.ShouldDie())
             Die();
+        else
+            GameServices.Registry.Resolve<ICombatFeedbackService>()?.ReportHit(transform.position + Vector3.up, 1f);
     }
 
     public virtual void Die()
     {
+        GameServices.Registry.Resolve<ICombatFeedbackService>()?.ReportKill(transform.position + Vector3.up);
+
         dropController.DropItems();
 
 
