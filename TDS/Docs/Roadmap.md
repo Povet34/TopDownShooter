@@ -146,7 +146,11 @@
 - 📋 Phase B — 맵 콘텐츠 카탈로그 SO(실제 프리팹) + `Cover` 컴포넌트 배선(엄폐 실작동)
 - 🔧 **Phase C — 몬스터 스폰 (동작)**: `SpawnSelection`(순수 가중선택, EditMode 5 green) + `MonsterDef`/`SpawnTable` SO + `MonsterSpawner`(플레이어 생성 후 navmesh 링에 시드 스폰). 데이터 `MD_Melee`/`MD_Range`/`ST_Basic`. Map_Generated에서 **적 5마리 스폰 확인**(가중치 반영, navmesh 위, 크래시 0). `PlayerSpawner`가 인스턴스를 "Player"로 명명(적 AI `Find("Player")`), `Player.playerBody`=Bip001 Spine2 배선(Range 조준).
   - **전투 루프 검증 ✅**: `EnemyCombatTests` — 적 히트박스 `IDamagable.TakeDamage`(총알이 호출하는 경로)→`GetHit`→체력감소→**사망**. navmesh 베이크한 테스트 환경. `Enemy.Die`의 off-navmesh `agent.isStopped` 가드. (ST_Basic은 테스트 로드용으로 Resources 이동). **PlayMode 14 green.**
-  - 남음: 적 변형 다양화, 웨이브/긴장도(SpawnDirector — §6 공식), 전투 연출(피격 FX/사망 랙돌 in-game 확인).
+  - **in-game 전투 검증 ✅ (2026-06-21)**: Map_Generated Play → 총알 명중 시 적 사망+랙돌, 총알 임팩트 확인. 빗나감은 적이 접근해 옛 위치로 발사된 것(조준=마우스).
+    - 🐛 **melee 공격 NullRef 수정** (`006dff9`): `Enemy_AnimationEvents.BeginMeleeAttackCheck`의 `enemy?.audioManager...`가 null `audioManager`(사운드 보류, 씬에 AudioManager 없음) 역참조. audioManager/meleeSFX 양쪽 가드(사운드 연결 시 자동 재생).
+    - 🐛 **보스 화염 ParticleSystem Assert 수정** (`e4153b0`): `Enemy_Boss.ActivateFlamethrower`가 재생 중 `.duration` 설정 → 정지(StopEmittingAndClear) 후 설정.
+  - **적 변형 다양화 ✅ (검증)**: 고유 변형 prefab 13종(근접5/원거리6/보스2) 이미 존재 + 8 MonsterDef가 올바른 변형 가리킴 + 5 테마 테이블. 13종 동시 난전 in-game → **NullRef 0**.
+- ✅ **Phase C2 — SpawnDirector 다중 웨이브** (`3739ec5`): `WaveSequencer`(순수, EditMode 9) + `SpawnDirector`(TDS.Game 글루, PlayMode 1 통합). 전멸/타임아웃 진행. Map_Generated에 5웨이브(Basic4→MeleeRush5→RangedDefense5→Mixed6→Boss4) 배선. 씬 Play로 W1→W2 진행 검증. **EditMode 32 / PlayMode 15 green.** 긴장도(intensity)는 §6.1 추후.
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

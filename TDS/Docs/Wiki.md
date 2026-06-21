@@ -34,14 +34,14 @@
 - **`SceneEntryPoint`**: 씬에 하나 두면 진입 시 자동으로 EnsureSystems → **어느 씬이든 단독 Play/테스트 가능**(Boot 씬 강제 없음).
 - **Systems 프리팹**(`Resources/Systems`): 전역 매니저 — TimeManager·MissionManager·GameManager·ObjectPool·ControlsManager (각각 인터페이스 `IClockService`/`IMissionService`/`IGameStateService`/`IObjectPoolService`/`IControlsService`로 등록). UI/카메라는 씬 종속이라 제외.
 
-> 다이어그램(스폰 파이프라인): `입력(난이도/시간/어그로) → 스폰 디렉터(언제·얼마나) → 스폰 테이블(무엇·가중치) → 스폰 지점(어디) → 군집 스포너(어떻게) → navmesh 활성 군집 → (개체수 피드백)`. 현재는 **스폰 테이블 + 배치형 스포너**까지 구현, 디렉터/긴장도/군집은 §6 추후.
+> 다이어그램(스폰 파이프라인): `입력(난이도/시간/어그로) → 스폰 디렉터(언제·얼마나) → 스폰 테이블(무엇·가중치) → 스폰 지점(어디) → 군집 스포너(어떻게) → navmesh 활성 군집 → (개체수 피드백)`. 현재는 **스폰 테이블 + 스포너 + 기본 웨이브 디렉터(클리어/타임아웃 진행)** 까지 구현, **긴장도(intensity) 페이싱/군집(Pack)/인지(FSM)** 는 §6 추후.
 
 ---
 
 ## 3. 맵 생성 (TDS.Core)
 
 - **`MapGenerator`** + **`MapConfig`**(SO): 시드 결정적 그리드. 바닥/경계벽/장애물/엄폐물 + NavMesh 베이크. 프리팹 비면 프리미티브 폴백. 전용 `System.Random(seed)`(전역 Random 비오염).
-- **씬 `Assets/Scenes/Map_Generated.unity`**: "맵만 있는 씬" — Light/Camera(+CameraFollow)/MapGenerator/EntryPoint/PlayerSpawner/PlayerMapBootstrap/MonsterSpawner.
+- **씬 `Assets/Scenes/Map_Generated.unity`**: "맵만 있는 씬" — Light/Camera(+CameraFollow)/MapGenerator/EntryPoint/PlayerSpawner/PlayerMapBootstrap/**SpawnDirector**(5웨이브).
 - 같은 시드 → 같은 맵. `MapGenerator.onGenerated` 이벤트로 후속(스포너/카메라) 연동.
 
 ---
@@ -63,7 +63,9 @@
 - **`MonsterDef`**(SO): 기존 적 프리팹 래핑 + `weight`/`cost`/`tags`. 메뉴 `TDS/Spawn/Monster Def`.
 - **`SpawnTable`**(SO): `MonsterDef[]` + `Pick(roll)` 가중 선택. 메뉴 `TDS/Spawn/Spawn Table`. 상황/난이도/테마별로 **여러 개**.
 - **`SpawnSelection`**(순수): 가중 누적분포 선택(테스트됨).
-- **`MonsterSpawner`**(컴포넌트): 플레이어 생성 후 navmesh 링에 시드 스폰. `count`/`minRadius`/`maxRadius`/`seed`.
+- **`MonsterSpawner`**(컴포넌트): 플레이어 생성 후 navmesh 링에 **단일** 웨이브 시드 스폰. `count`/`minRadius`/`maxRadius`/`seed`.
+- **`WaveSequencer`**(순수, 테스트됨): 웨이브 진행 결정 로직(Wait/SpawnNext/Done). 생존 수·경과시간·웨이브별 타임아웃으로 판정 — 전멸(clear) 또는 타임아웃 시 다음 웨이브, 마지막 클리어 시 종료. 긴장도(intensity)는 §6.1 추후.
+- **`SpawnDirector`**(컴포넌트, **TDS.Game**): `WaveSequencer` 글루. 스폰한 적의 생존 수를 추적(적 타입 필요 → Game)하며 각 웨이브를 `SpawnTable`에서 navmesh 링에 스폰. `WaveDef[]`(table/count/maxWaveTime) + 시드 결정적. Map_Generated가 이걸 사용(5웨이브: Basic4→MeleeRush5→RangedDefense5→Mixed6→Boss4, 90s 안전 타임아웃).
 
 ### 데이터 카탈로그
 `Assets/GameData/Spawn/` (MonsterDef), `Assets/Resources/` (테스트/런타임 로드용 테이블).
@@ -126,15 +128,16 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ### 6.4 기타 추후
 - 군집(Pack) 가상 앵커 + boids, navmesh "군집당 1경로"(성능), 화면 밖 스폰(절두체 후보점).
-- 적 변형 다양화, 웨이브, 전투 연출(피격 FX/사망 랙돌 in-game).
+- 전투 연출 심화(피격 FX/히트스톱/카메라 셰이크) — 사망 랙돌·기본 사격/총알 임팩트는 in-game 검증됨.
 - 맵 비주얼(실제 프리팹/청크), HUD(탄약/체력), 차량 재통합, 미션 재통합.
+- 사운드(보류): 총소리·근접 swoosh 등. `AudioManager` 부트 + SFX 연결 시 자동 재생되도록 가드해 둠(melee swoosh 등).
 - 미래: 생존 루프 · 광역 스티칭 · 동굴(씬 전환) · 수송선 탈출/전리품 반출 · 인벤토리/파밍.
 
 ---
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection. **23 green.**
-- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망). **14 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·**WaveSequencer**. **32 green.**
+- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망), **SpawnDirector(웨이브 스폰→전멸→다음→종료)**. **15 green.**
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.
 - 한계: navmesh 의존 적 AI 테스트는 테스트 씬에 navmesh 베이크 필요(`EnemyCombatTests` 참고).
