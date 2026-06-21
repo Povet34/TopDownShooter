@@ -43,7 +43,8 @@
 - **`MapGenerator`** + **`MapConfig`**(SO): 시드 결정적 그리드. 바닥/경계벽/장애물/엄폐물 + NavMesh 베이크. 프리팹 비면 프리미티브 폴백. 전용 `System.Random(seed)`(전역 Random 비오염).
 - **데이터 기반 콘텐츠** (`Assets/GameData/Map/MapConfig_Default`): 사막 황무지 테마 — 바닥 머티리얼(`Mat_DesertSand`), 장애물 풀(부서진 차/연료탱크/콘크리트관/사막바위/돌/선인장), 엄폐물(`sea_container`). 임포트 프리팹은 바닥(y=0) 배치, 정적 MeshCollider는 `convex=false`(navmesh 카빙 + 충돌).
 - **엄폐 실작동**: 배치된 엄폐물에 `Cover` 컴포넌트 + `CoverPoint` 4지점(오프셋 `coverPointOffset`로 풋프린트 밖). 원거리 적(coverPerk)이 `OverlapSphere`로 찾아 엄폐 → §4 적 AI와 연결. CoverPoint 마커 렌더러는 비활성(디버그용).
-- **씬 `Assets/Scenes/Map_Generated.unity`**: "맵만 있는 씬" — Light/Camera(+CameraFollow)/MapGenerator/EntryPoint/PlayerSpawner/PlayerMapBootstrap/**SpawnDirector**(5웨이브).
+- **씬 `Assets/Scenes/Map_Generated.unity`**: "맵만 있는 씬" — Light/Camera(+CameraFollow)/MapGenerator/EntryPoint/PlayerSpawner/PlayerMapBootstrap/**SpawnDirector**(5웨이브)/**HUD**.
+- **`MapHUD`**(TDS.Game): 자족형 미니 HUD. 캔버스/TMP를 코드로 생성(UI 프리팹·기존 UI 싱글톤 의존 X). 체력·현재무기 탄약(탄창/예비)·웨이브 표시. **승리**(전 웨이브 클리어)/**패배**(체력 0) → 종료 패널 + **R 재시작**(Input System). 재시작은 씬 리로드(빌드세팅 등록됨); `PlayerSpawner`가 재스폰 직전 `IControlsService.RecreateControls()`로 옛 입력 구독 누수 차단.
 - 같은 시드 → 같은 맵. `MapGenerator.onGenerated` 이벤트로 후속(스포너/카메라) 연동.
 
 ---
@@ -131,7 +132,7 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 ### 6.4 기타 추후
 - 군집(Pack) 가상 앵커 + boids, navmesh "군집당 1경로"(성능), 화면 밖 스폰(절두체 후보점).
 - 전투 연출 심화(피격 FX/히트스톱/카메라 셰이크) — 사망 랙돌·기본 사격/총알 임팩트는 in-game 검증됨.
-- 맵 청크 스티칭(광역 맵 이어붙이기) — 단일 맵 비주얼·엄폐는 Phase B에서 완료. HUD(탄약/체력), 차량 재통합, 미션 재통합.
+- 맵 청크 스티칭(광역 맵 이어붙이기) — 단일 맵 비주얼·엄폐는 Phase B, HUD·승패·재시작은 Phase D1에서 완료. 차량 재통합, 미션 재통합 남음.
 - 사운드(보류): 총소리·근접 swoosh 등. `AudioManager` 부트 + SFX 연결 시 자동 재생되도록 가드해 둠(melee swoosh 등).
 - 미래: 생존 루프 · 광역 스티칭 · 동굴(씬 전환) · 수송선 탈출/전리품 반출 · 인벤토리/파밍.
 
