@@ -119,6 +119,8 @@ namespace TDS.Tests.PlayMode
             var player = SpawnPlayer();
             yield return null;
 
+            player.SetControlsEnabledTo(true); // 컨트롤 활성화(Player_Movement가 controlsEnabled 가드함)
+
             var mv = player.movement;
             var moveField = typeof(Player_Movement).GetField("<moveInput>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(moveField, "moveInput 백킹필드 못찾음");

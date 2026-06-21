@@ -33,7 +33,7 @@ namespace TDS.Tests.PlayMode
             yield return null;
         }
 
-        private IEnumerator Setup(Vector3 playerForward, Vector3 enemyPos)
+        private IEnumerator Setup(Vector3 playerForward, Vector3 enemyPos, int entryIndex = 0)
         {
             GameServices.ResetForTests();
             GameBootstrap.EnsureSystems();
@@ -54,7 +54,7 @@ namespace TDS.Tests.PlayMode
             yield return null;
 
             var table = Resources.Load<SpawnTable>("ST_Basic");
-            enemyGo = Object.Instantiate(table.entries[0].prefab, enemyPos, Quaternion.identity);
+            enemyGo = Object.Instantiate(table.entries[entryIndex].prefab, enemyPos, Quaternion.identity);
             yield return null;
             yield return null;
         }
@@ -107,6 +107,32 @@ namespace TDS.Tests.PlayMode
 
             float endDist = Vector3.Distance(melee.transform.position, player.transform.position);
             Assert.Less(endDist, startDist - 3f, $"평소 적이 근접하지 않음(거리 {startDist:0.0}→{endDist:0.0})");
+        }
+
+        [UnityTest]
+        public IEnumerator Threatened_ranged_repositions()
+        {
+            // 원거리(Enemy_Range, ST_Basic 두 번째 엔트리)
+            yield return Setup(Vector3.forward, new Vector3(0f, 0f, 8f), entryIndex: 1);
+
+            var er = enemyGo.GetComponentInChildren<Enemy_Range>();
+            Assert.IsNotNull(er, "Enemy_Range 없음");
+            er.stateMachine.ChangeState(er.battleState); // 교전(정지) 상태
+            yield return null;
+            Vector3 startPos = er.transform.position;
+
+            // 피격 → 재배치(이동) 트리거
+            enemyGo.GetComponentInChildren<IDamagable>().TakeDamage(2);
+
+            float maxMove = 0f;
+            for (int i = 0; i < 70; i++)
+            {
+                yield return null;
+                if (er == null) break;
+                maxMove = Mathf.Max(maxMove, Vector3.Distance(startPos, er.transform.position));
+            }
+
+            Assert.Greater(maxMove, 1f, "피격당한 원거리 적이 재배치하지 않음(굳어있음)");
         }
     }
 }
