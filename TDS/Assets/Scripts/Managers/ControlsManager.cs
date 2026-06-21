@@ -16,6 +16,21 @@ public class ControlsManager : MonoBehaviour, IControlsService
         GameServices.Registry.Register<IControlsService>(this);
     }
 
+    /// <summary>
+    /// 컨트롤을 새 인스턴스로 교체. 영속 ControlsManager는 리로드돼도 Awake가 다시 안 돌아
+    /// 옛 컨트롤이 유지되는데, 파괴된 플레이어의 람다 구독이 거기 쌓여 MissingReferenceException을 낸다.
+    /// 플레이어 재스폰 직전에 호출해 옛 구독을 폐기한다.
+    /// </summary>
+    public void RecreateControls()
+    {
+        if (controls != null)
+        {
+            controls.Disable();
+            controls.Dispose();
+        }
+        controls = new PlayerControls();
+    }
+
 
     private void Start()
     {

@@ -30,6 +30,9 @@ namespace TDS.Core
 
             GameBootstrap.EnsureSystems(); // 플레이어보다 시스템을 먼저 보장
 
+            // 씬 리로드 시 옛 플레이어 입력 구독이 영속 컨트롤에 누적되는 누수 방지 — 새 컨트롤로 교체.
+            GameServices.Registry.Resolve<IControlsService>()?.RecreateControls();
+
             var prefab = playerPrefab != null ? playerPrefab : Resources.Load<GameObject>("Player");
             if (prefab == null)
             {
