@@ -34,6 +34,12 @@ public class FieldOfView : MonoBehaviour
     public float CurrentHalfAngle => halfAngle + (Time.time < revealUntil ? revealAngleBoost : 0f);
     public float CurrentRange => range + (Time.time < revealUntil ? revealRangeBoost : 0f);
 
+    // 비주얼 마스크(VisionMask)와 단일 소스 공유
+    public Vector3 ViewDirection => Forward();
+    public float NearRadius => nearRadius;
+    public LayerMask OccluderMask => occluderMask;
+    public float EyeHeight => eyeHeight;
+
     /// <summary>발사 등으로 시야를 잠깐 확대.</summary>
     public void Reveal() => revealUntil = Time.time + revealDuration;
 
