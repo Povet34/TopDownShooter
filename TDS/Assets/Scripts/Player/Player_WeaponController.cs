@@ -20,6 +20,8 @@ public class Player_WeaponController : MonoBehaviour
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private float bulletSpeed;
     [SerializeField] private Light fireEffectLight;
+    [Tooltip("총성이 적에게 들리는 반경(§6.2 소음). 이 안의 적은 뒤돌아 있어도 이쪽을 조사하러 옴")]
+    [SerializeField] private float gunshotNoiseRadius = 18f;
 
 
     [SerializeField] private Transform weaponHolder;
@@ -202,6 +204,9 @@ public class Player_WeaponController : MonoBehaviour
 
         rbNewBullet.mass = REFERENCE_BULLET_SPEED / currentWeapon.weaponData.bulletSpeed;
         rbNewBullet.linearVelocity = bulletsDirection * currentWeapon.weaponData.bulletSpeed;
+
+        // §6.2 소음: 총성은 주변 적이 이쪽을 조사하게 만든다(뒤돌아 있어도).
+        NoisePing.Emit(player.transform.position, gunshotNoiseRadius);
     }
 
     private IEnumerator ShowFireEffectLight()

@@ -23,7 +23,14 @@ public class MoveState_Melee : EnemyState
         enemy.agent.isStopped = false; // 교전 상태에서 멈춰있던 agent를 순찰 진입 시 다시 풀어줌
         enemy.agent.speed = enemy.walkSpeed;
 
-        destination = enemy.GetPatrolDestination();
+        // 경계 수색이면 조사 지점으로, 아니면 다음 순찰점으로.
+        if (enemy.HasSearchPoint)
+        {
+            destination = enemy.SearchPoint;
+            enemy.ConsumeSearchPoint();
+        }
+        else
+            destination = enemy.GetPatrolDestination();
         enemy.agent.SetDestination(destination);
 
     }

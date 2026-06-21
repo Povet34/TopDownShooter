@@ -213,6 +213,13 @@ public class Enemy_Range : Enemy
         stateMachine.ChangeState(idleState);
     }
 
+    // 경계 진입 → 조사 지점으로 걸어가 수색(도착/타임아웃 후 순찰 복귀).
+    protected override void OnEnterAlert(Vector3 investigatePoint)
+    {
+        SetSearchPoint(investigatePoint);
+        stateMachine.ChangeState(moveState);
+    }
+
     #region Cover System
 
     public bool CanGetCover()

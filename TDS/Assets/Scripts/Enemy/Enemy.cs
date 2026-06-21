@@ -104,20 +104,37 @@ public class Enemy : MonoBehaviour
 
     // §6.2/§6.3: 시야(콘+가림+근접) 기반 인지로 교전을 켜고, 시야를 잃으면 경계→순찰로 내려가며 교전을 끈다.
     // Boss는 이 동작을 오버라이드해 기존 거리 aggro를 유지한다.
+    private Vector3 lastKnownPlayerPos;
+    private const float NoiseMaxAge = 0.3f;
+
     protected virtual void UpdateAggro()
     {
-        var state = perception.Tick(SeesPlayer(), HeardNoise(), Time.deltaTime);
+        bool sees = SeesPlayer();
+        if (sees)
+            lastKnownPlayerPos = player.position;
+
+        bool heard = HeardNoise(out Vector3 noisePos);
+
+        var prev = perception.State;
+        var state = perception.Tick(sees, heard, Time.deltaTime);
 
         if (state == TDS.Core.PerceptionState.Engage)
         {
             if (!inBattleMode)
                 EnterBattleMode();
+            return;
         }
-        else if (inBattleMode)
-        {
+
+        if (inBattleMode)
             ExitBattleMode();
-        }
+
+        // 경계로 막 진입 → 조사 지점으로 이동(소음이면 소음 위치, 시야상실이면 마지막 목격 위치).
+        if (state == TDS.Core.PerceptionState.Alert && prev != TDS.Core.PerceptionState.Alert)
+            OnEnterAlert(heard ? noisePos : lastKnownPlayerPos);
     }
+
+    /// <summary>경계 진입 시 호출 — 서브클래스가 조사 지점으로 이동(수색)시킨다. Boss는 사용 안 함.</summary>
+    protected virtual void OnEnterAlert(Vector3 investigatePoint) { }
 
     /// <summary>플레이어가 시야 콘(각도+사거리) 안 + 가려지지 않음, 또는 아주 가까우면(근접) true.</summary>
     public bool SeesPlayer()
@@ -146,8 +163,20 @@ public class Enemy : MonoBehaviour
         return !Physics.Raycast(eye, dir / dist, dist - 0.4f, viewOccluderMask, QueryTriggerInteraction.Ignore);
     }
 
-    /// <summary>소음(총성 등) 인지 — 경계 진입 트리거. #21에서 소음원 연결 전까지 false.</summary>
-    protected virtual bool HeardNoise() => false;
+    /// <summary>최근 총성 등 소음이 이 적에게 들리면 true(+ 소음 위치). 경계 진입 트리거(§6.2).</summary>
+    protected virtual bool HeardNoise(out Vector3 noisePos)
+    {
+        noisePos = NoisePing.Position;
+        float age = Time.time - NoisePing.Time;
+        float dist = Vector3.Distance(transform.position, NoisePing.Position);
+        return TDS.Core.NoiseModel.Heard(dist, NoisePing.Radius, age, NoiseMaxAge);
+    }
+
+    /// <summary>경계 중 수색할 지점(마지막 목격/소음 위치). MoveState가 순찰점 대신 사용.</summary>
+    public Vector3 SearchPoint { get; private set; }
+    public bool HasSearchPoint { get; private set; }
+    public void SetSearchPoint(Vector3 p) { SearchPoint = p; HasSearchPoint = true; }
+    public void ConsumeSearchPoint() { HasSearchPoint = false; }
 
     // §2: navmesh가 낮은 장애물 위로 베이크되거나 회피 교착으로 적이 끼는 문제 → 일정 시간 진전이 없으면
     // 가까운 navmesh 바닥으로 워프 + 재경로해서 빠져나오게 한다(원인 불문 안전망).
