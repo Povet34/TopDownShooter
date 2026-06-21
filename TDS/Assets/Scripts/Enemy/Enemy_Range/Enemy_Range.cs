@@ -199,7 +199,7 @@ public class Enemy_Range : Enemy
         if (lastCover != currentCover && currentCover != null)
             return true;
 
-        Debug.LogWarning("No cover found!");
+        // 근처에 적절한 엄폐가 없음 — 정상적인 폴백(호출측에서 BattleMover 재배치로 처리).
         return false;
     }
 

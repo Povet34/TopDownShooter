@@ -31,10 +31,18 @@ public class BattleState_Range : EnemyState
 
         enemy.agent.isStopped = true;
         enemy.agent.velocity = Vector3.zero;
+        enemy.agent.updateRotation = false; // 전투 중엔 이동방향이 아니라 플레이어를 바라봄(사선/strafe 이동을 위해)
 
         enemy.visuals.EnableIK(true, true);
 
         stateTimer = enemy.attackDelay;
+    }
+
+    public override void Exit()
+    {
+        base.Exit();
+        enemy.agent.updateRotation = true; // 다음 상태(이동/엄폐주행)는 이동방향을 바라봄
+        StopRepositioning();
     }
 
 
@@ -51,8 +59,7 @@ public class BattleState_Range : EnemyState
         if (MustAdvancePlayer())
             stateMachine.ChangeState(enemy.advancePlayerState);
 
-        ChangeCoverIfShould();
-        RepositionIfThreatened();
+        SeekCoverOrReposition();
 
         if (stateTimer > 0)
             return;
@@ -96,17 +103,40 @@ public class BattleState_Range : EnemyState
         return outOfStoppingDistance && unstoppableWalkOnCooldown == false;
     }
 
-    // §12: 최근 피격 시 사거리 유지하며 플레이어 시야 정면을 피해 재배치(strafe). 평소엔 제자리 사격.
-    private void RepositionIfThreatened()
+    // 원거리 기본 행동: 피격당하거나(threatened) 위험(시야/근접)하면 먼저 근처 엄폐를 찾아 그 뒤로 숨고,
+    // 적절한 엄폐가 없으면 melee식으로 사거리 유지하며 시야 정면을 피해 재배치(strafe)한다.
+    private void SeekCoverOrReposition()
     {
         bool threatened = Time.time - enemy.LastTimeDamaged < EvadeGrace;
+        bool inDanger = ReadyToChangeCover();
+        bool coverAllowed = enemy.coverPerk == CoverPerk.CanTakeAndChangeCover && ReadyToLeaveCover();
 
-        if (!threatened)
+        // 엄폐 가능 여부는 0.5초마다, 필요할 때만 평가(CanGetCover는 비용·점유 부수효과 있음).
+        coverCheckTimer -= Time.deltaTime;
+        bool reevalCover = coverCheckTimer < 0f;
+        if (reevalCover) coverCheckTimer = 0.5f;
+
+        bool coverAvailable = reevalCover && coverAllowed && (threatened || inDanger) && enemy.CanGetCover();
+
+        switch (RangedEngageDecision.Decide(threatened, inDanger, coverAllowed, coverAvailable))
         {
-            if (repositioning) StopRepositioning();
-            return;
-        }
+            case RangedEngageAction.TakeCover:
+                StopRepositioning();
+                stateMachine.ChangeState(enemy.runToCoverState);
+                break;
 
+            case RangedEngageAction.Reposition: // 적절한 엄폐 없음 + 피격 → melee식 재배치
+                UpdateBattleMoverReposition();
+                break;
+
+            case RangedEngageAction.Hold:
+                if (repositioning) StopRepositioning();
+                break;
+        }
+    }
+
+    private void UpdateBattleMoverReposition()
+    {
         repositionTimer -= Time.deltaTime;
         if (repositionTimer < 0f)
         {
@@ -147,26 +177,6 @@ public class BattleState_Range : EnemyState
     private bool ReadyToLeaveCover()
     {
         return Time.time > enemy.minCoverTime + enemy.runToCoverState.lastTimeTookCover;
-    }
-
-    private void ChangeCoverIfShould()
-    {
-        if (enemy.coverPerk != CoverPerk.CanTakeAndChangeCover)
-            return;
-
-        coverCheckTimer -= Time.deltaTime;
-
-        if (coverCheckTimer < 0)
-        {
-            coverCheckTimer = .5f; // We do cover check each .5f seconds
-
-            if (ReadyToChangeCover() && ReadyToLeaveCover())
-
-            {
-                if (enemy.CanGetCover())
-                    stateMachine.ChangeState(enemy.runToCoverState);
-            }
-        }
     }
 
     private bool ReadyToChangeCover()

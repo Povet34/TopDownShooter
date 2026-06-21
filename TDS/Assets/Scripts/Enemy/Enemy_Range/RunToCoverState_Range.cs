@@ -41,7 +41,16 @@ public class RunToCoverState_Range : EnemyState
 
         enemy.FaceTarget(GetNextPathPoint());
 
-        if (Vector3.Distance(enemy.transform.position, destination) < .8f)
+        bool arrived = Vector3.Distance(enemy.transform.position, destination) < .8f;
+
+        // 엄폐점이 navmesh에서 약간 벗어나 경로가 부분(PathPartial)이면 정확히 못 닿아 멈춘다 →
+        // 더 못 가고 정지했으면 도착으로 간주(BattleState 전이, 무한 대기 방지).
+        bool cannotGetCloser = enemy.agent.hasPath
+            && !enemy.agent.pathPending
+            && enemy.agent.remainingDistance <= enemy.agent.stoppingDistance + 0.15f
+            && enemy.agent.velocity.sqrMagnitude < 0.05f;
+
+        if (arrived || cannotGetCloser)
             stateMachine.ChangeState(enemy.battleState);
     }
 }
