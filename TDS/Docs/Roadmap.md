@@ -154,6 +154,7 @@
   - **적 변형 다양화 ✅ (검증)**: 고유 변형 prefab 13종(근접5/원거리6/보스2) 이미 존재 + 8 MonsterDef가 올바른 변형 가리킴 + 5 테마 테이블. 13종 동시 난전 in-game → **NullRef 0**.
 - ✅ **Phase C2 — SpawnDirector 다중 웨이브** (`3739ec5`): `WaveSequencer`(순수, EditMode 9) + `SpawnDirector`(TDS.Game 글루, PlayMode 1 통합). 전멸/타임아웃 진행. Map_Generated에 5웨이브(Basic4→MeleeRush5→RangedDefense5→Mixed6→Boss4) 배선. 씬 Play로 W1→W2 진행 검증. **EditMode 32 / PlayMode 15 green.** 긴장도(intensity)는 §6.1 추후.
 - ✅ **Phase D1 — 맵 HUD + 승리/패배 + 재시작** (`2d5a28c`, 2026-06-21): `MapHUD`(자족형, 캔버스/TMP 코드 생성) — 체력/탄약/웨이브 표시, 승리(전 웨이브)·패배(체력0) 종료 패널 + R 재시작. 씬 빌드세팅 등록. **재시작 노출 버그 수정**: 플레이어가 영속 `ControlsManager.controls`에 람다 구독만 하고 해제 안 해 리로드마다 죽은 콜백 누적 → `IControlsService.RecreateControls()`(PlayerSpawner가 재스폰 전 호출). 2회 리로드 MissingRef 0, 중복 0.
+- ✅ **테스트 하네스 강화** (2026-06-21): 커버리지 감사 후 갭 충원 — `GameOutcome`(HUD 승패 순수 추출, EditMode 7), `MapGenerator`(결정성/중앙비움/경계, PlayMode 4), `Cover`(엄폐 획득, PlayMode 1), `ControlsManager.RecreateControls`(PlayMode 1). **EditMode 39 / PlayMode 21 green.** TDD 하네스 문서 [Testing.md](Testing.md) + 작업 루프 [Workflow.md](Workflow.md) 추가(작업 전 읽는 가이드).
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

@@ -140,7 +140,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 ## 7. 테스트
 
-- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·**WaveSequencer**. **32 green.**
-- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망), **SpawnDirector(웨이브 스폰→전멸→다음→종료)**. **15 green.**
+- **EditMode** (순수 로직): ServiceRegistry·BootSequence·GameServices·SystemsEnsurer·AimRotation·PlayerSpawnPoint·FollowPosition·SpawnSelection·WaveSequencer·**GameOutcome(승패 판정)**. **39 green.**
+- **PlayMode** (통합): 부트(서비스등록·멱등·영속·씬단독), Player(스폰·컨트롤·이동·무기장착/전환·사격·피해), Enemy(피해→사망), SpawnDirector(웨이브 스폰→전멸→다음→종료), **MapGenerator(시드 결정성·중앙비움·경계), Cover(엄폐 획득), ControlsManager.RecreateControls**. **21 green.**
+- **TDD 하네스 가이드: [Testing.md](Testing.md) · 작업 루프: [Workflow.md](Workflow.md)** — 새 기능은 여기 규칙대로(시임 먼저 → EditMode, 통합은 PlayMode).
 - 실행: Test Runner 창 또는 MCP `run_tests(mode, assembly_names)`.
 - 한계: navmesh 의존 적 AI 테스트는 테스트 씬에 navmesh 베이크 필요(`EnemyCombatTests` 참고).

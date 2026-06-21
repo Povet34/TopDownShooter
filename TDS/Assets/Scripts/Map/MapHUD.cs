@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using TMPro;
+using TDS.Core;
 
 /// <summary>
 /// 맵 씬 자족형 미니 HUD(TDS.Game). 플레이어 체력 / 현재 무기 탄약 / SpawnDirector 웨이브를 표시하고,
@@ -46,10 +47,16 @@ public class MapHUD : MonoBehaviour
 
         if (!ended)
         {
-            if (playerHealth != null && playerHealth.currentHealth <= 0)
-                EndGame("DEFEATED", new Color(0.85f, 0.27f, 0.27f));
-            else if (director != null && director.Finished && director.AliveCount <= 0)
-                EndGame("VICTORY", new Color(0.35f, 0.8f, 0.45f));
+            // 판정은 순수 GameOutcome(EditMode 테스트). 플레이어/디렉터 미존재 시 진행 중으로 간주.
+            int hp = playerHealth != null ? playerHealth.currentHealth : 1;
+            bool finished = director != null && director.Finished;
+            int alive = director != null ? director.AliveCount : 1;
+
+            switch (GameOutcome.Evaluate(hp, finished, alive))
+            {
+                case MatchState.Defeat: EndGame("DEFEATED", new Color(0.85f, 0.27f, 0.27f)); break;
+                case MatchState.Victory: EndGame("VICTORY", new Color(0.35f, 0.8f, 0.45f)); break;
+            }
         }
         else if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
         {

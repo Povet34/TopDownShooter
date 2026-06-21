@@ -21,7 +21,7 @@ run_tests(mode="EditMode", assembly_names=["TDS.Tests.EditMode"], include_failed
 run_tests(mode="PlayMode", assembly_names=["TDS.Tests.PlayMode"], init_timeout=120000, include_failed_tests=true)
 get_test_job(job_id, wait_timeout=60)   # 폴링
 ```
-또는 에디터 Test Runner 창. **현재 baseline: EditMode 32 / PlayMode 15 green.**
+또는 에디터 Test Runner 창. **현재 baseline: EditMode 39 / PlayMode 21 green (총 60).**
 
 > 새 테스트 파일을 추가하면 **`refresh_unity` 후 `editor/state`로 컴파일 완료 확인** → 그래야 Test Runner가 발견한다. (스크립트만 refresh로는 새 파일 import가 안 될 때가 있어 풀 refresh 권장.)
 
@@ -43,14 +43,14 @@ get_test_job(job_id, wait_timeout=60)   # 폴링
 
 ## 5. 현재 커버리지 맵
 
-✅ 커버됨: ServiceRegistry·GameServices·SystemsEnsurer·BootSequence·GameBootstrap·SceneEntryPoint·AimRotation·FollowPosition·PlayerSpawnPoint·SpawnSelection·WaveSequencer·Player(스폰/컨트롤/이동/무기/사격/피해)·Enemy(피해→사망)·SpawnDirector(웨이브 진행).
+✅ 커버됨: ServiceRegistry·GameServices·SystemsEnsurer·BootSequence·GameBootstrap·SceneEntryPoint·AimRotation·FollowPosition·PlayerSpawnPoint·SpawnSelection·WaveSequencer·**GameOutcome(승패)**·Player(스폰/컨트롤/이동/무기/사격/피해)·Enemy(피해→사망)·SpawnDirector(웨이브 진행)·**MapGenerator(결정성/중앙비움/경계)**·**Cover(엄폐 획득)**·**ControlsManager.RecreateControls**.
 
 ## 6. 갭 백로그 (우선순위순) — 채우면 체크
 
-- [ ] **MapGenerator** — 시드 결정성(같은 시드→같은 배치), 콘텐츠 수(장애물/엄폐), 중앙 스폰존 비움, MapBounds. (PlayMode; `navMeshSurface=null`이면 베이크 스킵돼 빠름.)
-- [ ] **Cover 시스템** — 엄폐 perk 적이 Cover를 찾아 유효 지점 점유. (PlayMode; 바닥+navmesh+Player+Cover 오브젝트.)
-- [ ] **GameOutcome (HUD 승패)** — `MapHUD`의 승/패/진행 판정을 순수 `GameOutcome`로 추출 → EditMode. (체력/Finished/생존수 → Playing|Win|Lose.)
-- [ ] **ControlsManager.RecreateControls** — 호출 시 새 인스턴스로 교체(옛 구독 폐기). (PlayMode 또는 IControlsService 통한 단위.)
+- [x] **MapGenerator** — 시드 결정성·중앙 스폰존 비움·MapBounds. (`MapGeneratorTests`, PlayMode 4. play 모드 `DestroySafe`=지연 Destroy라 `Find("MapRoot")`가 옛 루트를 주는 함정 → private `mapRoot` 필드 리플렉션으로 최신 루트 읽음. `generateOnStart`는 끄고 명시 시드.)
+- [x] **Cover 시스템** — 엄폐 perk 적이 Cover를 찾아 유효 지점 점유. (`CoverTests`, PlayMode 1. CoverPoint 마커는 런타임 생성, 변형 적은 `Resources/ST_RangedDefense`에서 로드.)
+- [x] **GameOutcome (HUD 승패)** — `MapHUD` 판정을 순수 `GameOutcome.Evaluate`로 추출. (`GameOutcomeTests`, EditMode 7. 패배 우선.)
+- [x] **ControlsManager.RecreateControls** — 호출 시 새 인스턴스로 교체. (`ControlsRecreateTests`, PlayMode 1.)
 - [ ] (낮음) SpawnTable.Pick 직접, MonsterSpawner 스폰 수, CameraFollow 추적, Enemy.FaceTarget 0벡터 가드.
 
 ## 7. 새 테스트 추가 체크리스트
