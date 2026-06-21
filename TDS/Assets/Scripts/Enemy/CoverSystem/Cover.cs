@@ -47,7 +47,18 @@ public class Cover : MonoBehaviour
     private void Start()
     {
         ComputeHeight();
+        TagRole();
         GenerateCoverPoints();
+    }
+
+    private void TagRole()
+    {
+        var mo = GetComponent<MapObject>();
+        if (mo == null) mo = gameObject.AddComponent<MapObject>();
+
+        bool breakable = GetComponent<Breakable>() != null;
+        bool movable = GetComponent<Movable>() != null;
+        mo.role = TDS.Core.MapObjectClassifier.Classify(CoverHeight, isCover: true, breakable, movable);
     }
 
     private void ComputeHeight()

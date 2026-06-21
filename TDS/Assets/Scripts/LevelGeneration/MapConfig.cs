@@ -42,6 +42,13 @@ public class MapConfig : ScriptableObject
     [Tooltip("엄폐 지점 오프셋(x=좌우, y=전후). 엄폐물 풋프린트에 맞춰 4지점이 박스 '밖'에 놓이도록. 예: sea_container ≈ (1.5, 2.8)")]
     public Vector2 coverPointOffset = new Vector2(1.5f, 1.5f);
 
+    [Header("배럴 (movable + breakable 프롭)")]
+    [Min(0)]
+    [Tooltip("총알에 밀리고 누적 피해로 부서지는 프롭 수")]
+    public int barrelCount = 6;
+    [Tooltip("배럴 프리팹. 비우면 프리미티브 실린더(≤0.9)로 대체")]
+    public GameObject barrelPrefab;
+
     [Header("바닥 머티리얼 (프리미티브 바닥용)")]
     [Tooltip("프리미티브 바닥에 입힐 머티리얼(사막 모래 등). 비우면 기본 흰색")]
     public Material floorMaterial;

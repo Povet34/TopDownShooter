@@ -89,10 +89,18 @@ public class Bullet : MonoBehaviour
         CreateImpactFx();
         ReturnBulletToPool();
 
-        IDamagable damagable = collision.gameObject.GetComponent<IDamagable>();
+        IDamagable damagable = collision.gameObject.GetComponentInParent<IDamagable>();
         damagable?.TakeDamage(bulletDamage);
 
         ApplyBulletImpactToEnemy(collision);
+        ApplyImpactToMovable(collision);
+    }
+
+    private void ApplyImpactToMovable(Collision collision)
+    {
+        Movable movable = collision.collider.GetComponentInParent<Movable>();
+        if (movable != null)
+            movable.Push(rb.linearVelocity.normalized * impactForce, collision.contacts[0].point);
     }
 
     private void ApplyBulletImpactToEnemy(Collision collision)

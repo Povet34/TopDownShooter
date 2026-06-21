@@ -70,6 +70,7 @@ public class MapGenerator : MonoBehaviour
         BuildPerimeterWalls(worldW, worldL, cell, wallH);
         ScatterObstacles(gw, gh, cell, wallH, origin, dens, clearR, rng);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
+        PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         BakeNavMesh();
 
         LastBounds = new MapBounds
@@ -190,6 +191,45 @@ public class MapGenerator : MonoBehaviour
         if (usingPrefab)
             foreach (var mc in go.GetComponentsInChildren<MeshCollider>())
                 mc.convex = false;
+
+        var mo = go.AddComponent<MapObject>();
+        mo.role = TDS.Core.MapObjectRole.Blocking;
+    }
+
+    private void PlaceBarrels(int gw, int gh, float cell, Vector3 origin, int count, float clearR, System.Random rng)
+    {
+        int placed = 0, attempts = 0, maxAttempts = Mathf.Max(1, count) * 20;
+        while (placed < count && attempts++ < maxAttempts)
+        {
+            int x = 1 + rng.Next(Mathf.Max(1, gw - 2));
+            int z = 1 + rng.Next(Mathf.Max(1, gh - 2));
+            Vector3 pos = CellCenter(x, z, cell, origin);
+            if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue;
+
+            GameObject go;
+            float h = 0.9f;
+            var prefab = config != null ? config.barrelPrefab : null;
+            if (prefab != null)
+            {
+                go = Instantiate(prefab, mapRoot);
+            }
+            else
+            {
+                go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                go.transform.SetParent(mapRoot, false);
+                go.transform.localScale = new Vector3(0.8f, h * 0.5f, 0.8f); // 실린더 높이 = scale.y*2
+            }
+            go.name = "Barrel";
+            Vector3 p = pos;
+            p.y = prefab != null ? 0f : h * 0.5f;
+            go.transform.localPosition = p;
+
+            go.AddComponent<Movable>();
+            go.AddComponent<Breakable>();
+            var mo = go.AddComponent<MapObject>();
+            mo.role = TDS.Core.MapObjectClassifier.Classify(h, isCover: false, breakable: true, movable: true);
+            placed++;
+        }
     }
 
     private void PlaceCover(int gw, int gh, float cell, Vector3 origin,

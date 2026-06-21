@@ -179,7 +179,8 @@
 - 📋 그 다음(사용자 우선순위, 2026-06-21):
   1. **맵 오브젝트 용도/범위** —
      - ✅ **적 끼임 방지(안전망)**: 순수 `StuckTracker`(EditMode 5) + `Enemy.UpdateStuckRecovery` — 일정 시간(1.5s) 진전 없으면 가까운 navmesh 바닥으로 `agent.Warp` + 재경로. 원인(낮은 장애물 위 베이크/회피 교착) 불문. in-game: y=1.5로 올린 적을 y=0으로 복구. (참고: 낮은 cover/장애물은 cover 높이 작업 + navmesh 카빙으로 대부분 해소, 복구는 잔여 케이스 안전망.)
-     - 📋 **오브젝트 종류 분류(다음)**: cover(은폐)·hide·**breakable**(피격 누적 파괴)·**movable**(총알/특정 공격에 밀림). `MapObject`(역할 enum) 컴포넌트 + 맵 생성 시 부여 + breakable(Health+파편)·movable(Rigidbody+힘) 행동. 큰 슬라이스 — 별도 진행.
+     - ✅ **오브젝트 종류 분류 (구현 완료)**: 순수 `MapObjectClassifier`(높이·속성→역할 플래그, EditMode 4) + `MapObjectRole`(Blocking/Cover/Hide/Breakable/Movable). `MapObject` 태그(Cover가 측정 높이로 자동 분류, 맵 생성이 장애물·배럴 태깅). **breakable**=`Breakable`(IDamagable, 순수 `BreakableHealth` EditMode 4, 누적 피해→파편+제거), **movable**=`Movable`(Rigidbody+NavMeshObstacle carving, Bullet이 밀기). 맵 생성에 배럴(movable+breakable) 추가. PlayMode 2(파괴/밀림). in-game: 배럴 +4.9 밀림 + 누적 45피해 파괴, 분류 Cover11/Hide3/Breakable6/Movable6.
+       - (잔여) 배럴이 다른 오브젝트와 겹쳐 스폰 시 물리로 튕겨 정착(시작 시 살짝 떠올랐다 내려옴) — 배치 겹침 회피는 추후 폴리시.
   2. **적 패트롤 + AI 고도화** (인지 §6.2 + FSM §6.3 + 패트롤 스폰).
   3. **FoV** (§6.6) — 시야 밖은 어둡게(적 안 보임, 맵은 회색), 발사 시 주변 밝아짐, 추후 인지력 연동. 고도화 기획은 md에 적어두고 추가 검토.
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
