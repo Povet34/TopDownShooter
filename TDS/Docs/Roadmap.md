@@ -190,6 +190,9 @@
      - **확정 결정(사용자)**: ① 웨이브 대체(상시 로밍) ② 플레이어 쪽으로 대략 전진(추격 아님) ③ 디스폰 = 순찰 상태 + 가장자리 도달.
      - ✅ **순수 시임/테스트 (2026-06-22)**: `SquadRoam`(`EdgeSpawnPoint`·`AdvanceDirectionToward`·`IsAtEdge`·`ShouldDespawn`·`SquadsToSpawn`, EditMode 10) → **EditMode 185 green**.
      - 📋 **남음 = 글루**: `SpawnDirector` 상시모드(가장자리 스폰+N유지) · `Squad` 디스폰(순찰+가장자리) · `AdvancePatrol` 방향을 플레이어로 · 맵 bounds 전달 · in-game 검증 + PlayMode 통합.
+  6. 🔧 **소음원 2종 — 총구음/피격음 (기획 2026-06-22)** — 순찰·경계 상태 적의 소리 반응을 2채널로. 총구음(발사 위치, 큼) 들리면 그쪽 우선 → 못 들었어도 **피격음(총알이 땅에 박힌 위치, 작음)** 들리면 그 근처로 가 플레이어 수색. 자세히 [Wiki §6.2.1](Wiki.md).
+     - ✅ **순수 시임/테스트 (2026-06-22)**: `NoiseModel.Investigate`(총구음>피격음 우선, target/kind 결정) + `NoiseKind`. EditMode 4 추가 → **EditMode 189 green**.
+     - 📋 **남음 = 글루**: `NoisePing`을 muzzle/impact 2채널로 · `Bullet`이 비-적 충돌 시 피격 핑 발신 · `Enemy.HeardNoise`가 두 핑 → `Investigate` · in-game 검증 + PlayMode 통합.
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.
