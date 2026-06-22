@@ -126,10 +126,8 @@ public class SpawnDirector : MonoBehaviour
                 if (def == null || def.prefab == null)
                     continue;
 
-                // 분대 중심 주변에 황금각 나선으로 균등 분산(겹쳐 쌓이지 않게)
-                float ga = i * 2.39996323f; // 황금각(rad)
-                float r = squadClusterRadius * Mathf.Sqrt((i + 0.5f) / size);
-                Vector3 pos = center + new Vector3(Mathf.Cos(ga) * r, 0f, Mathf.Sin(ga) * r);
+                // 분대 중심 주변에 황금각 나선으로 균등 분산(겹쳐 쌓이지 않게) — 순찰 대형과 같은 수식 공유.
+                Vector3 pos = TDS.Core.SquadFormation.SpiralPoint(center, i, size, squadClusterRadius);
 
                 if (NavMesh.SamplePosition(pos, out var hit, 3f, NavMesh.AllAreas))
                     pos = hit.position; // 작은 샘플 반경 — 멀리 있는 한 점으로 뭉치지 않게

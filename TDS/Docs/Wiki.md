@@ -34,7 +34,7 @@
 - **`SceneEntryPoint`**: 씬에 하나 두면 진입 시 자동으로 EnsureSystems → **어느 씬이든 단독 Play/테스트 가능**(Boot 씬 강제 없음).
 - **Systems 프리팹**(`Resources/Systems`): 전역 매니저 — TimeManager·MissionManager·GameManager·ObjectPool·ControlsManager (각각 인터페이스 `IClockService`/`IMissionService`/`IGameStateService`/`IObjectPoolService`/`IControlsService`로 등록). UI/카메라는 씬 종속이라 제외.
 
-> 다이어그램(스폰 파이프라인): `입력(난이도/시간/어그로) → 스폰 디렉터(언제·얼마나) → 스폰 테이블(무엇·가중치) → 스폰 지점(어디) → 군집 스포너(어떻게) → navmesh 활성 군집 → (개체수 피드백)`. 현재는 **스폰 테이블 + 스포너 + 기본 웨이브 디렉터(클리어/타임아웃 진행)** 까지 구현, **긴장도(intensity) 페이싱/군집(Pack)/인지(FSM)** 는 §6 추후.
+> 다이어그램(스폰 파이프라인): `입력(난이도/시간/어그로) → 스폰 디렉터(언제·얼마나) → 스폰 테이블(무엇·가중치) → 스폰 지점(어디) → 군집 스포너(어떻게) → navmesh 활성 군집 → (개체수 피드백)`. 현재는 **스폰 테이블 + 스포너 + 웨이브 디렉터(클리어/타임아웃) + 군집 분대 스폰(Squad) + 시야/소음 인지(PerceptionFsm)** 까지 구현(§6.3.1), **긴장도(intensity) 페이싱** 은 §6 추후.
 
 ---
 
@@ -139,7 +139,16 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 ```
 - 멤버는 각자 콘으로 감지(분산 센서). 한 놈이라도 발각 → 공용 칠판 `knownPlayerPosition`에 기록 → **전원 교전**.
 - 전원 시야 상실 + T초 경과 → 위치 낡음 → 경계(마지막 위치 수색) → 순찰 복귀.
-- 구현 시 순수 `PackFsm`(전이 규칙, 테스트) + MonsterPack 통합.
+
+#### 6.3.1 적 분대(Squad) — **구현 완료** (커밋 `fd2d7ce`·`bdc61cd`·`8cb0e21`·`e858475`)
+개별 적의 시야/이동 AI(§6.2 `PerceptionFsm`)는 그대로 두고, **"교전 의식 공유" + "함께 로밍" 레이어만** 얹은 경량 구현(형제 프로젝트 `MonsterPack`의 앵커+공유 PackState 개념을 TDS 적별 perception에 맞게 축소).
+- **`Squad`**(`Scripts/Enemy/Squad.cs`, MonoBehaviour 글루): `SpawnDirector`가 군집 스폰 시 분대원을 `Register`. 매 틱 — 멤버 중 한 명이라도 `SeesPlayer()` **또는** 최근 누군가 피격(`OnMemberHit` → `hitAlertDuration` 4s) → **전원 `SquadEngage()`**(시야 밖이라도 즉시 교전 + 시야상실 타이머 리셋). 트리거 사라지면 각 적이 제 lose-sight 타이머로 개별 이탈. `health<=0` 멤버는 `PruneDead`로 제거, 전멸 시 자기 파괴.
+- **함께 로밍(앵커-추종)**: 비교전 시 분대가 공용 **앵커**를 천천히 전진(`patrolAdvance` 8). 멤버는 `Enemy.GetPatrolDestination`이 `TryGetPatrolPoint`로 받은 **앵커 주변 대형 위치**를 향함. 가장 뒤처진 멤버까지 모여야(낙오 방지) 앵커가 다음 칸으로 전진 → 뭉쳐 다님. 방향은 랜덤 ±35° 틀고, navmesh 밖이면 반대로.
+- **`Enemy` 연동**: `Enemy.Squad` 프로퍼티(null=단독), `SquadEngage()`(`perception.ForceEngage()`+`EnterBattleMode`), `GetHit`에서 `Squad?.OnMemberHit()`, `GetPatrolDestination`이 분대 대형점 우선. 디버그 라벨에 `[분대]`.
+- **순수 시임 `SquadFormation`**(`TDS.Core`, EditMode 9): 분대 대형 수학을 한 곳으로 모음(군집 스폰·순찰 대형이 같은 공식을 쓰던 중복 제거).
+  - `SpiralOffset(index, count, radius)` — **황금각 나선** 분산(겹쳐쌓임 방지, 반경 단조증가·항상 radius 미만). `SpawnDirector` 군집 스폰 + `Squad` 순찰 대형이 공유.
+  - `AllGathered(positions, anchor, radius, slack)` — 가장 뒤처진 멤버까지 (radius+slack) 안인가 → 앵커 전진 게이트.
+- **맵 확장**: 다중 로밍 분대 수용 위해 `MapConfig_Default` 그리드 16×16→26×26(104×104 월드), 엄폐 20·배럴 10.
 
 ### 6.5 교전 이동 — 시야-회피 유틸리티 스코어링 `BattleMover` (사용자 §12)
 > **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨. 고정 슬롯 포위(균일) 아님 — 창발적.

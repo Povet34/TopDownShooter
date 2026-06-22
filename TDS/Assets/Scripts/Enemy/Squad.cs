@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using TDS.Core;
 
 /// <summary>
 /// 분대(Squad) — 한 곳에서 뭉쳐 스폰된 적들이 "의식을 공유"한다(§6.2 그룹 인지).
@@ -95,11 +96,7 @@ public class Squad : MonoBehaviour
         }
 
         // 가장 뒤처진 멤버까지 앵커 근처에 모였을 때만 전진(낙오 방지 → 뭉침 유지)
-        float farthest = 0f;
-        for (int i = 0; i < members.Count; i++)
-            if (members[i] != null)
-                farthest = Mathf.Max(farthest, Flat(members[i].transform.position - patrolAnchor).magnitude);
-        if (farthest > patrolFormationRadius + 3f)
+        if (!SquadFormation.AllGathered(MemberPositions(), patrolAnchor, patrolFormationRadius))
             return; // 아직 모이는 중 — 앵커 정지(뒤처진 멤버 대기)
 
         // 방향을 약간 틀고 한 칸 전진(막히면 반대로)
@@ -121,11 +118,7 @@ public class Squad : MonoBehaviour
         }
 
         int idx = members.IndexOf(m);
-        if (idx < 0) idx = 0;
-        int n = Mathf.Max(1, members.Count);
-        float ga = idx * 2.39996323f;
-        float rad = patrolFormationRadius * Mathf.Sqrt((idx + 0.5f) / n);
-        Vector3 p = patrolAnchor + new Vector3(Mathf.Cos(ga) * rad, 0f, Mathf.Sin(ga) * rad);
+        Vector3 p = SquadFormation.SpiralPoint(patrolAnchor, idx, members.Count, patrolFormationRadius);
         if (NavMesh.SamplePosition(p, out var hit, 3f, NavMesh.AllAreas))
             p = hit.position;
         point = p;
@@ -140,7 +133,15 @@ public class Squad : MonoBehaviour
         return n > 0 ? c / n : transform.position;
     }
 
-    private static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+    // 살아있는 멤버의 현재 위치(전진 게이트 계산용).
+    private List<Vector3> MemberPositions()
+    {
+        var list = new List<Vector3>(members.Count);
+        for (int i = 0; i < members.Count; i++)
+            if (members[i] != null)
+                list.Add(members[i].transform.position);
+        return list;
+    }
 
     private void PruneDead()
     {
