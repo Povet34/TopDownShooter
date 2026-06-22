@@ -186,10 +186,11 @@
   3. ✅ **FoV** (§6.6, 셰이더 마스크) — 시야 콘+사거리+눈높이 차폐로 적 숨김(`ViewCone`/`FieldOfView`) + 지면 fog 쿼드(`VisionMask`+`VisionFog` 셰이더)로 시야 밖 회색, 발사 시 확대. EditMode 9 + PlayMode 5, 마스크 텍셀·명도 검증. **추후(별도, §6.6)**: 광원 보유 적(횃불) 벽 뒤 가시, 낮/밤 콘 스케일, 플레이어 소리 인지, 적 인지(§6.2) 대칭 통합, 마스크 성능 최적화(프레임 분산).
   4. ✅ **적 분대(Squad) — 군집 스폰 + 공유 인지 + 함께 로밍** (`fd2d7ce`·`b9bab3a`·`bdc61cd`·`8cb0e21`·`e858475`, 2026-06-22): `SpawnDirector`가 군집(황금각 나선)으로 스폰 → `Squad`가 "교전 의식 공유"(한 명 발각/피격 시 전원 `SquadEngage`, hitAlert 4s) + "앵커-추종 함께 로밍"(낙오 없을 때만 앵커 전진)을 얹음. 개별 `PerceptionFsm`은 그대로(레이어만 추가). NavMesh/Quaternion 에러 플러드 수정(죽은/off-mesh agent의 perception churn), per-enemy perception gizmo, off-navmesh 적 recover. 다중 분대 위해 맵 64→104 확장. 자세히 §6.3.1.
      - **부채 정리(TDD/문서 백필)** (2026-06-22): 분대 작업이 doc-first+TDD 루프를 건너뛰어, 사후 보강. 대형/순찰 수학을 순수 `SquadFormation`(`SpiralOffset`·`SpiralPoint`·`AllGathered`)으로 추출 — `SpawnDirector` 군집 + `Squad` 순찰의 **중복 황금각 공식 제거**. EditMode 9 추가(총 **EditMode 175 green**). `Squad`/`SpawnDirector` 글루를 시임 호출로 교체. in-game 재검증(분대 1·적 4 스폰, 콘솔 0). Wiki §6.3.1 신설.
-  5. 🔧 **상시 로밍 분대 디렉터 (기획 2026-06-22)** — WAVE 대체. 분대가 **맵 가장자리에서 스폰 → 플레이어 쪽으로 대략 전진(순찰) → 순찰 상태로 반대편 가장자리 도달 시 디스폰 → 새 가장자리에서 리스폰**(상시 `maxSquads` 유지). 자세히 [Wiki §6.3.2](Wiki.md).
+  5. ✅ **상시 로밍 분대 디렉터 (기획+구현 2026-06-22)** — WAVE 대체. 분대가 **맵 가장자리에서 스폰 → 플레이어 쪽으로 대략 전진(순찰) → 순찰 상태로 반대편 가장자리 도달 시 디스폰 → 새 가장자리에서 리스폰**(상시 `maxSquads` 유지). 자세히 [Wiki §6.3.2](Wiki.md).
      - **확정 결정(사용자)**: ① 웨이브 대체(상시 로밍) ② 플레이어 쪽으로 대략 전진(추격 아님) ③ 디스폰 = 순찰 상태 + 가장자리 도달.
-     - ✅ **순수 시임/테스트 (2026-06-22)**: `SquadRoam`(`EdgeSpawnPoint`·`AdvanceDirectionToward`·`IsAtEdge`·`ShouldDespawn`·`SquadsToSpawn`, EditMode 10) → **EditMode 185 green**.
-     - 📋 **남음 = 글루**: `SpawnDirector` 상시모드(가장자리 스폰+N유지) · `Squad` 디스폰(순찰+가장자리) · `AdvancePatrol` 방향을 플레이어로 · 맵 bounds 전달 · in-game 검증 + PlayMode 통합.
+     - ✅ **순수 시임/테스트**: `SquadRoam`(`EdgeSpawnPoint`·`AdvanceDirectionToward`·`IsAtEdge`·`ShouldDespawn`·`SquadsToSpawn`, EditMode 10).
+     - ✅ **글루**: `SpawnDirector` `mode=Roaming`(가장자리 스폰+`maxSquads` 유지, `MapGenerator.LastBounds`) · `Squad.ConfigureRoaming`(플레이어로 전진 + 순찰·가장자리 디스폰) · 로밍 멤버 `idleTime` 단축(프리팹 기본 60s라 순찰이 멈추던 것) · `MapHUD` 로밍 라벨(`enemies: N`) · 씬 `Map_Generated` 배선(ST_Mixed, maxSquads 3).
+     - ✅ **in-game 검증**: 분대 3개 가장자리 스폰→플레이어로 거리 감소(100→72)→강제 제거 시 3개 리스폰, 콘솔 0, **EditMode 189 green**. (추후 선택: PlayMode 통합 · 풀 반납.)
   6. 🔧 **소음원 2종 — 총구음/피격음 (기획 2026-06-22)** — 순찰·경계 상태 적의 소리 반응을 2채널로. 총구음(발사 위치, 큼) 들리면 그쪽 우선 → 못 들었어도 **피격음(총알이 땅에 박힌 위치, 작음)** 들리면 그 근처로 가 플레이어 수색. 자세히 [Wiki §6.2.1](Wiki.md).
      - ✅ **순수 시임/테스트 (2026-06-22)**: `NoiseModel.Investigate`(총구음>피격음 우선, target/kind 결정) + `NoiseKind`. EditMode 4 추가 → **EditMode 189 green**.
      - 📋 **남음 = 글루**: `NoisePing`을 muzzle/impact 2채널로 · `Bullet`이 비-적 충돌 시 피격 핑 발신 · `Enemy.HeardNoise`가 두 핑 → `Investigate` · in-game 검증 + PlayMode 통합.

@@ -29,8 +29,28 @@ public class Squad : MonoBehaviour
     private Vector3 patrolDir;
     private bool patrolInit;
 
+    // 상시 로밍(§6.3.2) — 디렉터가 ConfigureRoaming으로 켠다. 안 켜면 기존(웨이브) 동작 유지.
+    private bool roaming;
+    private Vector3 mapCenter;
+    private float mapHalfExtent;
+    private float despawnMargin = 4f;
+    private bool hasLeftEdge; // 스폰 가장자리를 한 번 벗어나야 반대편 가장자리에서 디스폰(스폰 즉시 디스폰 방지)
+    private Transform player;
+
     public IReadOnlyList<Enemy> Members => members;
     public bool Engaged { get; private set; }
+
+    /// <summary>
+    /// 상시 로밍 모드 켜기(§6.3.2): 플레이어 쪽으로 순찰 전진 + 순찰 상태로 맵 가장자리 도달 시 디스폰.
+    /// halfExtent ≤ 0이면 로밍 비활성(웨이브 동작).
+    /// </summary>
+    public void ConfigureRoaming(Vector3 center, float halfExtent, float despawnEdgeMargin)
+    {
+        roaming = halfExtent > 0f;
+        mapCenter = center;
+        mapHalfExtent = halfExtent;
+        despawnMargin = despawnEdgeMargin;
+    }
 
     public void Register(Enemy e)
     {
@@ -72,6 +92,8 @@ public class Squad : MonoBehaviour
         Engaged = trigger;
         if (!trigger)
         {
+            if (roaming && TryDespawnAtEdge()) // 순찰 상태로 반대편 가장자리 도달 → 디스폰
+                return;
             AdvancePatrol(); // 비교전 시 분대 함께 로밍(앵커 전진 → 멤버는 GetPatrolDestination으로 따라옴)
             return;
         }
@@ -99,13 +121,53 @@ public class Squad : MonoBehaviour
         if (!SquadFormation.AllGathered(MemberPositions(), patrolAnchor, patrolFormationRadius))
             return; // 아직 모이는 중 — 앵커 정지(뒤처진 멤버 대기)
 
-        // 방향을 약간 틀고 한 칸 전진(막히면 반대로)
-        patrolDir = Quaternion.AngleAxis(Random.Range(-35f, 35f), Vector3.up) * patrolDir;
+        // 로밍이면 플레이어 쪽으로 대략 전진(좌우 jitter), 아니면 기존 랜덤 워크.
+        if (roaming && PlayerPos(out var pp))
+            patrolDir = SquadRoam.AdvanceDirectionToward(patrolAnchor, pp, Random.Range(-35f, 35f));
+        else
+            patrolDir = Quaternion.AngleAxis(Random.Range(-35f, 35f), Vector3.up) * patrolDir;
+
         Vector3 next = patrolAnchor + patrolDir * patrolAdvance;
         if (NavMesh.SamplePosition(next, out var hit, 5f, NavMesh.AllAreas))
             patrolAnchor = hit.position;
         else
             patrolDir = -patrolDir;
+    }
+
+    // 순찰 상태로 맵 가장자리(스폰 후 한 번 벗어났던)에서 디스폰. 디스폰했으면 true.
+    private bool TryDespawnAtEdge()
+    {
+        bool atEdge = SquadRoam.IsAtEdge(Centroid(), mapCenter, mapHalfExtent, despawnMargin);
+        if (!atEdge)
+            hasLeftEdge = true; // 안쪽으로 들어옴 — 이제부터 가장자리 도달 시 디스폰 가능
+        else if (hasLeftEdge && SquadRoam.ShouldDespawn(patrolling: true, atEdge: true))
+        {
+            Despawn();
+            return true;
+        }
+        return false;
+    }
+
+    // 멤버 전부 + 분대 오브젝트 제거(맵 끝까지 순찰해 사라짐). 디렉터가 빈자리를 새 분대로 채운다.
+    private void Despawn()
+    {
+        for (int i = members.Count - 1; i >= 0; i--)
+            if (members[i] != null)
+                Destroy(members[i].transform.root.gameObject);
+        members.Clear();
+        Destroy(gameObject);
+    }
+
+    private bool PlayerPos(out Vector3 pos)
+    {
+        if (player == null)
+        {
+            var go = GameObject.FindWithTag("Player");
+            if (go != null) player = go.transform;
+        }
+        if (player != null) { pos = player.position; return true; }
+        pos = default;
+        return false;
     }
 
     /// <summary>멤버의 순찰 목표 = 앵커 주변 대형 위치(황금각 분산). 분대원 GetPatrolDestination이 사용.</summary>

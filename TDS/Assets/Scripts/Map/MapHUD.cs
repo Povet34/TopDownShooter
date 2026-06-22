@@ -41,9 +41,11 @@ public class MapHUD : MonoBehaviour
         }
 
         if (director != null)
-            waveText.text = director.Finished
-                ? "ALL WAVES CLEARED"
-                : $"WAVE  {director.CurrentWaveNumber} / {director.TotalWaves}     enemies: {director.AliveCount}";
+            waveText.text = director.IsRoaming
+                ? $"enemies: {director.AliveCount}"
+                : director.Finished
+                    ? "ALL WAVES CLEARED"
+                    : $"WAVE  {director.CurrentWaveNumber} / {director.TotalWaves}     enemies: {director.AliveCount}";
 
         if (!ended)
         {
