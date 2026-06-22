@@ -128,6 +128,7 @@
 - **D2. 적 배치 = 스포너로 완전 분리** ✅. 적을 LevelPart에서 빼고 `MonsterDef`/`SpawnTable` + 배치형 `MonsterSpawner`로만 스폰.
 - **D3. 시작 지점 = P0 맵/씬 디커플링부터** ✅.
 - **D4. 사운드 = 보류** ⏸️. P0/맵 작업 우선. (Phase D는 뒤로.)
+- **D7. 스폰 페이싱 = WAVE → 상시 로밍 분대** ✅ (확정 2026-06-22). 웨이브(클리어/타임아웃)를 버리고, 분대가 맵 가장자리에서 스폰돼 플레이어 쪽으로 순찰하다 반대편 가장자리에서 디스폰·리스폰하는 상시 흐름. 시임/테스트 완료, 글루는 다음 슬라이스(§ 진행 상태의 "상시 로밍 분대 디렉터", [Wiki §6.3.2](Wiki.md)).
 - **남은 결정(추후)**: 시드 지속성(씬 저자 vs 런타임 저장) — 미래 "반출" 메타 설계 시 확정.
 
 ### 진행 상태
@@ -185,6 +186,10 @@
   3. ✅ **FoV** (§6.6, 셰이더 마스크) — 시야 콘+사거리+눈높이 차폐로 적 숨김(`ViewCone`/`FieldOfView`) + 지면 fog 쿼드(`VisionMask`+`VisionFog` 셰이더)로 시야 밖 회색, 발사 시 확대. EditMode 9 + PlayMode 5, 마스크 텍셀·명도 검증. **추후(별도, §6.6)**: 광원 보유 적(횃불) 벽 뒤 가시, 낮/밤 콘 스케일, 플레이어 소리 인지, 적 인지(§6.2) 대칭 통합, 마스크 성능 최적화(프레임 분산).
   4. ✅ **적 분대(Squad) — 군집 스폰 + 공유 인지 + 함께 로밍** (`fd2d7ce`·`b9bab3a`·`bdc61cd`·`8cb0e21`·`e858475`, 2026-06-22): `SpawnDirector`가 군집(황금각 나선)으로 스폰 → `Squad`가 "교전 의식 공유"(한 명 발각/피격 시 전원 `SquadEngage`, hitAlert 4s) + "앵커-추종 함께 로밍"(낙오 없을 때만 앵커 전진)을 얹음. 개별 `PerceptionFsm`은 그대로(레이어만 추가). NavMesh/Quaternion 에러 플러드 수정(죽은/off-mesh agent의 perception churn), per-enemy perception gizmo, off-navmesh 적 recover. 다중 분대 위해 맵 64→104 확장. 자세히 §6.3.1.
      - **부채 정리(TDD/문서 백필)** (2026-06-22): 분대 작업이 doc-first+TDD 루프를 건너뛰어, 사후 보강. 대형/순찰 수학을 순수 `SquadFormation`(`SpiralOffset`·`SpiralPoint`·`AllGathered`)으로 추출 — `SpawnDirector` 군집 + `Squad` 순찰의 **중복 황금각 공식 제거**. EditMode 9 추가(총 **EditMode 175 green**). `Squad`/`SpawnDirector` 글루를 시임 호출로 교체. in-game 재검증(분대 1·적 4 스폰, 콘솔 0). Wiki §6.3.1 신설.
+  5. 🔧 **상시 로밍 분대 디렉터 (기획 2026-06-22)** — WAVE 대체. 분대가 **맵 가장자리에서 스폰 → 플레이어 쪽으로 대략 전진(순찰) → 순찰 상태로 반대편 가장자리 도달 시 디스폰 → 새 가장자리에서 리스폰**(상시 `maxSquads` 유지). 자세히 [Wiki §6.3.2](Wiki.md).
+     - **확정 결정(사용자)**: ① 웨이브 대체(상시 로밍) ② 플레이어 쪽으로 대략 전진(추격 아님) ③ 디스폰 = 순찰 상태 + 가장자리 도달.
+     - ✅ **순수 시임/테스트 (2026-06-22)**: `SquadRoam`(`EdgeSpawnPoint`·`AdvanceDirectionToward`·`IsAtEdge`·`ShouldDespawn`·`SquadsToSpawn`, EditMode 10) → **EditMode 185 green**.
+     - 📋 **남음 = 글루**: `SpawnDirector` 상시모드(가장자리 스폰+N유지) · `Squad` 디스폰(순찰+가장자리) · `AdvancePatrol` 방향을 플레이어로 · 맵 bounds 전달 · in-game 검증 + PlayMode 통합.
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.

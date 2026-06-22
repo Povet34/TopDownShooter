@@ -150,6 +150,17 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
   - `AllGathered(positions, anchor, radius, slack)` — 가장 뒤처진 멤버까지 (radius+slack) 안인가 → 앵커 전진 게이트.
 - **맵 확장**: 다중 로밍 분대 수용 위해 `MapConfig_Default` 그리드 16×16→26×26(104×104 월드), 엄폐 20·배럴 10.
 
+#### 6.3.2 상시 로밍 분대 디렉터 — **기획 확정(2026-06-22), 순수 시임/테스트 완료 · 글루 미구현**
+> WAVE(클리어/타임아웃) 모델을 **대체**한다(결정 D7). 맵에 분대가 상시 흐르는 "방랑 순찰대" 페이싱.
+- **흐름**: 디렉터가 목표 수(`maxSquads`)만큼 분대를 유지 → 새 분대는 **맵 가장자리에서 스폰** → **플레이어 쪽으로 대략 전진**(발각 전엔 추격이 아니라 "그쪽으로 순찰", 좌우 jitter로 직선적이지 않게) → 지나가다 발각/피격되면 §6.3.1 분대 교전 → **순찰 상태로 맵 반대편 가장자리에 닿으면 디스폰** → 디렉터가 빈자리를 새 가장자리 분대로 **리스폰**. (교전 중이면 가장자리여도 안 사라짐.)
+- **확정 결정(2026-06-22, 사용자)**: ① 스폰 페이싱 = **웨이브 대체, 상시 로밍**. ② 로밍 방향 = **플레이어 쪽으로 대략 전진**(추격 아님). ③ 디스폰 = **순찰 상태 + 가장자리 도달**.
+- **순수 시임 `SquadRoam`**(`TDS.Core`, EditMode 10): 정사각 맵(center+halfExtent) 기준 디렉터 수학.
+  - `EdgeSpawnPoint(center, halfExtent, perimeterT)` — 경계 둘레의 한 점(항상 경계 위, t 둘레비율로 래핑).
+  - `AdvanceDirectionToward(from, toward, jitterDeg)` — 플레이어 쪽 평면 방향(정규화, 0벡터→forward 폴백). `Squad.AdvancePatrol`의 랜덤방향을 이걸로 대체 예정.
+  - `IsAtEdge(centroid, center, halfExtent, margin)` — 분대 중심이 안쪽 사각 밖인가.
+  - `ShouldDespawn(patrolling, atEdge)` = `patrolling && atEdge`. `SquadsToSpawn(current, max)` = 부족분.
+- **미구현(다음 슬라이스 = 글루)**: ① `SpawnDirector`를 상시 로밍 모드로(웨이브 시퀀스 대체 또는 모드 플래그) — `SquadRoam.EdgeSpawnPoint`로 가장자리 스폰 + `SquadsToSpawn`으로 N 유지. ② `Squad`에 디스폰 — `Squad.Engaged==false`(순찰) + `SquadRoam.IsAtEdge`면 `ShouldDespawn` → 멤버 풀 반납/파괴. ③ `Squad.AdvancePatrol` 방향을 `AdvanceDirectionToward(anchor, playerPos, jitter)`로. ④ 맵 bounds(center/halfExtent)를 디렉터에 전달(`MapGenerator`/`MapConfig`에서). ⑤ in-game 검증(상시 N개 흐름, 가장자리 디스폰/리스폰, 콘솔 0) + PlayMode 통합 1~2.
+
 ### 6.5 교전 이동 — 시야-회피 유틸리티 스코어링 `BattleMover` (사용자 §12)
 > **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨. 고정 슬롯 포위(균일) 아님 — 창발적.
 > **구현됨**: 순수 `BattleMover`(FrontExposure·Score·PickEngagePosition·**ViewAvoidWeight** 그레이스 게이트, EditMode 13).
