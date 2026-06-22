@@ -92,10 +92,11 @@ public class Squad : MonoBehaviour
         Engaged = trigger;
         if (!trigger)
         {
-            if (roaming && TryDespawnAtEdge()) // 순찰 상태로 반대편 가장자리 도달 → 디스폰
-                return;
-            AdvancePatrol(); // 비교전 시 분대 함께 로밍(앵커 전진 → 멤버는 GetPatrolDestination으로 따라옴)
-            return;
+            switch (CurrentIntent())
+            {
+                case SquadIntent.Despawning: Despawn(); return;        // 순찰 상태로 반대편 가장자리 도달
+                default:                     AdvancePatrol(); return;  // Patrolling — 함께 로밍(앵커 전진)
+            }
         }
 
         // ForceEngage는 시야 상실 타이머를 리셋하므로, 트리거가 유지되는 한 전원 교전을 유지한다.
@@ -134,18 +135,13 @@ public class Squad : MonoBehaviour
             patrolDir = -patrolDir;
     }
 
-    // 순찰 상태로 맵 가장자리(스폰 후 한 번 벗어났던)에서 디스폰. 디스폰했으면 true.
-    private bool TryDespawnAtEdge()
+    // 이번 틱 분대 의사결정(순수 SquadDecision). 비교전 호출 — 가장자리 latch(hasLeftEdge)도 여기서 갱신.
+    private SquadIntent CurrentIntent()
     {
-        bool atEdge = SquadRoam.IsAtEdge(Centroid(), mapCenter, mapHalfExtent, despawnMargin);
-        if (!atEdge)
+        bool atEdge = roaming && SquadRoam.IsAtEdge(Centroid(), mapCenter, mapHalfExtent, despawnMargin);
+        if (roaming && !atEdge)
             hasLeftEdge = true; // 안쪽으로 들어옴 — 이제부터 가장자리 도달 시 디스폰 가능
-        else if (hasLeftEdge && SquadRoam.ShouldDespawn(patrolling: true, atEdge: true))
-        {
-            Despawn();
-            return true;
-        }
-        return false;
+        return SquadDecision.Resolve(Engaged, roaming, hasLeftEdge, atEdge);
     }
 
     // 멤버 전부 + 분대 오브젝트 제거(맵 끝까지 순찰해 사라짐). 디렉터가 빈자리를 새 분대로 채운다.
@@ -214,5 +210,89 @@ public class Squad : MonoBehaviour
             if (dead)
                 members.RemoveAt(i);
         }
+    }
+
+    // 상태 변경 없이 현재 의도만 읽기(기즈모용).
+    private SquadIntent PeekIntent(out bool atEdge)
+    {
+        atEdge = roaming && SquadRoam.IsAtEdge(Centroid(), mapCenter, mapHalfExtent, despawnMargin);
+        return SquadDecision.Resolve(Engaged, roaming, hasLeftEdge, atEdge);
+    }
+
+    // 분대가 "무엇을 하려는지" 한눈에: 의도색 앵커 구슬 + 전진 화살표 + 대형 목표점 + (로밍) 디스폰 경계·플레이어 라인.
+    // 게임뷰/씬뷰 Gizmos 토글로 플레이 중에도 보인다. 그리는 결정은 SquadDecision(테스트됨)과 동일.
+    private void OnDrawGizmos()
+    {
+        if (!Application.isPlaying || members.Count == 0)
+            return;
+
+        var intent = PeekIntent(out bool atEdge);
+        Color c;
+        switch (intent)
+        {
+            case SquadIntent.Engaging:   c = Color.red; break;
+            case SquadIntent.Despawning: c = Color.yellow; break;
+            default:                     c = Color.cyan; break; // Patrolling
+        }
+
+        Vector3 centroid = Centroid();
+        Vector3 anchor = patrolInit ? patrolAnchor : centroid;
+        Vector3 up = Vector3.up * 0.4f;
+
+        // 앵커(분대가 모이려는 지점) + 분대 중심→앵커 라인
+        Gizmos.color = c;
+        Gizmos.DrawSphere(anchor + up, 0.5f);
+        Gizmos.color = new Color(c.r, c.g, c.b, 0.5f);
+        Gizmos.DrawLine(centroid + up, anchor + up);
+        Gizmos.DrawWireSphere(anchor + up, patrolFormationRadius);
+
+        // 멤버별 대형 목표점(황금각) + 멤버→목표 라인
+        Gizmos.color = new Color(c.r, c.g, c.b, 0.35f);
+        for (int i = 0; i < members.Count; i++)
+        {
+            if (members[i] == null) continue;
+            Vector3 fp = SquadFormation.SpiralPoint(anchor, i, members.Count, patrolFormationRadius);
+            Gizmos.DrawLine(members[i].transform.position + up, fp + up);
+            Gizmos.DrawWireSphere(fp + up, 0.18f);
+        }
+
+        // 전진 방향 화살표(앵커 → 다음 전진 지점)
+        if (patrolInit && patrolDir.sqrMagnitude > 1e-4f)
+        {
+            Vector3 tip = anchor + patrolDir.normalized * patrolAdvance + up;
+            Gizmos.color = c;
+            Gizmos.DrawLine(anchor + up, tip);
+            Vector3 back = -patrolDir.normalized;
+            Gizmos.DrawLine(tip, tip + (Quaternion.AngleAxis(25f, Vector3.up) * back) * 1.2f);
+            Gizmos.DrawLine(tip, tip + (Quaternion.AngleAxis(-25f, Vector3.up) * back) * 1.2f);
+        }
+
+        // 로밍: 디스폰 경계(안쪽 사각) + 앵커→플레이어(로밍 목표) 라인
+        if (roaming)
+        {
+            float inner = mapHalfExtent - despawnMargin;
+            Gizmos.color = atEdge ? Color.yellow : new Color(c.r, c.g, c.b, 0.25f);
+            DrawSquareXZ(mapCenter, inner, mapCenter.y + 0.05f);
+            if (PlayerPos(out var pp))
+            {
+                Gizmos.color = new Color(c.r, c.g, c.b, 0.4f);
+                Gizmos.DrawLine(anchor + up, pp + up);
+            }
+        }
+
+#if UNITY_EDITOR
+        var style = new UnityEngine.GUIStyle { fontSize = 12 };
+        style.normal.textColor = c;
+        UnityEditor.Handles.Label(anchor + Vector3.up * 1.2f, $"{intent}  ({members.Count})", style);
+#endif
+    }
+
+    private static void DrawSquareXZ(Vector3 center, float half, float y)
+    {
+        Vector3 a = new Vector3(center.x - half, y, center.z - half);
+        Vector3 b = new Vector3(center.x + half, y, center.z - half);
+        Vector3 d = new Vector3(center.x + half, y, center.z + half);
+        Vector3 e = new Vector3(center.x - half, y, center.z + half);
+        Gizmos.DrawLine(a, b); Gizmos.DrawLine(b, d); Gizmos.DrawLine(d, e); Gizmos.DrawLine(e, a);
     }
 }

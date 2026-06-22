@@ -152,6 +152,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - **`Squad`**(`Scripts/Enemy/Squad.cs`, MonoBehaviour 글루): `SpawnDirector`가 군집 스폰 시 분대원을 `Register`. 매 틱 — 멤버 중 한 명이라도 `SeesPlayer()` **또는** 최근 누군가 피격(`OnMemberHit` → `hitAlertDuration` 4s) → **전원 `SquadEngage()`**(시야 밖이라도 즉시 교전 + 시야상실 타이머 리셋). 트리거 사라지면 각 적이 제 lose-sight 타이머로 개별 이탈. `health<=0` 멤버는 `PruneDead`로 제거, 전멸 시 자기 파괴.
 - **함께 로밍(앵커-추종)**: 비교전 시 분대가 공용 **앵커**를 천천히 전진(`patrolAdvance` 8). 멤버는 `Enemy.GetPatrolDestination`이 `TryGetPatrolPoint`로 받은 **앵커 주변 대형 위치**를 향함. 가장 뒤처진 멤버까지 모여야(낙오 방지) 앵커가 다음 칸으로 전진 → 뭉쳐 다님. 방향은 랜덤 ±35° 틀고, navmesh 밖이면 반대로.
 - **`Enemy` 연동**: `Enemy.Squad` 프로퍼티(null=단독), `SquadEngage()`(`perception.ForceEngage()`+`EnterBattleMode`), `GetHit`에서 `Squad?.OnMemberHit()`, `GetPatrolDestination`이 분대 대형점 우선. 디버그 라벨에 `[분대]`.
+- **의사결정 기즈모(`Squad.OnDrawGizmos`)**: 분대가 "무엇을 하려는지" 한눈에 — 의도색(청록=Patrolling/빨강=Engaging/노랑=Despawning) 앵커 구슬 + 전진 화살표(앵커→다음 전진점) + 멤버별 대형 목표점(황금각) 라인 + (로밍) 디스폰 경계 사각·앵커→플레이어 라인 + 의도 라벨. 그리는 결정은 순수 `SquadDecision`과 동일(보이는 결정=실제 결정). 게임뷰/씬뷰 Gizmos 토글로 플레이 중 표시.
+- **순수 시임 `SquadDecision`**(`TDS.Core`, EditMode 5): 분대 의도 결정 — 교전 트리거 > (로밍·가장자리 복귀)디스폰 > 순찰. `Squad.Update`가 이 결과로 분기(교전/디스폰/순찰), 기즈모도 같은 함수로 색·라벨 결정.
 - **순수 시임 `SquadFormation`**(`TDS.Core`, EditMode 9): 분대 대형 수학을 한 곳으로 모음(군집 스폰·순찰 대형이 같은 공식을 쓰던 중복 제거).
   - `SpiralOffset(index, count, radius)` — **황금각 나선** 분산(겹쳐쌓임 방지, 반경 단조증가·항상 radius 미만). `SpawnDirector` 군집 스폰 + `Squad` 순찰 대형이 공유.
   - `AllGathered(positions, anchor, radius, slack)` — 가장 뒤처진 멤버까지 (radius+slack) 안인가 → 앵커 전진 게이트.
