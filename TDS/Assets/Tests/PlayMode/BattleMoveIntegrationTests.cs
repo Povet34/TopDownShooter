@@ -90,7 +90,7 @@ namespace TDS.Tests.PlayMode
         [UnityTest]
         public IEnumerator Calm_melee_closes_to_attack_range()
         {
-            // 미피격. 멀리 둔 적이 그냥 근접해야 함
+            // 미피격. 적이 공격 사거리까지 근접해야 함(시야 안 거리 8 — 더 멀면 미발각으로 battle 이탈).
             yield return Setup(Vector3.forward, new Vector3(0f, 0f, 8f));
 
             var melee = enemyGo.GetComponentInChildren<Enemy_Melee>();
@@ -103,13 +103,18 @@ namespace TDS.Tests.PlayMode
             melee.EnterBattleMode();
             melee.stateMachine.ChangeState(melee.chaseState);
 
-            for (int i = 0; i < 120; i++) // 경계 플레이크 방지 — 근접 완료에 충분한 시간
+            // 프레임 수가 아니라 실제 시간으로 대기 — 테스트 러너는 프레임 dt가 작아 느린 agent가
+            // 프레임 기준으론 거의 못 움직인다(§ BattleMove 글루는 정상, 시간이 필요).
+            float t = 0f;
+            while (t < 5f)
             {
                 yield return null;
                 if (melee == null) break;
+                t += Time.deltaTime;
             }
 
             float endDist = Vector3.Distance(melee.transform.position, player.transform.position);
+            // §6.5: 근접은 공격 사거리까지 접근해 둘러싸 공격 → 시작보다 확연히 가까워져야 함.
             Assert.Less(endDist, startDist - 3f, $"평소 적이 근접하지 않음(거리 {startDist:0.0}→{endDist:0.0})");
         }
 
@@ -128,12 +133,14 @@ namespace TDS.Tests.PlayMode
             // 피격 → 재배치(이동) 트리거
             enemyGo.GetComponentInChildren<IDamagable>().TakeDamage(2);
 
-            float maxMove = 0f;
-            for (int i = 0; i < 70; i++)
+            // 프레임 수가 아니라 실제 시간으로 — 러너 프레임 dt가 작아 느린 agent가 프레임 기준으론 거의 안 움직임.
+            float maxMove = 0f, t = 0f;
+            while (t < 3f)
             {
                 yield return null;
                 if (er == null) break;
                 maxMove = Mathf.Max(maxMove, Vector3.Distance(startPos, er.transform.position));
+                t += Time.deltaTime;
             }
 
             Assert.Greater(maxMove, 1f, "피격당한 원거리 적이 재배치하지 않음(굳어있음)");

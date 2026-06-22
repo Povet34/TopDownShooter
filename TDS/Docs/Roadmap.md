@@ -190,11 +190,12 @@
      - **확정 결정(사용자)**: ① 웨이브 대체(상시 로밍) ② 플레이어 쪽으로 대략 전진(추격 아님) ③ 디스폰 = 순찰 상태 + 가장자리 도달.
      - ✅ **순수 시임/테스트**: `SquadRoam`(`EdgeSpawnPoint`·`AdvanceDirectionToward`·`IsAtEdge`·`ShouldDespawn`·`SquadsToSpawn`, EditMode 10).
      - ✅ **글루**: `SpawnDirector` `mode=Roaming`(가장자리 스폰+`maxSquads` 유지, `MapGenerator.LastBounds`) · `Squad.ConfigureRoaming`(플레이어로 전진 + 순찰·가장자리 디스폰) · 로밍 멤버 `idleTime` 단축(프리팹 기본 60s라 순찰이 멈추던 것) · `MapHUD` 로밍 라벨(`enemies: N`) · 씬 `Map_Generated` 배선(ST_Mixed, maxSquads 3).
-     - ✅ **in-game 검증**: 분대 3개 가장자리 스폰→플레이어로 거리 감소(100→72)→강제 제거 시 3개 리스폰, 콘솔 0. (추후 선택: PlayMode 통합 · 풀 반납.)
+     - ✅ **in-game 검증**: 분대 3개 가장자리 스폰→플레이어로 거리 감소(100→72)→강제 제거 시 3개 리스폰, 콘솔 0.
+     - ✅ **PlayMode 통합 (2026-06-22)**: `SpawnDirectorTests.Roaming_director_keeps_squads_at_map_edge`(bounds 주입 → maxSquads 가장자리 스폰 + 리스폰). **풀 반납은 보류** — 적 풀링은 재사용 시 health/FSM/agent 리셋 패스 필요(Enemy OnEnable 리셋 없음 → 죽은 상태 부활 위험), 별도 슬라이스로([Wiki §6.3.2](Wiki.md)).
      - ✅ **의사결정 기즈모 + 테스트 (2026-06-22)**: 순수 `SquadDecision.Resolve`(교전>디스폰>순찰, EditMode 5) → `Squad.Update`·`OnDrawGizmos` 공유. 기즈모 = 의도색 앵커/전진 화살표/대형 목표점/디스폰 경계/플레이어 라인/라벨. in-game(씬뷰) 검증: Patrolling=청록·Engaging=빨강 정확, 콘솔 0. **EditMode 194 green**.
   6. 🔧 **소음원 2종 — 총구음/피격음 (기획 2026-06-22)** — 순찰·경계 상태 적의 소리 반응을 2채널로. 총구음(발사 위치, 큼) 들리면 그쪽 우선 → 못 들었어도 **피격음(총알이 땅에 박힌 위치, 작음)** 들리면 그 근처로 가 플레이어 수색. 자세히 [Wiki §6.2.1](Wiki.md).
-     - ✅ **순수 시임/테스트 (2026-06-22)**: `NoiseModel.Investigate`(총구음>피격음 우선, target/kind 결정) + `NoiseKind`. EditMode 4 추가 → **EditMode 189 green**.
-     - 📋 **남음 = 글루**: `NoisePing`을 muzzle/impact 2채널로 · `Bullet`이 비-적 충돌 시 피격 핑 발신 · `Enemy.HeardNoise`가 두 핑 → `Investigate` · in-game 검증 + PlayMode 통합.
+     - ✅ **순수 시임/테스트**: `NoiseModel.Investigate`(총구음>피격음 우선, target/kind 결정) + `NoiseKind`. EditMode 4.
+     - ✅ **글루 (2026-06-22)**: `NoisePing` muzzle/impact 2채널(`EmitMuzzle`/`EmitImpact`) · `Player_WeaponController`가 발사 muzzle + `impactNoiseRadius` 전달 · `Bullet.EmitImpactNoise`(비-적 충돌, 플레이어 총알만) · `Enemy.HeardNoise`가 두 핑 → `Investigate`. PlayMode 2(`SquadTests`: impact만으로 경계 전환 / 먼 impact 무시). **PlayMode 42 green.**
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.

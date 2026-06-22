@@ -131,12 +131,13 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - **소음 = "발각"이 아니라 "고개를 돌리게 하는 트리거"**: 소리 나면 그쪽으로 시야를 돌려 조사 → 그 결과 콘에 들어오면 발각.
 - **거리 = 시야의 게이트**: 시야 안이어도 너무 멀면 미발각, 가까우면 확정. 시야 밖이면 거리 무의미.
 
-#### 6.2.1 소음원 2종 — 총구음 / 피격음 (기획 2026-06-22, 시임/테스트 완료 · 글루 미구현)
+#### 6.2.1 소음원 2종 — 총구음 / 피격음 — **구현 완료 (2026-06-22)**
 > **순찰·경계 상태**의 적이 소리에 반응하는 채널이 둘이다(우선순위 = 총구음 > 피격음).
-- **총구음(Muzzle)**: 발사 시 **총구(=플레이어) 위치**에 큰 반경으로 발신. 들리면 그쪽으로 조사 → 플레이어에 직접 다가감. (**구현됨** — 기존 `NoisePing`.)
-- **피격음(Impact)**: 총알이 **땅·벽에 박힌 위치**에 작은 반경으로 발신(총구음보다 조용). 발사음은 멀어서 못 들었지만 **총알이 내 근처에 박히면** 그 소리를 듣고 **박힌 곳 근처로 가 플레이어를 수색**(기존 경계 수색 흐름 재사용). (**미구현** — `Bullet`이 비-적 충돌 시 피격 NoisePing 발신 + 적이 두 핑을 함께 읽어야 함.)
-- **순수 시임 `NoiseModel.Investigate`**(`TDS.Core`, EditMode 4 추가): `(muzzleHeard, muzzlePos, impactHeard, impactPos) → NoiseKind(None/Muzzle/Impact) + target`. 총구음 들리면 Muzzle 우선, 아니면 Impact, 둘 다 없으면 None. 가청 판정은 소음원별로 기존 `NoiseModel.Heard`(거리·반경·나이).
-- **미구현(다음 슬라이스 = 글루)**: ① 두 번째 소음 채널 — 전역 `NoisePing` 단일을 **muzzle/impact 2채널**로(또는 impact 전용 핑 추가). ② `Bullet`이 적 외(땅/벽/movable) 충돌 시 임팩트 위치에 작은 반경 피격 핑 발신. ③ `Enemy.HeardNoise`가 두 핑을 `Heard`로 각각 판정 → `Investigate`로 조사 위치/종류 결정(순찰·경계 모두). ④ in-game 검증(먼 곳 빗맞은 탄이 근처 땅에 박히면 적이 그쪽 수색) + PlayMode 통합.
+- **총구음(Muzzle)**: 발사 시 **총구(=플레이어) 위치**에 큰 반경(`gunshotNoiseRadius` 18)으로 발신. 들리면 그쪽으로 조사 → 플레이어에 직접 다가감.
+- **피격음(Impact)**: 총알이 **땅·벽에 박힌 위치**에 작은 반경(`impactNoiseRadius` 8, 총구음보다 조용)으로 발신. 발사음은 멀어서 못 들었지만 **총알이 내 근처에 박히면** 그 소리를 듣고 **박힌 곳 근처로 가 플레이어를 수색**(기존 경계 수색 흐름 재사용).
+- **순수 시임 `NoiseModel.Investigate`**(`TDS.Core`, EditMode 4): `(muzzleHeard, muzzlePos, impactHeard, impactPos) → NoiseKind(None/Muzzle/Impact) + target`. 총구음 들리면 Muzzle 우선, 아니면 Impact, 둘 다 없으면 None. 가청 판정은 소음원별로 `NoiseModel.Heard`(거리·반경·나이).
+- **글루(구현됨)**: `NoisePing`을 **muzzle/impact 2채널**(`Ping` 구조체 2개)로 — `EmitMuzzle`/`EmitImpact`. `Player_WeaponController`가 발사 시 muzzle 발신 + `BulletSetup`에 `impactNoiseRadius` 전달. `Bullet.EmitImpactNoise`가 **비-적(땅/벽) 충돌** 시 임팩트 위치에 피격 핑 발신(플레이어 총알만 — `impactNoiseRadius>0`; 적 명중은 GetHit→분대 교전이 따로 처리). `Enemy.HeardNoise`가 두 핑을 `Heard`로 각각 판정 → `Investigate`로 조사 위치 결정.
+- **검증**: PlayMode `SquadTests` — `Impact_noise_alone_makes_member_investigate`(muzzle 없이 impact만 → 적 경계 전환), `Distant_impact_noise_is_ignored`(먼 피격음 무시).
 
 ### 6.3 3상태 FSM + 공용 칠판(blackboard)
 ```
@@ -175,7 +176,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
   - **HUD**: `SpawnDirector.IsRoaming`이면 `MapHUD`가 `WAVE x/y` 대신 `enemies: N`(=로밍 적 수) 표시, 승리 판정 없음(엔드리스). `Finished`는 Roaming에서 항상 false.
   - **씬 `Map_Generated`**: SpawnDirector `mode=Roaming`, `roamTable=ST_Mixed`, `maxSquads=3`, `mapGenerator` 배선.
   - **검증(in-game)**: 분대 3개가 가장자리(±90)에서 스폰→플레이어 쪽으로 거리 감소(100→89→72…)→강제 제거 시 3개로 리스폰, 콘솔 0 에러, HUD `enemies: N`. EditMode 189 green.
-- **추후(선택)**: PlayMode 통합 테스트(디렉터 spawn 수/가장자리 위치) · 긴장도(intensity) 연동(§6.1) · 디스폰 후 풀 반납(현재 Destroy).
+- **PlayMode 통합(구현됨)**: `SpawnDirectorTests.Roaming_director_keeps_squads_at_map_edge` — bounds 주입 후 roaming 디렉터가 maxSquads만큼 **가장자리에 스폰** + 전부 제거 시 **리스폰** 검증.
+- **추후(선택)**: 긴장도(intensity) 연동(§6.1) · **디스폰 후 풀 반납(보류)** — 현재 `Destroy`. 적 풀링은 재사용 시 health/FSM/agent **리셋 패스**가 필요(Enemy에 OnEnable 리셋 없음 → 그냥 풀에서 꺼내면 죽은 상태로 부활). 안전한 enemy-reset 작업 후 별도 슬라이스로.
 
 ### 6.5 교전 이동 — 시야-회피 유틸리티 스코어링 `BattleMover` (사용자 §12)
 > **포위는 목표가 아니라 결과.** 몬스터는 플레이어 시야를 피하려 움직이고, 그 결과 "어쩌다 포위"가 됨. 고정 슬롯 포위(균일) 아님 — 창발적.

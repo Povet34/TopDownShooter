@@ -21,7 +21,9 @@ run_tests(mode="EditMode", assembly_names=["TDS.Tests.EditMode"], include_failed
 run_tests(mode="PlayMode", assembly_names=["TDS.Tests.PlayMode"], init_timeout=120000, include_failed_tests=true)
 get_test_job(job_id, wait_timeout=60)   # 폴링
 ```
-또는 에디터 Test Runner 창. **현재 baseline: EditMode 194 / PlayMode 38 green.**
+또는 에디터 Test Runner 창. **현재 baseline: EditMode 194 / PlayMode 42 green.**
+
+> ⚠️ **PlayMode 이동 테스트는 프레임 수가 아니라 실제 시간으로 대기**할 것. 러너는 프레임 dt가 작아 느린 agent(speed ~1.5)가 N프레임 기준으론 거의 안 움직인다 → `while (t < seconds) { yield return null; t += Time.deltaTime; }` 패턴 사용(`BattleMoveIntegrationTests` 참고).
 
 > 새 테스트 파일을 추가하면 **`refresh_unity` 후 `editor/state`로 컴파일 완료 확인** → 그래야 Test Runner가 발견한다. (스크립트만 refresh로는 새 파일 import가 안 될 때가 있어 풀 refresh 권장.)
 

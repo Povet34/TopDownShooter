@@ -83,5 +83,41 @@ namespace TDS.Tests.PlayMode
             foreach (var m in members)
                 Assert.IsTrue(m.inBattleMode, "분대원 한 명 피격 시 전원 교전해야(공유 인지)");
         }
+
+        // §6.2.1 피격음: 발사음(muzzle)을 못 들었어도 총알이 근처에 박히면(impact) 그쪽을 조사(경계).
+        [UnityTest]
+        public IEnumerator Impact_noise_alone_makes_member_investigate()
+        {
+            yield return BuildSquad(1);
+            var e = members[0];
+            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState, "초기엔 순찰");
+
+            // 총구음은 멀리/작게(안 들림), 피격음만 적 위에 발신
+            for (int i = 0; i < 6; i++)
+            {
+                NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
+                NoisePing.EmitImpact(e.transform.position, 10f);
+                yield return null;
+            }
+
+            Assert.AreEqual(PerceptionState.Alert, e.PerceptionState, "피격음 들으면 경계(조사)로 전환");
+        }
+
+        // 피격음이 가청 반경 밖이면 반응하지 않는다(거짓 양성 방지).
+        [UnityTest]
+        public IEnumerator Distant_impact_noise_is_ignored()
+        {
+            yield return BuildSquad(1);
+            var e = members[0];
+
+            for (int i = 0; i < 6; i++)
+            {
+                NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
+                NoisePing.EmitImpact(e.transform.position + new Vector3(60f, 0f, 0f), 8f); // 반경 8, 거리 60
+                yield return null;
+            }
+
+            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState, "먼 피격음엔 반응 없음");
+        }
     }
 }

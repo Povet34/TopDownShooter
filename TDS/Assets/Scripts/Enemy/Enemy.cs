@@ -183,13 +183,18 @@ public class Enemy : MonoBehaviour
         return !Physics.Raycast(eye, dir / dist, dist - 0.4f, viewOccluderMask, QueryTriggerInteraction.Ignore);
     }
 
-    /// <summary>최근 총성 등 소음이 이 적에게 들리면 true(+ 소음 위치). 경계 진입 트리거(§6.2).</summary>
+    /// <summary>
+    /// 총구음/피격음 2채널 중 들리는 게 있으면 true(+ 조사 위치). 경계 진입 트리거(§6.2).
+    /// 총구음 우선(플레이어에 더 가까운 단서) → 없으면 피격음 위치로 수색. 판정은 순수 NoiseModel.
+    /// </summary>
     protected virtual bool HeardNoise(out Vector3 noisePos)
     {
-        noisePos = NoisePing.Position;
-        float age = Time.time - NoisePing.Time;
-        float dist = Vector3.Distance(transform.position, NoisePing.Position);
-        return TDS.Core.NoiseModel.Heard(dist, NoisePing.Radius, age, NoiseMaxAge);
+        var m = NoisePing.Muzzle;
+        var im = NoisePing.Impact;
+        Vector3 pos = transform.position;
+        bool muzzleHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, m.position), m.radius, Time.time - m.time, NoiseMaxAge);
+        bool impactHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, im.position), im.radius, Time.time - im.time, NoiseMaxAge);
+        return TDS.Core.NoiseModel.Investigate(muzzleHeard, m.position, impactHeard, im.position, out noisePos) != TDS.Core.NoiseKind.None;
     }
 
     /// <summary>경계 중 수색할 지점(마지막 목격/소음 위치). MoveState가 순찰점 대신 사용.</summary>
