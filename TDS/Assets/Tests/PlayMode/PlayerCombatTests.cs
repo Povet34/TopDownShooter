@@ -215,6 +215,45 @@ namespace TDS.Tests.PlayMode
             Assert.Less(maxY, startY + 0.5f, $"적 레이어 몸을 타고 솟구침 (maxY={maxY:0.00}, start={startY:0.00})");
         }
 
+        // 낮은 prop(0.4m, 맵 최저 prop 수준)을 타고 올라가지 않는다 — 실제 이동 경로(Y-lock)로 검증.
+        [UnityTest]
+        public IEnumerator Player_does_not_climb_low_prop()
+        {
+            GameServices.ResetForTests();
+
+            var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.transform.localScale = new Vector3(20f, 1f, 20f);
+            floor.transform.position = new Vector3(0f, -0.5f, 0f);
+
+            var player = SpawnPlayer(); // (0,0,0)
+            yield return null;
+            player.SetControlsEnabledTo(true);
+
+            // 진로(+x)에 0.4m 높이 단(맵 최저 prop ~0.38=concrete_tube/rock 수준).
+            var prop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            prop.transform.localScale = new Vector3(1f, 0.4f, 6f);
+            prop.transform.position = new Vector3(1.5f, 0.2f, 0f);
+
+            var mv = player.movement;
+            var moveField = typeof(Player_Movement).GetField("<moveInput>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            float startY = player.transform.position.y;
+            float maxY = startY;
+            for (int i = 0; i < 60; i++)
+            {
+                moveField.SetValue(mv, new Vector2(1f, 0f)); // +x 입력 홀드(ApplyMovement가 Y-lock 적용)
+                yield return null;
+                maxY = Mathf.Max(maxY, player.transform.position.y);
+            }
+
+            float endX = player.transform.position.x;
+            Object.DestroyImmediate(prop);
+            Object.DestroyImmediate(floor);
+
+            Assert.Less(maxY, startY + 0.15f, $"낮은 prop을 타고 올라감 (maxY={maxY:0.00}, start={startY:0.00})");
+            Assert.Less(endX, 1.3f, $"prop에 막히지 않고 통과/등반함 (endX={endX:0.00})");
+        }
+
         [UnityTest]
         public IEnumerator BulletDirection_is_stable_when_aiming_at_own_feet()
         {

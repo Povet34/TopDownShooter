@@ -36,7 +36,14 @@ public class Player : MonoBehaviour
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         if (enemyLayer >= 0)
             Physics.IgnoreLayerCollision(gameObject.layer, enemyLayer, true);
+
+        // 낮은 장애물/엄폐물/배럴을 타고 올라가지 않게 step 높이를 낮춘다(작은 지면 단차만 허용).
+        var cc = GetComponent<CharacterController>();
+        if (cc != null)
+            cc.stepOffset = Mathf.Min(cc.stepOffset, MaxStepOffset);
     }
+
+    private const float MaxStepOffset = 0.1f;
 
 
     private void OnEnable()

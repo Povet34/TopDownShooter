@@ -15,7 +15,10 @@
 
 - (없음 — 아래 해결 기록 참조)
 
-> ✅ **해결: 플레이어가 적과 겹치면 Y축으로 솟구침 (2026-06-25)** — 원인: 적이 **Enemy 레이어 래그돌 본 콜라이더**(non-trigger 캡슐/박스)를 갖고 있어, 플레이어 `CharacterController`(Player 레이어)가 그 둥근 캡슐을 타고 위로 솟구침. 수정: `Player.Awake`에서 **`Physics.IgnoreLayerCollision(Player, Enemy)`** — 적 몸과 충돌 무시(총알=Bullet 레이어·근접=오버랩 판정이라 영향 없음). PlayMode `Player_ignores_collision_with_enemy_layer`(플래그) + `Player_does_not_climb_enemy_layer_body`(적 레이어 몸 통과 시 솟구침 없음). in-game: 적 8마리가 0.4m로 겹쳐도 playerY=0 유지. **EditMode 205 / PlayMode 49 green.** (낮은 지형 props 타고 오름이 따로 보이면 stepOffset 후속.)
+> ✅ **해결: 플레이어가 적/낮은 prop 타고 Y축으로 솟구침 (2026-06-25)**
+> - **적 끼임**: 적이 **Enemy 레이어 래그돌 본 콜라이더**(non-trigger)를 갖고 있어 플레이어 `CharacterController`가 타고 솟구침 → `Player.Awake`에서 **`Physics.IgnoreLayerCollision(Player, Enemy)`**(총알=Bullet 레이어·근접=오버랩이라 영향 없음).
+> - **낮은 prop 타고 오름**: CC 둥근 바닥(radius 0.2)이 낮은 장애물(맵 최저 ~0.38)을 stepOffset과 무관하게 굴러 넘음. 평면 탑다운이라 수직 상승이 불필요 → `Player_Movement`에 **Y-lock**(이동 후 위로 오른 수직분 되돌림, 중력 하강은 허용) + stepOffset 0.1. 점프 없으니 안전.
+> - PlayMode: `Player_ignores_collision_with_enemy_layer`, `Player_does_not_climb_enemy_layer_body`, `Player_does_not_climb_low_prop`(실제 이동 경로로 0.4 prop 비등반). in-game: 적 8마리 0.4m 겹침에도 playerY=0. **EditMode 205 / PlayMode 50 green.**
 
 ---
 

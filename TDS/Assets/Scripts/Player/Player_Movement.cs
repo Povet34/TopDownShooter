@@ -104,7 +104,16 @@ public class Player_Movement : MonoBehaviour
             // 사격 중이면 감속(정조준하려면 멈춰야 함) — §MovingSpread.
             bool shooting = player.weapon != null && player.weapon.IsShooting();
             float factor = TDS.Core.MovingSpread.MoveSpeedFactor(shooting, shootingMoveFactor);
+
+            // 평면 탑다운: 적/낮은 prop을 타고 위로 솟구치는 것 차단 — 이동 후 위로 오른 수직분은 되돌린다
+            // (중력 하강·낙하는 허용). 점프/수직 게임플레이가 없으므로 안전.
+            float yBefore = transform.position.y;
             characterController.Move(movementDirection * Time.deltaTime * speed * factor);
+            if (transform.position.y > yBefore)
+            {
+                Vector3 p = transform.position; p.y = yBefore;
+                transform.position = p;
+            }
         }
     }
 
