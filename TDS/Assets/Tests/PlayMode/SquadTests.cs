@@ -153,6 +153,40 @@ namespace TDS.Tests.PlayMode
             Assert.Less(dist, 5f, $"분대 조사 앵커가 소음 지점으로 향하지 않음 anchor=({anchor.x:0.0},{anchor.z:0.0}) noise=({noise.x:0.0},{noise.z:0.0})");
         }
 
+        // §6.2.1 멤버가 갱신된 조사 지점을 추종: 처음 지점(A)으로 끝까지 가지 않고, 조사 지점이 B로
+        // 바뀌면 이동 중에도 B로 재추종한다(MoveState가 분대 앵커를 주기적으로 재설정).
+        [UnityTest]
+        public IEnumerator Squad_members_follow_updated_investigate_target()
+        {
+            yield return BuildSquad(2);
+            foreach (var m in members) if (m != null) m.idleTime = 0.1f;
+            var squad = squadGo.GetComponent<Squad>();
+
+            Vector3 A = new Vector3(18f, 0f, 10f);
+            Vector3 B = new Vector3(-15f, 0f, 10f);
+
+            // A로 조사 시작 + 멤버를 이동 상태로(하네스의 stale idle 우회)
+            squad.OnMemberHeardNoise(A);
+            yield return null; yield return null; // Squad.Update가 앵커=A 설정
+            foreach (var m in members) { var mm = m as Enemy_Melee; if (mm != null) mm.stateMachine.ChangeState(mm.moveState); }
+
+            float t = 0f; while (t < 1.5f) { yield return null; t += Time.deltaTime; }
+            Assert.Less(AvgMemberDestDist(A), AvgMemberDestDist(B), "초기엔 멤버 목적지가 A쪽이어야");
+
+            // 조사 지점을 B로 갱신 → 멤버 목적지가 B로 따라와야(처음 A로 끝까지 가지 않음)
+            squad.OnMemberHeardNoise(B);
+            t = 0f; while (t < 1.5f) { yield return null; t += Time.deltaTime; }
+            Assert.Less(AvgMemberDestDist(B), AvgMemberDestDist(A), "갱신된 지점(B)으로 재추종하지 않고 A에 머묾");
+        }
+
+        private float AvgMemberDestDist(Vector3 p)
+        {
+            float sum = 0f; int n = 0;
+            foreach (var m in members)
+                if (m != null && m.agent != null) { sum += Vector3.Distance(m.agent.destination, p); n++; }
+            return n > 0 ? sum / n : 999f;
+        }
+
         // §6.2.1 분대 청각: 분대원은 소음 반경이 작아도(여기선 2) squadHearingRadius(기본 50m) 안이면 듣는다.
         [UnityTest]
         public IEnumerator Squad_member_hears_quiet_noise_within_hearing_radius()

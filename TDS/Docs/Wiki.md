@@ -139,6 +139,8 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - **글루(구현됨)**: `NoisePing`을 **muzzle/impact 2채널**(`Ping` 구조체 2개)로 — `EmitMuzzle`/`EmitImpact`. `Player_WeaponController`가 발사 시 muzzle 발신 + `BulletSetup`에 `impactNoiseRadius` 전달. `Bullet.EmitImpactNoise`가 **비-적(땅/벽) 충돌** 시 임팩트 위치에 피격 핑 발신(플레이어 총알만 — `impactNoiseRadius>0`; 적 명중은 GetHit→분대 교전이 따로 처리). `Enemy.HeardNoise`가 두 핑을 `Heard`로 각각 판정 → `Investigate`로 조사 위치 결정.
 - **분대 청각 50m (2026-06-25)**: `Enemy.squadHearingRadius`(기본 50) — **분대원**은 `HeardNoise`에서 `max(소음반경, 50)`을 써서 소음 크기와 무관하게 **50m 안이면 무조건 들음**. (솔로 적은 소음원 반경 그대로.)
 - **분대 그룹 조사 (2026-06-25)**: 분대원이 소음을 들으면 개별 수색 대신 **분대가 함께** 그 지점을 조사한다 — `Enemy.UpdateAggro`가 분대원이면 `Squad.OnMemberHeardNoise(pos)`를 호출(개별 `OnEnterAlert` 수색은 솔로만). `Squad`가 **앵커를 소음 지점으로 옮겨**(멤버가 대형으로 따라 이동) → **도착하면 `investigateDwell`(기본 4s) 동안 머물며 살펴봄** → 없으면 **순찰 복귀**(현재 위치에서 `patrolDir` 그대로). 도달 실패는 `investigateMaxTravel`(25s)로 포기. 교전(시야/피격)이 조사보다 우선. `Squad.Investigating` 프로퍼티.
+  - **경계 중 새 소음 → 조사 지점 갱신**: 경계 상태에서도 새 소음이 들리면(`Enemy.UpdateAggro`의 `heard && Squad`) `OnMemberHeardNoise`가 `investigatePoint`를 최신 위치로 덮어쓴다(1m 이상 변할 때). 그래서 플레이어가 계속 쏘면 분대가 최신 총성 위치로 방향을 계속 따라간다.
+  - **멤버가 갱신을 즉시 추종 (버그 수정 2026-06-25)**: `MoveState`는 진입 시 목적지를 1회만 잡아 앵커가 갱신돼도 멤버가 첫 목적지까지 다 가던 문제 → `MoveState_Melee/Range`가 **분대원일 때 이동 중 0.2s마다 `GetPatrolDestination`(대형 목표)으로 목적지 재설정**. 솔로는 제외(순찰 인덱스 부수효과).
 - **검증**: PlayMode `SquadTests` — `Impact_noise_alone_makes_member_investigate`(impact만 → 적 경계), `Distant_impact_noise_is_ignored`(먼 소음 무시), `Squad_member_hears_quiet_noise_within_hearing_radius`(50m 작은 소음 청취), `Squad_targets_heard_noise_for_investigation`(분대 앵커가 소음 지점으로). in-game: 분대가 플레이어 총성(50m)을 듣고 그쪽으로 조사 이동.
 
 ### 6.3 3상태 FSM + 공용 칠판(blackboard)

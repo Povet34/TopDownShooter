@@ -6,6 +6,7 @@ public class MoveState_Range : EnemyState
 {
     private Enemy_Range enemy;
     private Vector3 destination;
+    private float lastRetargetTime;
 
     public MoveState_Range(Enemy enemyBase, EnemyStateMachine stateMachine, string animBoolName) : base(enemyBase, stateMachine, animBoolName)
     {
@@ -49,6 +50,13 @@ public class MoveState_Range : EnemyState
 
         enemy.FaceTarget(GetNextPathPoint());
 
+        // 분대원은 이동 중에도 분대 앵커(대형 목표)를 추종 — 조사 지점이 갱신되면 처음 목적지를 끝까지
+        // 가지 않고 새 지점으로 따라간다. (분대 GetPatrolDestination은 부수효과 없는 TryGetPatrolPoint.)
+        if (enemy.Squad != null && !enemy.HasSearchPoint && Time.time > lastRetargetTime + 0.2f)
+        {
+            lastRetargetTime = Time.time;
+            enemy.agent.SetDestination(enemy.GetPatrolDestination());
+        }
 
         if (enemy.agent.remainingDistance <= enemy.agent.stoppingDistance + .05f)
             stateMachine.ChangeState(enemy.idleState);
