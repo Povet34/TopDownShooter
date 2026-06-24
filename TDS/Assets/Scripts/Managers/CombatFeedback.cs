@@ -15,9 +15,11 @@ public class CombatFeedback : MonoBehaviour, ICombatFeedbackService
     [Header("Camera shake trauma")]
     [SerializeField] private float hitTrauma = 0.18f;
     [SerializeField] private float killTrauma = 0.42f;
+    [SerializeField] private float explosionTrauma = 0.65f;
 
     [Header("Hitstop (초, unscaled)")]
     [SerializeField] private float killHitStop = 0.06f;
+    [SerializeField] private float explosionHitStop = 0.05f;
 
     private readonly HitStop hitStop = new HitStop();
     private CameraFollow cachedCam;
@@ -56,6 +58,15 @@ public class CombatFeedback : MonoBehaviour, ICombatFeedbackService
         Shaker()?.AddTrauma(killTrauma);
         hitStop.Trigger(killHitStop);
         SpawnHitFx(position);
+    }
+
+    public void ReportExplosion(Vector3 position, float intensity)
+    {
+        float k = Mathf.Clamp01(intensity);
+        if (k <= 0f) return;
+        Shaker()?.AddTrauma(explosionTrauma * k);
+        if (k > 0.5f) hitStop.Trigger(explosionHitStop * k); // 아주 가까운 폭발만 살짝 멈칫
+        // 자체 폭발 FX가 있으므로 피격 FX는 스폰하지 않음
     }
 
     private CameraFollow Shaker()

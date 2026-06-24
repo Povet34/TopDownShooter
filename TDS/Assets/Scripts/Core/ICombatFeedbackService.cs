@@ -13,5 +13,8 @@ namespace TDS.Core
 
         /// <summary>사망/처치. 강한 셰이크 + 히트스톱 + FX.</summary>
         void ReportKill(Vector3 position);
+
+        /// <summary>폭발. 거리 강도로 스케일된 강한 셰이크(가까울수록 큼). 자체 FX가 있어 피격 FX는 안 띄움.</summary>
+        void ReportExplosion(Vector3 position, float intensity);
     }
 }

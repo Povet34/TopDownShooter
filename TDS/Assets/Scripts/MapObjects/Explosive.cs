@@ -60,5 +60,15 @@ public class Explosive : MonoBehaviour
             var fx = Instantiate(explosionFX, center, Quaternion.identity);
             Destroy(fx, 3f);
         }
+
+        // 카메라 셰이크(가까울수록 강하게) — 자체 FX가 있어 피격 FX는 안 띄움.
+        var feedback = TDS.Core.GameServices.Registry?.Resolve<TDS.Core.ICombatFeedbackService>();
+        if (feedback != null)
+        {
+            const float shakeRange = 45f;
+            float dist = player != null ? Vector3.Distance(center, player.transform.position) : 0f;
+            float intensity = Mathf.Clamp01(1f - dist / shakeRange);
+            feedback.ReportExplosion(center, intensity);
+        }
     }
 }
