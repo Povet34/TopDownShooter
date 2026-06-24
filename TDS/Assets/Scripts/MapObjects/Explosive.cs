@@ -15,6 +15,9 @@ public class Explosive : MonoBehaviour
     [Tooltip("폭발 시각 FX(있으면 스폰). 비우면 Breakable 파편만)")]
     [SerializeField] private GameObject explosionFX;
 
+    /// <summary>폭발 FX 프리팹(런타임 생성 배럴에 맵 생성기가 주입).</summary>
+    public GameObject ExplosionFX { get => explosionFX; set => explosionFX = value; }
+
     private bool exploded;
 
     private void Awake()

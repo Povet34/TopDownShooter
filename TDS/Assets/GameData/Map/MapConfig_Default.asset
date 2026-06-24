@@ -49,6 +49,7 @@ MonoBehaviour:
   coverPointOffset: {x: 1.5, y: 2.8}
   barrelCount: 45
   barrelPrefab: {fileID: 0}
+  explosionFXPrefab: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
   interiorCliffCount: 14
   cliffHeight: 10
   cliffMinFootprint: 5

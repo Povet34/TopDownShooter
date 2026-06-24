@@ -62,6 +62,8 @@ public class MapConfig : ScriptableObject
     public int barrelCount = 6;
     [Tooltip("배럴 프리팹. 비우면 프리미티브 실린더(≤0.9)로 대체")]
     public GameObject barrelPrefab;
+    [Tooltip("배럴 폭발 시 스폰할 시각 FX 프리팹(CFXR 등). 비우면 파편만")]
+    public GameObject explosionFXPrefab;
 
     [Header("절벽 (못 올라가는 지형 — 경계 + 내부)")]
     [Tooltip("내부 절벽(메사) 수. 못 올라가는 임패서블 바위 덩어리 — 동선을 막아 우회/엄폐 유발. navmesh가 자동 제외(가팔라 못 걸음). 0이면 끔")]

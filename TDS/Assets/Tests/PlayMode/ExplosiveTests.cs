@@ -67,6 +67,29 @@ namespace TDS.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Explosion_spawns_configured_fx()
+        {
+            var barrel = MakeBarrel(Vector3.zero);
+            var fxPrefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            fxPrefab.name = "ExplosionFX_TEST";
+            fxPrefab.transform.position = new Vector3(100f, 0f, 0f); // 폭발 반경 밖(연쇄 무관)
+            barrel.GetComponent<Explosive>().ExplosionFX = fxPrefab;
+            yield return null;
+
+            ((IDamagable)barrel.GetComponent<Breakable>()).TakeDamage(999); // 파괴 → 폭발
+            yield return null;
+
+            bool spawned = false;
+            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                if (t.name.StartsWith("ExplosionFX_TEST") && t.gameObject != fxPrefab) { spawned = true; break; }
+            Assert.IsTrue(spawned, "폭발 FX 인스턴스가 스폰되지 않음");
+
+            // 정리(FX 원본 + 클론)
+            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                if (t != null && t.name.StartsWith("ExplosionFX_TEST")) Object.DestroyImmediate(t.gameObject);
+        }
+
+        [UnityTest]
         public IEnumerator Explosion_chains_to_nearby_barrel()
         {
             var barrelA = MakeBarrel(Vector3.zero);

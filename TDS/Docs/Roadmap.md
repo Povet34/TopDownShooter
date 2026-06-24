@@ -31,6 +31,7 @@
 > 포함: ① 바닥 노이즈 블렌딩 셰이더 ② 절벽(경계+내부) ③ 바위 장식 (위 §맵 발전 1~3 슬라이스, 이 브랜치서 구현) ④ 적 레이더.
 
 - ✅ **적 레이더/미니맵 (2026-06-25)** — 1024 대형 맵 항법 보조(리서치: 탑다운/추출 슈터 표준 = 코너 레이더, 플레이어 중심·주변 한정 시야, 적 핑). 순수 `MinimapProjection`(월드 XZ→플레이어 중심 북-업 픽셀, 범위 밖 가장자리 클램프+방향 유지, EditMode 7) + 글루 `Minimap`(TDS.Game, 자족 캔버스: 원형 레이더 우상단, 플레이어=초록 중심+진행방향 노즈, 적=빨강 블립, 범위 밖=반투명 가장자리). `worldRange`(90) 안의 적 표시, M 토글, 런타임 생성 원형 스프라이트(빌트인 Knob.psd 부재 대응). `Map_Generated` HUD에 부착. (추후 튜닝 여지: 적 가시/소음 게이트, 지형 표시.)
+- ✅ **폭발 FX 연결 (2026-06-25)** — 배럴 폭발 연출(§맵 발전 2의 "추후: 폭발 FX 프리팹" 처리). `Explosive.ExplosionFX`(public 주입) + `MapConfig.explosionFXPrefab`(`CFXR3 Fire Explosion B`) → `MapGenerator`가 배럴에 주입. 폭발 시 화염 FX 스폰(3s 후 정리). PlayMode `ExplosiveTests.Explosion_spawns_configured_fx`. in-game: 화염+연기 확인.
 
 ## ⚠️ 빠른 시일 내 해결할 것
 
