@@ -208,9 +208,9 @@
   8. ✅ **분대 그룹 소음 조사 (2026-06-25, 사용자)** — 경계 시 "확인 시간이 너무 짧아" 소리 난 곳에 도착하기도 전에 순찰 복귀하던 문제. 이제 분대원이 소음을 들으면 **분대가 함께 그 지점으로 이동(`Squad.OnMemberHeardNoise`→앵커 이동) → 도착해서 `investigateDwell`(4s) 동안 살펴봄 → 없으면 순찰 복귀(patrolDir 유지)**. 개별 수색은 솔로만(`Enemy.UpdateAggro`가 분대원은 분대로 라우팅). 도달 실패는 `investigateMaxTravel`(25s) 포기, 교전 우선. PlayMode `Squad_targets_heard_noise_for_investigation`(앵커→소음). in-game: 분대가 플레이어 총성(50m)을 듣고 그쪽으로 조사 이동.
      - 🐛 **이동 중 조사 지점 갱신 추종 (2026-06-25)**: 기즈모(앵커)는 갱신되는데 멤버는 첫 지점까지 가던 버그 — `MoveState`가 진입 시 목적지를 1회만 잡던 것. `MoveState_Melee/Range`가 분대원일 때 이동 중 0.2s마다 대형 목표로 재설정 → 갱신된 소음 위치를 즉시 추종. PlayMode `Squad_members_follow_updated_investigate_target`.
      - ✅ **피격음 청각 10m로 (2026-06-25, 사용자)**: 발포음은 분대 50m 유지, **피격음은 분대 부스트 미적용 → 발신 반경(`impactNoiseRadius=10`)만** (실탄=근거리). 폭발성 공격 등 큰 피격음은 추후. `Enemy.HeardNoise` impact는 `im.radius` 직접 사용. PlayMode `Impact_noise_is_not_boosted_by_squad_hearing`(12m 무시). **EditMode 195 / PlayMode 47 green.**
-- 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
-  - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
-  - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.
+- ✅ **이동 중 사격 페널티 (2026-06-25)** — 이동하면서 쏘면 ① 이동속도 감소 ② 탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
+  - **순수 시임/테스트**: `MovingSpread`(`SpreadMultiplier`(speed/maxSpeed→1+penalty), `MoveSpeedFactor`(사격 중 감속), EditMode 7).
+  - **글루**: `Weapon.ApplySpread(dir, spreadMultiplier)`(탄퍼짐 배수) · `Player_WeaponController.FireSingleBullet`이 `player.movement.CurrentPlanarSpeed/MaxSpeed`로 배수 계산(`movingSpreadPenalty=2`) + `IsShooting()` 노출 · `Player_Movement`가 사격 중 `shootingMoveFactor=0.5`로 감속. **EditMode 202 / PlayMode 47 green.** (손맛=WASD+사격은 사용자 최종 확인.)
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

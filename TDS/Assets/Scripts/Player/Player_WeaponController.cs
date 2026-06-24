@@ -24,6 +24,11 @@ public class Player_WeaponController : MonoBehaviour
     [SerializeField] private float gunshotNoiseRadius = 18f;
     [Tooltip("총알이 땅·벽에 박힐 때 나는 소리 반경(§6.2.1 피격음, 실탄은 근거리 ~10m). 발사음을 못 들은 적도 이 안에 박히면 그쪽을 수색. 폭발성 공격은 추후 더 크게.")]
     [SerializeField] private float impactNoiseRadius = 10f;
+    [Tooltip("이동 중 사격 탄퍼짐 페널티 배수(§MovingSpread). 전속 이동 시 탄퍼짐 = 기본×(1+이 값).")]
+    [SerializeField] private float movingSpreadPenalty = 2f;
+
+    /// <summary>지금 사격 중인가(이동 감속 등에 사용).</summary>
+    public bool IsShooting() => isShooting;
 
 
     [SerializeField] private Transform weaponHolder;
@@ -202,7 +207,11 @@ public class Player_WeaponController : MonoBehaviour
         bulletScript.BulletSetup(whatIsAlly,currentWeapon.bulletDamage, currentWeapon.gunDistance,bulletImpactForce, impactNoiseRadius);
 
 
-        Vector3 bulletsDirection = currentWeapon.ApplySpread(BulletDirection());
+        // 이동 중 사격 페널티: 빠를수록 탄퍼짐↑(§MovingSpread).
+        float moveSpeed = player.movement != null ? player.movement.CurrentPlanarSpeed : 0f;
+        float maxSpeed = player.movement != null ? player.movement.MaxSpeed : 1f;
+        float spreadMult = TDS.Core.MovingSpread.SpreadMultiplier(moveSpeed, maxSpeed, movingSpreadPenalty);
+        Vector3 bulletsDirection = currentWeapon.ApplySpread(BulletDirection(), spreadMult);
 
         rbNewBullet.mass = REFERENCE_BULLET_SPEED / currentWeapon.weaponData.bulletSpeed;
         rbNewBullet.linearVelocity = bulletsDirection * currentWeapon.weaponData.bulletSpeed;

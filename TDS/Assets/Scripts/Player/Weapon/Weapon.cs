@@ -103,11 +103,13 @@ public class Weapon
 
     #region Spread methods
 
-    public Vector3 ApplySpread(Vector3 originalDirection)
+    // spreadMultiplier: 이동 중 사격 페널티(§MovingSpread). 정지=1, 이동할수록 >1로 탄퍼짐 확대.
+    public Vector3 ApplySpread(Vector3 originalDirection, float spreadMultiplier = 1f)
     {
         UpdateSpread();
 
-        float randomizedValue = Random.Range(-currentSpread, currentSpread);
+        float spread = currentSpread * Mathf.Max(0f, spreadMultiplier);
+        float randomizedValue = Random.Range(-spread, spread);
 
         Quaternion spreadRotation = Quaternion.Euler(randomizedValue, randomizedValue / 2, randomizedValue);
 

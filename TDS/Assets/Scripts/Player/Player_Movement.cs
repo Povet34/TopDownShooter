@@ -13,8 +13,23 @@ public class Player_Movement : MonoBehaviour
     [SerializeField] private float walkSpeed;
     [SerializeField] private float runSpeed;
     [SerializeField] private float turnSpeed;
+    [Tooltip("사격 중 이동속도 배수(0~1). 정조준하려면 멈춰야 함 — §MovingSpread")]
+    [SerializeField] private float shootingMoveFactor = 0.5f;
     private float speed;
     private float verticalVelocity;
+
+    /// <summary>현재 평면 이동 속도(탄퍼짐 계산용). 사격 감속이 반영된 실제 속도.</summary>
+    public float CurrentPlanarSpeed
+    {
+        get
+        {
+            if (characterController == null) return 0f;
+            Vector3 v = characterController.velocity; v.y = 0f;
+            return v.magnitude;
+        }
+    }
+    /// <summary>최대 이동 속도(달리기) — 탄퍼짐 정규화 기준.</summary>
+    public float MaxSpeed => runSpeed;
 
     public Vector2 moveInput { get; private set; }
     private Vector3 movementDirection;
@@ -86,7 +101,10 @@ public class Player_Movement : MonoBehaviour
         {
             PlayFootstepsSFX();
 
-            characterController.Move(movementDirection * Time.deltaTime * speed);
+            // 사격 중이면 감속(정조준하려면 멈춰야 함) — §MovingSpread.
+            bool shooting = player.weapon != null && player.weapon.IsShooting();
+            float factor = TDS.Core.MovingSpread.MoveSpeedFactor(shooting, shootingMoveFactor);
+            characterController.Move(movementDirection * Time.deltaTime * speed * factor);
         }
     }
 
