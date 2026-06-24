@@ -25,6 +25,13 @@
    - 구현 슬라이스: ① ✅ **바닥 텍스쳐 + 노이즈 블렌딩 (2026-06-25)** — 통짜 타일이 단조로워서 커스텀 셰이더 `TDS/DesertGroundBlend`(`Mat_DesertGroundBlend`)로 교체: 모래(Ground098) 풀디테일 + 월드 노이즈로 바위 패치(Rocks012)·명암 변주를 부드럽게 블렌딩(반복 티 제거, ~158fps). `[MainTexture]` 태그/`SetTextureScale("_BaseMap")`로 타일링 버그(1024 전체 stretch) 해결. `Mat_Cliff`(Rock029)/`Mat_RockProp`(Rocks012)도 생성. ② ✅ **절벽 (2026-06-25)** — 내부 절벽(메사) `interiorCliffCount`(메사=1~3 지터 블록, `cliffHeight`/`cliffMinFootprint`~`cliffMaxFootprint`) + `boundaryAsCliff`로 경계 벽을 절벽 높이/`cliffMaterial`로 올림. 높아서 CC/navmesh가 자동 제외 → 엔티티가 못 올라가고 우회(테스트 `CliffTests.Cliff_blocks_ground_path_forcing_detour`로 우회 강제 검증). 시드 결정적, cullable. ③ ✅ **바위 장식 (2026-06-25)** — `capCliffsWithRocks`로 절벽 위를 작은 바위로 덮고(탑다운서 윗면 보임), `rockPropCount`로 바닥에 작은 바위 산재(`Mat_RockProp`/Rocks012). 둘 다 **콜라이더 제거 = 순수 시각**(네브메시/이동 영향 0), 비균일 스케일+회전으로 각진 돌 느낌. ④ 📋 (추후) 나무.
 4. ✅ **주변만 렌더링 (거리 컬링)** (2026-06-24) — `MapConfig.cullRadius`(기본 70). `MapGenerator.Update`가 0.4s마다 플레이어 반경 밖 맵 오브젝트를 `SetActive(false)`(렌더+물리 절약, 바닥 제외). navmesh는 베이크돼 있어 비활성해도 경로 영향 없음. in-game: 919개 중 7개만 활성(반경 안), 130fps. (프러스텀 컬링은 렌더만, 이건 물리까지 + 밀도 상향 여지. 대형 스티칭은 추후 청크 스트리밍.)
 
+## 🌿 자율 보강 — 브랜치 `feature/map-feel-and-extras` (2026-06-25)
+
+> 사용자 부재(8~9h) 중 "보강할 수 있는 것" 자율 작업 브랜치. **기획 방향(생존/탈출/파밍)을 바꾸는 큰 P2/P3 시스템은 손대지 않고**(룰: 큰 변경은 합의 후), 자족적·테스트 가능한 **항법 보조/연출/하드닝**만 추가. 다른 게임 리서치로 선택 근거 마련.
+> 포함: ① 바닥 노이즈 블렌딩 셰이더 ② 절벽(경계+내부) ③ 바위 장식 (위 §맵 발전 1~3 슬라이스, 이 브랜치서 구현) ④ 적 레이더.
+
+- ✅ **적 레이더/미니맵 (2026-06-25)** — 1024 대형 맵 항법 보조(리서치: 탑다운/추출 슈터 표준 = 코너 레이더, 플레이어 중심·주변 한정 시야, 적 핑). 순수 `MinimapProjection`(월드 XZ→플레이어 중심 북-업 픽셀, 범위 밖 가장자리 클램프+방향 유지, EditMode 7) + 글루 `Minimap`(TDS.Game, 자족 캔버스: 원형 레이더 우상단, 플레이어=초록 중심+진행방향 노즈, 적=빨강 블립, 범위 밖=반투명 가장자리). `worldRange`(90) 안의 적 표시, M 토글, 런타임 생성 원형 스프라이트(빌트인 Knob.psd 부재 대응). `Map_Generated` HUD에 부착. (추후 튜닝 여지: 적 가시/소음 게이트, 지형 표시.)
+
 ## ⚠️ 빠른 시일 내 해결할 것
 
 - (없음 — 아래 해결 기록 참조)
