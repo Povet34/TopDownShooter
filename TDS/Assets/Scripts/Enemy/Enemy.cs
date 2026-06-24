@@ -23,6 +23,8 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected float viewHalfAngle = 70f;
     [Tooltip("이 반경 안이면 콘 밖/뒤라도 인지(몰래 바로 옆 접근 차단)")]
     [SerializeField] protected float senseRadius = 2f;
+    [Tooltip("분대 소속일 때의 청각 반경(§6.2.1). 이 안의 소음은 크기와 무관하게 무조건 들린다.")]
+    [SerializeField] protected float squadHearingRadius = 50f;
     [SerializeField] protected float eyeHeight = 1.6f;
     [Tooltip("시야를 가리는 환경 레이어(0이면 Default+Environment 자동)")]
     [SerializeField] protected LayerMask viewOccluderMask = 0;
@@ -192,8 +194,10 @@ public class Enemy : MonoBehaviour
         var m = NoisePing.Muzzle;
         var im = NoisePing.Impact;
         Vector3 pos = transform.position;
-        bool muzzleHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, m.position), m.radius, Time.time - m.time, NoiseMaxAge);
-        bool impactHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, im.position), im.radius, Time.time - im.time, NoiseMaxAge);
+        // 분대원은 청각이 좋다 — squadHearingRadius(기본 50m) 안이면 소음 크기와 무관하게 들린다.
+        float hear = Squad != null ? squadHearingRadius : 0f;
+        bool muzzleHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, m.position), Mathf.Max(m.radius, hear), Time.time - m.time, NoiseMaxAge);
+        bool impactHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, im.position), Mathf.Max(im.radius, hear), Time.time - im.time, NoiseMaxAge);
         return TDS.Core.NoiseModel.Investigate(muzzleHeard, m.position, impactHeard, im.position, out noisePos) != TDS.Core.NoiseKind.None;
     }
 

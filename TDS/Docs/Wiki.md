@@ -162,16 +162,16 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 
 #### 6.3.2 상시 로밍 분대 디렉터 — **구현 완료 (2026-06-22, in-game 검증)**
 > WAVE(클리어/타임아웃) 모델을 **대체**한다(결정 D7). 맵에 분대가 상시 흐르는 "방랑 순찰대" 페이싱.
-- **흐름**: 디렉터가 목표 수(`maxSquads`)만큼 분대를 유지 → 새 분대는 **맵 가장자리에서 스폰** → **플레이어 쪽으로 대략 전진**(발각 전엔 추격이 아니라 "그쪽으로 순찰", 좌우 jitter로 직선적이지 않게) → 지나가다 발각/피격되면 §6.3.1 분대 교전 → **순찰 상태로 맵 반대편 가장자리에 닿으면 디스폰** → 디렉터가 빈자리를 새 가장자리 분대로 **리스폰**. (교전 중이면 가장자리여도 안 사라짐.)
-- **확정 결정(2026-06-22, 사용자)**: ① 스폰 페이싱 = **웨이브 대체, 상시 로밍**. ② 로밍 방향 = **플레이어 쪽으로 대략 전진**(추격 아님). ③ 디스폰 = **순찰 상태 + 가장자리 도달**.
-- **순수 시임 `SquadRoam`**(`TDS.Core`, EditMode 10): 정사각 맵(center+halfExtent) 기준 디렉터 수학.
+- **흐름**: 디렉터가 목표 수(`maxSquads`)만큼 분대를 유지 → 새 분대는 **맵 가장자리에서 스폰** → **처음 정한 방향 그대로 직진 순찰**(플레이어 추적 안 함, 맵 끝/네브메시 밖에서만 반전) → 지나가다 발각/피격되면 §6.3.1 분대 교전 → **순찰 상태로 맵 반대편 가장자리에 닿으면 디스폰** → 디렉터가 빈자리를 새 가장자리 분대로 **리스폰**. (교전 중이면 가장자리여도 안 사라짐.)
+- **확정 결정**: ① 스폰 페이싱 = **웨이브 대체, 상시 로밍**(2026-06-22). ② 로밍 방향 = **처음 방향 고정, 플레이어 추적 안 함**(2026-06-25 — 기존 플레이어-추적에서 변경). 경계→순찰 복귀 시 `patrolDir` 유지로 **가던 방향 계속**, 경계 동안 흩어졌으면 현재 중심으로 앵커 재설정해 그 자리에서 이어감. ③ 디스폰 = **순찰 상태 + 가장자리 도달**.
+- **순수 시임 `SquadRoam`**(`TDS.Core`): 정사각 맵(center+halfExtent) 기준 디렉터 수학.
   - `EdgeSpawnPoint(center, halfExtent, perimeterT)` — 경계 둘레의 한 점(항상 경계 위, t 둘레비율로 래핑).
-  - `AdvanceDirectionToward(from, toward, jitterDeg)` — 플레이어 쪽 평면 방향(정규화, 0벡터→forward 폴백).
+  - `NextPatrolDirection(currentDir, blocked)` — **방향 고정**: 안 막히면 그대로, 막히면 반전(`-dir`). (플레이어-추적 `AdvanceDirectionToward`를 대체.)
   - `IsAtEdge(centroid, center, halfExtent, margin)` — 분대 중심이 안쪽 사각 밖인가.
   - `ShouldDespawn(patrolling, atEdge)` = `patrolling && atEdge`. `SquadsToSpawn(current, max)` = 부족분.
 - **글루(구현됨)**:
   - **`SpawnDirector` 모드** = `Waves`(기존) / `Roaming`(신규). Roaming이면 매 틱 `SquadsToSpawn`만큼 `roamSpawnInterval` 간격으로 1개씩 채움. 맵 bounds는 `MapGenerator.LastBounds`(미할당 시 자동 탐색)에서. 가장자리 스폰점 = `EdgeSpawnPoint(center, halfExtent-edgeInset, rng)` → `NavMesh.SamplePosition`. 웨이브·로밍이 분대 스폰 헬퍼 `SpawnSquadAt` 공유.
-  - **`Squad.ConfigureRoaming(center, halfExtent, margin)`**: 로밍 켜기. `AdvancePatrol`이 랜덤 대신 `AdvanceDirectionToward(anchor, player, ±35°)`로 플레이어 쪽 전진. 비교전 + 가장자리(스폰 후 한 번 벗어난 뒤 `hasLeftEdge`) 도달 → `Despawn`(멤버 root + 분대 파괴). 플레이어는 태그로 캐싱.
+  - **`Squad.ConfigureRoaming(center, halfExtent, margin)`**: 로밍 켜기. `AdvancePatrol`이 `NextPatrolDirection`으로 **처음 방향 그대로 직진**(막히면 반전), 경계 등으로 앵커에서 `patrolAdvance*1.5` 이상 벗어나면 현재 중심으로 앵커 재설정(되돌아가지 않고 이어감). 비교전 + 가장자리(스폰 후 한 번 벗어난 뒤 `hasLeftEdge`) 도달 → `Despawn`(멤버 root + 분대 파괴).
   - **로밍 멤버 idle 단축**: 프리팹 기본 `idleTime`이 크면(예: 60s) idle↔move 순찰이 멈춰 앵커를 못 따라감 → 디렉터가 로밍 멤버 `idleTime`을 `roamIdleTime`(기본 1s)로 낮춤.
   - **HUD**: `SpawnDirector.IsRoaming`이면 `MapHUD`가 `WAVE x/y` 대신 `enemies: N`(=로밍 적 수) 표시, 승리 판정 없음(엔드리스). `Finished`는 Roaming에서 항상 false.
   - **씬 `Map_Generated`**: SpawnDirector `mode=Roaming`, `roamTable=ST_Mixed`, `maxSquads=3`, `mapGenerator` 배선.

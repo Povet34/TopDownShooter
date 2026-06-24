@@ -35,7 +35,7 @@ public class Squad : MonoBehaviour
     private float mapHalfExtent;
     private float despawnMargin = 4f;
     private bool hasLeftEdge; // 스폰 가장자리를 한 번 벗어나야 반대편 가장자리에서 디스폰(스폰 즉시 디스폰 방지)
-    private Transform player;
+    private Transform player;  // 첫 순찰 방향 계산용(1회). 이후 방향 재조정엔 안 씀.
 
     public IReadOnlyList<Enemy> Members => members;
     public bool Engaged { get; private set; }
@@ -106,33 +106,41 @@ public class Squad : MonoBehaviour
                 members[i].SquadEngage();
     }
 
-    // 분대 앵커를 천천히 전진시킨다(분대 중심이 앵커에 가까워지면 다음 지점으로). 멤버는 앵커 주변 대형으로 따라온다.
+    // 분대 앵커를 처음 정한 방향으로 직진시킨다(벽/네브메시 끝에서만 반전). 멤버는 앵커 주변 대형으로 따라온다.
+    // 플레이어를 추적하지 않는다 — 그냥 정해진 방향으로 순찰. 경계→순찰 복귀 시 방향이 유지돼 가던 길 계속.
     private void AdvancePatrol()
     {
         if (!patrolInit)
         {
             patrolAnchor = Centroid();
-            Vector2 r = Random.insideUnitCircle.normalized;
-            patrolDir = new Vector3(r.x, 0f, r.y);
-            if (patrolDir.sqrMagnitude < 1e-4f) patrolDir = Vector3.forward;
+            // 첫 방향은 플레이어 쪽(가장자리 스폰이라 안쪽으로 들어가야 함). 이후엔 재조정 없이 고정.
+            if (PlayerPos(out var pp))
+                patrolDir = SquadRoam.InitialPatrolDirection(patrolAnchor, pp);
+            else
+            {
+                Vector2 r = Random.insideUnitCircle.normalized;
+                patrolDir = new Vector3(r.x, 0f, r.y);
+                if (patrolDir.sqrMagnitude < 1e-4f) patrolDir = Vector3.forward;
+            }
             patrolInit = true;
         }
+
+        // 경계 등으로 분대가 앵커에서 크게 벗어났으면(흩어졌다 복귀) 현재 중심으로 앵커 재설정 →
+        // 옛 앵커로 되돌아가지 않고 "있던 자리에서 같은 방향으로" 순찰을 이어간다.
+        Vector3 drift = Centroid() - patrolAnchor; drift.y = 0f;
+        if (drift.magnitude > patrolAdvance * 1.5f)
+            patrolAnchor = Centroid();
 
         // 가장 뒤처진 멤버까지 앵커 근처에 모였을 때만 전진(낙오 방지 → 뭉침 유지)
         if (!SquadFormation.AllGathered(MemberPositions(), patrolAnchor, patrolFormationRadius))
             return; // 아직 모이는 중 — 앵커 정지(뒤처진 멤버 대기)
 
-        // 로밍이면 플레이어 쪽으로 대략 전진(좌우 jitter), 아니면 기존 랜덤 워크.
-        if (roaming && PlayerPos(out var pp))
-            patrolDir = SquadRoam.AdvanceDirectionToward(patrolAnchor, pp, Random.Range(-35f, 35f));
-        else
-            patrolDir = Quaternion.AngleAxis(Random.Range(-35f, 35f), Vector3.up) * patrolDir;
-
+        // 처음 방향 그대로 한 칸 전진(막히면 반대로 반전 — 맵 끝에 닿으면 §6.3.2 디스폰).
         Vector3 next = patrolAnchor + patrolDir * patrolAdvance;
-        if (NavMesh.SamplePosition(next, out var hit, 5f, NavMesh.AllAreas))
+        bool blocked = !NavMesh.SamplePosition(next, out var hit, 5f, NavMesh.AllAreas);
+        if (!blocked)
             patrolAnchor = hit.position;
-        else
-            patrolDir = -patrolDir;
+        patrolDir = SquadRoam.NextPatrolDirection(patrolDir, blocked);
     }
 
     // 이번 틱 분대 의사결정(순수 SquadDecision). 비교전 호출 — 가장자리 latch(hasLeftEdge)도 여기서 갱신.
@@ -154,6 +162,7 @@ public class Squad : MonoBehaviour
         Destroy(gameObject);
     }
 
+    // 첫 순찰 방향용 플레이어 위치(태그로 1회 탐색·캐싱).
     private bool PlayerPos(out Vector3 pos)
     {
         if (player == null)
@@ -267,17 +276,12 @@ public class Squad : MonoBehaviour
             Gizmos.DrawLine(tip, tip + (Quaternion.AngleAxis(-25f, Vector3.up) * back) * 1.2f);
         }
 
-        // 로밍: 디스폰 경계(안쪽 사각) + 앵커→플레이어(로밍 목표) 라인
+        // 로밍: 디스폰 경계(안쪽 사각)
         if (roaming)
         {
             float inner = mapHalfExtent - despawnMargin;
             Gizmos.color = atEdge ? Color.yellow : new Color(c.r, c.g, c.b, 0.25f);
             DrawSquareXZ(mapCenter, inner, mapCenter.y + 0.05f);
-            if (PlayerPos(out var pp))
-            {
-                Gizmos.color = new Color(c.r, c.g, c.b, 0.4f);
-                Gizmos.DrawLine(anchor + up, pp + up);
-            }
         }
 
 #if UNITY_EDITOR

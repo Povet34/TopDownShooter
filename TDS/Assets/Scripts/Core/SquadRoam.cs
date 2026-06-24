@@ -4,8 +4,8 @@ namespace TDS.Core
 {
     /// <summary>
     /// 상시 로밍 분대 디렉터의 순수 수학(기획 2026-06-22). 웨이브를 대체해 맵에 분대를 상시 유지한다:
-    /// 가장자리에서 스폰 → 플레이어 쪽으로 대략 전진(순찰) → 순찰 상태로 맵 가장자리에 닿으면 디스폰 →
-    /// 디렉터가 새 가장자리에서 새 분대를 리스폰. 정사각 맵(중심+halfExtent) 기준.
+    /// 가장자리에서 스폰 → 처음 정한 방향 그대로 순찰(플레이어 추적 안 함) → 순찰 상태로 맵 가장자리에
+    /// 닿으면 디스폰 → 디렉터가 새 가장자리에서 새 분대를 리스폰. 정사각 맵(중심+halfExtent) 기준.
     /// 글루(SpawnDirector·Squad)는 이 시임을 호출만 한다.
     /// </summary>
     public static class SquadRoam
@@ -33,18 +33,23 @@ namespace TDS.Core
         }
 
         /// <summary>
-        /// 플레이어 쪽으로 대략 향하는 전진 방향(평면, 정규화). jitterDeg로 좌우로 틀어 직선적이지 않게.
-        /// from==toward(겹침)이면 forward 폴백(0벡터 가드).
+        /// 첫 순찰 방향 = 대상(플레이어) 쪽 평면 방향(정규화). 가장자리 스폰이라 안쪽(플레이어)으로 향해야
+        /// 벽에 박혀 바로 디스폰되지 않는다. 겹치면 forward 폴백. 이후엔 NextPatrolDirection으로 고정.
         /// </summary>
-        public static Vector3 AdvanceDirectionToward(Vector3 from, Vector3 toward, float jitterDeg)
+        public static Vector3 InitialPatrolDirection(Vector3 from, Vector3 toward)
         {
             Vector3 d = toward - from; d.y = 0f;
             if (d.sqrMagnitude < 1e-6f)
-                d = Vector3.forward;
-            d.Normalize();
-            d = Quaternion.AngleAxis(jitterDeg, Vector3.up) * d;
+                return Vector3.forward;
             return d.normalized;
         }
+
+        /// <summary>
+        /// 순찰 전진 방향(고정). 플레이어를 추적(재조정)하지 않고 처음 정한 방향을 그대로 유지하다가,
+        /// 길이 막히면(blocked=true, 맵 끝/네브메시 밖) 반대로 반전만 한다.
+        /// </summary>
+        public static Vector3 NextPatrolDirection(Vector3 currentDir, bool blocked)
+            => blocked ? -currentDir : currentDir;
 
         /// <summary>분대 중심이 맵 가장자리(안쪽 사각 밖, margin 이내)에 닿았는가.</summary>
         public static bool IsAtEdge(Vector3 centroid, Vector3 center, float halfExtent, float margin)

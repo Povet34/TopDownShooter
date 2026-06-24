@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -101,6 +102,53 @@ namespace TDS.Tests.PlayMode
             }
 
             Assert.AreEqual(PerceptionState.Alert, e.PerceptionState, "피격음 들으면 경계(조사)로 전환");
+        }
+
+        // §6.3.2 순찰 방향 고정: 분대 앵커가 플레이어를 추적하지 않고 처음 방향(축)을 유지한다.
+        [UnityTest]
+        public IEnumerator Patrol_direction_stays_fixed_not_homing_on_player()
+        {
+            yield return BuildSquad(3);
+            foreach (var m in members) if (m != null) m.idleTime = 0.2f; // 자주 재이동 → 앵커 여러 번 전진
+
+            var squad = squadGo.GetComponent<Squad>();
+            var fDir = typeof(Squad).GetField("patrolDir", BindingFlags.NonPublic | BindingFlags.Instance);
+            var fInit = typeof(Squad).GetField("patrolInit", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // 순찰 방향 초기화 대기
+            float w = 0f;
+            while (!(bool)fInit.GetValue(squad) && w < 2f) { yield return null; w += Time.deltaTime; }
+            Assert.IsTrue((bool)fInit.GetValue(squad), "순찰 방향이 초기화되지 않음");
+            Vector3 dir0 = (Vector3)fDir.GetValue(squad);
+
+            // 여러 번 전진할 시간(플레이어는 원점에 있음 — 옛 동작이면 그쪽으로 방향이 휘어짐)
+            float t = 0f;
+            while (t < 3f) { yield return null; t += Time.deltaTime; }
+            Vector3 dir1 = (Vector3)fDir.GetValue(squad);
+
+            // 축이 회전하지 않음 = 같거나 정확히 반전(벽 반사)만 허용. 플레이어로 휘면 |dot| < 1.
+            float dot = Vector3.Dot(dir0.normalized, dir1.normalized);
+            Assert.GreaterOrEqual(Mathf.Abs(dot), 0.999f, $"순찰 방향이 회전함(플레이어 추적 의심) dot={dot:0.000}");
+        }
+
+        // §6.2.1 분대 청각: 분대원은 소음 반경이 작아도(여기선 2) squadHearingRadius(기본 50m) 안이면 듣는다.
+        [UnityTest]
+        public IEnumerator Squad_member_hears_quiet_noise_within_hearing_radius()
+        {
+            yield return BuildSquad(1);
+            var e = members[0];
+            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState);
+
+            // 멤버에서 ~40m 떨어진 곳에 아주 작은 반경(2)의 피격음 — 일반 가청이면 안 들리지만 분대 청각(50m)이면 들림
+            Vector3 far = e.transform.position + new Vector3(0f, 0f, 40f);
+            for (int i = 0; i < 6; i++)
+            {
+                NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
+                NoisePing.EmitImpact(far, 2f);
+                yield return null;
+            }
+
+            Assert.AreEqual(PerceptionState.Alert, e.PerceptionState, "분대원이 50m 안의 작은 소음을 못 들음");
         }
 
         // 피격음이 가청 반경 밖이면 반응하지 않는다(거짓 양성 방지).

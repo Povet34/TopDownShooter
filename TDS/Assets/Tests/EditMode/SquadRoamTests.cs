@@ -39,36 +39,45 @@ namespace TDS.Tests.EditMode
         }
 
         [Test]
-        public void AdvanceDirection_points_at_target_without_jitter()
+        public void InitialPatrolDirection_points_at_target_flat()
         {
-            Vector3 d = SquadRoam.AdvanceDirectionToward(Vector3.zero, new Vector3(10f, 0f, 0f), 0f);
-            Assert.AreEqual(1f, d.x, 1e-4f);
-            Assert.AreEqual(0f, d.z, 1e-4f);
+            // 첫 방향은 플레이어(대상) 쪽 — 가장자리 스폰이라 안쪽으로 향해야 함.
+            Vector3 d = SquadRoam.InitialPatrolDirection(new Vector3(0f, 0f, 10f), new Vector3(0f, 5f, 0f));
+            Assert.AreEqual(0f, d.y, 1e-5f, "평면이어야");
+            Assert.AreEqual(-1f, d.z, 1e-4f, "대상(원점) 쪽 -z");
             Assert.AreEqual(1f, d.magnitude, 1e-4f);
         }
 
         [Test]
-        public void AdvanceDirection_ignores_height_difference()
+        public void InitialPatrolDirection_falls_back_to_forward_when_overlapping()
         {
-            Vector3 d = SquadRoam.AdvanceDirectionToward(Vector3.zero, new Vector3(0f, 99f, 10f), 0f);
-            Assert.AreEqual(0f, d.y, 1e-5f);
-            Assert.AreEqual(1f, d.z, 1e-4f);
+            Assert.AreEqual(Vector3.forward, SquadRoam.InitialPatrolDirection(Center, Center));
         }
 
         [Test]
-        public void AdvanceDirection_jitter_rotates_off_axis_but_stays_unit()
+        public void NextPatrolDirection_keeps_direction_when_clear()
         {
-            Vector3 toward = new Vector3(1f, 0f, 0f);
-            Vector3 d = SquadRoam.AdvanceDirectionToward(Vector3.zero, toward, 90f);
-            Assert.AreEqual(1f, d.magnitude, 1e-4f);
-            Assert.Less(Mathf.Abs(Vector3.Dot(d, toward.normalized)), 0.1f, "90도 틀면 거의 직각");
+            // 길이 안 막히면 방향 고정(플레이어 추적 안 함).
+            Vector3 dir = new Vector3(0.6f, 0f, -0.8f);
+            Assert.AreEqual(dir, SquadRoam.NextPatrolDirection(dir, blocked: false));
         }
 
         [Test]
-        public void AdvanceDirection_falls_back_to_forward_when_overlapping()
+        public void NextPatrolDirection_reverses_when_blocked()
         {
-            Vector3 d = SquadRoam.AdvanceDirectionToward(Center, Center, 0f);
-            Assert.AreEqual(Vector3.forward, d);
+            Vector3 dir = new Vector3(1f, 0f, 0f);
+            Assert.AreEqual(-dir, SquadRoam.NextPatrolDirection(dir, blocked: true));
+        }
+
+        [Test]
+        public void NextPatrolDirection_stays_fixed_over_many_clear_steps()
+        {
+            // 여러 번 전진해도(막힘 없음) 처음 방향 그대로 — "순찰 방향 고정" 보장.
+            Vector3 dir = new Vector3(0f, 0f, 1f);
+            Vector3 cur = dir;
+            for (int i = 0; i < 20; i++)
+                cur = SquadRoam.NextPatrolDirection(cur, blocked: false);
+            Assert.AreEqual(dir, cur);
         }
 
         [Test]
