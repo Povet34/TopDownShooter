@@ -76,6 +76,16 @@ public class MapConfig : ScriptableObject
     [Tooltip("true면 경계 둘레 벽을 cliffHeight로 높이고 cliffMaterial을 입힘")]
     public bool boundaryAsCliff = false;
 
+    [Header("바위 장식 (절벽 위 + 바닥 산재 — 순수 시각, 충돌 없음)")]
+    [Tooltip("바위 장식 머티리얼(Rocks012 등). 비우면 바위 장식 끔")]
+    public Material rockMaterial;
+    [Tooltip("바닥에 산재하는 작은 바위 수(자연스러운 디테일). 충돌/네브메시 영향 없음(콜라이더 제거)")]
+    [Min(0)] public int rockPropCount = 0;
+    [Tooltip("바닥 바위 크기(월드 단위, 대략)")]
+    [Min(0.2f)] public float rockPropSize = 1.4f;
+    [Tooltip("true면 절벽(메사) 위를 작은 바위들로 덮음")]
+    public bool capCliffsWithRocks = false;
+
     [Header("주변만 렌더링 (거리 컬링)")]
     [Tooltip("플레이어에서 이 반경 밖 맵 오브젝트는 비활성(렌더+물리 절약 — 밀도 높여도 깔끔). 0이면 끔. 카메라 시야보다 넉넉히 크게(예 70). 바닥/navmesh는 영향 없음.")]
     [Min(0f)] public float cullRadius = 0f;

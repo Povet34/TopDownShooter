@@ -198,6 +198,37 @@ namespace TDS.Tests.PlayMode
             Object.DestroyImmediate(cfg);
         }
 
+        // 바위 장식(바닥 산재)은 순수 시각 — 콜라이더 없음(네브메시/이동 영향 0) + 중앙 비움 밖.
+        [UnityTest]
+        public IEnumerator Rock_props_are_decorative_without_collider()
+        {
+            var mg = MakeGenerator();
+            var cfg = ScriptableObject.CreateInstance<MapConfig>();
+            cfg.cellSize = 4f; cfg.gridWidth = 50; cfg.gridHeight = 50;
+            cfg.obstacleCount = 0; cfg.coverCount = 0; cfg.barrelCount = 0;
+            cfg.centerClearRadius = 8f;
+            cfg.rockPropCount = 30; cfg.rockPropSize = 1.4f;
+            cfg.rockMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            typeof(MapGenerator).GetField("config", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(mg, cfg);
+
+            mg.Generate(7);
+            yield return null;
+
+            int rocks = 0;
+            foreach (Transform c in CurrentRoot(mg))
+            {
+                if (c.name != "RockProp") continue;
+                rocks++;
+                Assert.IsNull(c.GetComponent<Collider>(), "바위 장식에 콜라이더가 있음(네브메시/이동 오염)");
+                float dXZ = new Vector2(c.localPosition.x, c.localPosition.z).magnitude;
+                Assert.GreaterOrEqual(dXZ, cfg.centerClearRadius - 0.01f, $"바위가 중앙 스폰존 안: {c.localPosition}");
+            }
+            Assert.Greater(rocks, 0, "바위 장식이 하나도 생성되지 않음");
+
+            Object.DestroyImmediate(cfg.rockMaterial);
+            Object.DestroyImmediate(cfg);
+        }
+
         [UnityTest]
         public IEnumerator Reports_bounds_and_seed()
         {

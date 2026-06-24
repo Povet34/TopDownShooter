@@ -110,6 +110,7 @@ public class MapGenerator : MonoBehaviour
         PlaceClusters(worldW, worldL, cell, wallH, clearR, rng);
         PlaceInteriorWalls(worldW, worldL, wallH, clearR, rng);
         PlaceCliffs(worldW, worldL, clearR, rng);
+        PlaceRockProps(worldW, worldL, clearR, rng);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         BakeNavMesh();
@@ -290,6 +291,60 @@ public class MapGenerator : MonoBehaviour
 
         var mo = go.AddComponent<MapObject>();
         mo.role = TDS.Core.MapObjectRole.Blocking;
+
+        // 절벽 위를 작은 바위로 덮음(시각). 탑다운이라 위가 보임 → 단조로운 평면 윗면 가림.
+        bool cap = config != null && config.capCliffsWithRocks && config.rockMaterial != null;
+        if (cap)
+        {
+            int rocks = 2 + rng.Next(4);
+            float topY = size.y;
+            float fp = Mathf.Min(size.x, size.z) * 0.4f;
+            for (int i = 0; i < rocks; i++)
+            {
+                Vector2 o = RandomInCircle(rng) * fp;
+                float rs = Mathf.Max(size.x, size.z) * (0.18f + (float)rng.NextDouble() * 0.18f);
+                SpawnRock(new Vector3(localXZ.x + o.x, topY, localXZ.z + o.y), rs, config.rockMaterial, rng, "CliffRock", true);
+            }
+        }
+    }
+
+    // 바닥에 작은 바위 산재(순수 시각 디테일 — 콜라이더/네브메시 영향 없음).
+    private void PlaceRockProps(float worldW, float worldL, float clearR, System.Random rng)
+    {
+        int count = config != null ? config.rockPropCount : 0;
+        Material mat = config != null ? config.rockMaterial : null;
+        if (count <= 0 || mat == null) return;
+        float size = config != null ? config.rockPropSize : 1.4f;
+        float halfW = Mathf.Max(0f, worldW * 0.5f - size);
+        float halfL = Mathf.Max(0f, worldL * 0.5f - size);
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 pos = new Vector3((float)(rng.NextDouble() * 2 - 1) * halfW, 0f, (float)(rng.NextDouble() * 2 - 1) * halfL);
+            if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue;
+            SpawnRock(pos, size, mat, rng, "RockProp", false);
+        }
+    }
+
+    // 바위 1개 — 비균일 스케일 + 회전으로 각진 돌 느낌. 콜라이더 제거(시각 전용).
+    private void SpawnRock(Vector3 surfaceLocalPos, float size, Material mat, System.Random rng, string label, bool fullTumble)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.transform.SetParent(mapRoot, false);
+        go.name = label;
+        float sx = size * (0.7f + (float)rng.NextDouble() * 0.6f);
+        float sy = size * (0.5f + (float)rng.NextDouble() * 0.6f);
+        float sz = size * (0.7f + (float)rng.NextDouble() * 0.6f);
+        go.transform.localScale = new Vector3(sx, sy, sz);
+        Vector3 p = surfaceLocalPos; p.y = surfaceLocalPos.y + sy * 0.5f;
+        go.transform.localPosition = p;
+        go.transform.localRotation = fullTumble
+            ? Quaternion.Euler((float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f)
+            : Quaternion.Euler((float)(rng.NextDouble() * 16 - 8), (float)rng.NextDouble() * 360f, (float)(rng.NextDouble() * 16 - 8));
+        ApplyRockMaterial(go, go.transform.localScale, mat);
+
+        var col = go.GetComponent<Collider>();
+        if (col != null) { if (Application.isPlaying) Destroy(col); else DestroyImmediate(col); }
     }
 
     private void ScatterObstacles(int gw, int gh, float cell, float wallH, Vector3 origin,

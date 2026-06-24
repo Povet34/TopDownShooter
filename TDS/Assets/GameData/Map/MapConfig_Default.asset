@@ -55,6 +55,10 @@ MonoBehaviour:
   cliffMaxFootprint: 14
   cliffMaterial: {fileID: 2100000, guid: ab4a026e6b647ec469ed6a806f85b9c6, type: 2}
   boundaryAsCliff: 1
+  rockMaterial: {fileID: 2100000, guid: b352b478b70659841b7137706a620364, type: 2}
+  rockPropCount: 60
+  rockPropSize: 1.5
+  capCliffsWithRocks: 1
   cullRadius: 70
   floorMaterial: {fileID: 2100000, guid: e558f7c833d9e1e4094f6c89648814a3, type: 2}
   floorTileWorldUnits: 8
