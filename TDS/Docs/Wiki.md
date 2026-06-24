@@ -61,6 +61,7 @@
 - **카메라**: `CameraFollow`(Core)가 태그로 플레이어 추적(3/4 뷰) + `FollowPosition`(순수 시임). 추적 base와 별개로 `CameraShake`(순수) 오프셋·롤을 unscaled로 위에 더함(피드백 방지). 마우스 휠 줌(`CameraZoom` 순수 + `CameraZoomInput` 글루 → `offset×zoom`).
 - **전투 연출(손맛)**: 무기 비의존 `ICombatFeedbackService`(`CombatFeedback`, Systems). 적 피격(`Enemy.GetHit`)/사망(`Die`)·플레이어 피격(`Player_Health`)에서 호출 → 카메라 셰이크(`CameraShake`) + 처치 시 히트스톱(`HitStop`, Time.timeScale) + 피격 FX(CFXR). 순수 시임 2종은 EditMode 테스트.
 - **조준 IK**: aim 리그(`Head_Aim`/`Gun_Aim` MultiAimConstraint) source = 프리팹 내부 `Aim_Target`. `AimRotation.FaceHorizontal`(0벡터 가드).
+- **적과 충돌 무시 (2026-06-25)**: `Player.Awake`가 `Physics.IgnoreLayerCollision(Player, Enemy)` 설정 — 적 래그돌 본 콜라이더를 타고 플레이어 `CharacterController`가 Y로 솟구치던 버그 방지. 총알(Bullet 레이어)·근접(오버랩)엔 영향 없음.
 - **이동 중 사격 페널티 (2026-06-25)**: 순수 `MovingSpread`(`TDS.Core`, EditMode 7) — 이동하며 쏘면 ① 이동속도 감소 ② 탄퍼짐 증가(정조준하려면 멈춰야 함). 글루: `Player_WeaponController.FireSingleBullet`이 `MovingSpread.SpreadMultiplier(현재속도, runSpeed, movingSpreadPenalty=2)`로 `Weapon.ApplySpread(dir, mult)` 호출(전속 이동=기본×3 탄퍼짐) · `Player_Movement`가 `MoveSpeedFactor(IsShooting, shootingMoveFactor=0.5)`로 사격 중 감속. `CurrentPlanarSpeed`/`MaxSpeed`/`IsShooting()` 노출.
 - **무기 조준(탑다운)**: 무기·총구·총알 방향은 **수평**(`AimDirection.ResolveHorizontal`) — 조준점이 무기 바로 아래(발밑)면 거의 수직→`LookRotation` up-모호성으로 **무기가 팽글팽글 도는** 버그가 있어 수평+0벡터 가드로 해결. 프리팹 `isAimingPrecisly` 기본 false(정밀조준은 우클릭 홀드 기능).
 - **회복력 가드**: UI/Camera.main/CameraManager/currentWeapon/fogVolume null 컨텍스트에서도 안 죽도록 가드(맵 단독 실행).

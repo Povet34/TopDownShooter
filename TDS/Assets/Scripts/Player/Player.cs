@@ -30,6 +30,12 @@ public class Player : MonoBehaviour
         interaction = GetComponent<Player_Interaction>();
         sound = GetComponent<Player_SoundFX>();
         controls = ControlsManager.instance.controls;
+
+        // 탑다운: 플레이어 CharacterController가 적 몸(래그돌 콜라이더)을 타고 위로 솟구치거나 올라타지
+        // 않도록 Player↔Enemy 레이어 충돌을 무시한다. 총알(Bullet 레이어)·근접(오버랩 판정)엔 영향 없음.
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (enemyLayer >= 0)
+            Physics.IgnoreLayerCollision(gameObject.layer, enemyLayer, true);
     }
 
 

@@ -13,7 +13,9 @@
 
 ## ⚠️ 빠른 시일 내 해결할 것
 
-- **🐛 플레이어가 적과 겹치면 Y축으로 솟구침/낮은 곳 타고 올라감 (2026-06-25, 우선 수정)**: 플레이어가 적과 겹치거나 낮은 지형/오브젝트에 닿으면 `CharacterController`가 Y를 무시하고 하늘로 떠오르거나 낮은 곳을 그냥 넘어 올라가 버림. **빠르게 고쳐야 함.** 원인 후보: CharacterController vs 적 충돌/스텝오프셋, 적 NavMeshAgent와의 상호 밀림, 지면 슬로프 한계. (관련: `Player_Movement`, Player `CharacterController` 설정, 적 충돌 레이어.)
+- (없음 — 아래 해결 기록 참조)
+
+> ✅ **해결: 플레이어가 적과 겹치면 Y축으로 솟구침 (2026-06-25)** — 원인: 적이 **Enemy 레이어 래그돌 본 콜라이더**(non-trigger 캡슐/박스)를 갖고 있어, 플레이어 `CharacterController`(Player 레이어)가 그 둥근 캡슐을 타고 위로 솟구침. 수정: `Player.Awake`에서 **`Physics.IgnoreLayerCollision(Player, Enemy)`** — 적 몸과 충돌 무시(총알=Bullet 레이어·근접=오버랩 판정이라 영향 없음). PlayMode `Player_ignores_collision_with_enemy_layer`(플래그) + `Player_does_not_climb_enemy_layer_body`(적 레이어 몸 통과 시 솟구침 없음). in-game: 적 8마리가 0.4m로 겹쳐도 playerY=0 유지. **EditMode 205 / PlayMode 49 green.** (낮은 지형 props 타고 오름이 따로 보이면 stepOffset 후속.)
 
 ---
 

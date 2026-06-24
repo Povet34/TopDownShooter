@@ -164,6 +164,57 @@ namespace TDS.Tests.PlayMode
             Assert.Greater(after, before, "사격 시 총알이 스폰되지 않음");
         }
 
+        // 플레이어 CharacterController는 적 레이어와 충돌을 무시한다(적 몸 타고 솟구침 방지).
+        [UnityTest]
+        public IEnumerator Player_ignores_collision_with_enemy_layer()
+        {
+            GameServices.ResetForTests();
+            var player = SpawnPlayer();
+            yield return null;
+
+            int enemyLayer = LayerMask.NameToLayer("Enemy");
+            Assert.GreaterOrEqual(enemyLayer, 0, "Enemy 레이어가 없음");
+            Assert.IsTrue(Physics.GetIgnoreLayerCollision(player.gameObject.layer, enemyLayer),
+                "Player↔Enemy 레이어 충돌이 무시되지 않음(끼임/솟구침 방지 실패)");
+        }
+
+        // 적 레이어 몸과 겹쳐 전진해도 위로 솟구치지/올라타지 않는다.
+        [UnityTest]
+        public IEnumerator Player_does_not_climb_enemy_layer_body()
+        {
+            GameServices.ResetForTests();
+
+            var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.transform.localScale = new Vector3(20f, 1f, 20f);
+            floor.transform.position = new Vector3(0f, -0.5f, 0f);
+
+            var player = SpawnPlayer(); // (0,0,0)
+            yield return null;
+            var cc = player.GetComponent<CharacterController>();
+            Assert.IsNotNull(cc, "CharacterController 없음");
+
+            // 진로(+x)에 적 레이어 캡슐 몸 배치(겹침 유발)
+            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.layer = LayerMask.NameToLayer("Enemy");
+            body.transform.position = new Vector3(1f, 0.5f, 0f);
+
+            float startY = player.transform.position.y;
+            float maxY = startY;
+            for (int i = 0; i < 40; i++)
+            {
+                cc.Move(new Vector3(0.06f, -0.2f, 0f)); // 전진 + 중력
+                maxY = Mathf.Max(maxY, player.transform.position.y);
+                yield return null;
+            }
+
+            float crossedX = player.transform.position.x;
+            Object.DestroyImmediate(body);
+            Object.DestroyImmediate(floor);
+
+            Assert.Greater(crossedX, 0.9f, "전진하지 못함(테스트 전제 실패)");
+            Assert.Less(maxY, startY + 0.5f, $"적 레이어 몸을 타고 솟구침 (maxY={maxY:0.00}, start={startY:0.00})");
+        }
+
         [UnityTest]
         public IEnumerator BulletDirection_is_stable_when_aiming_at_own_feet()
         {
