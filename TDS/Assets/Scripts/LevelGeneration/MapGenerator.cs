@@ -255,6 +255,7 @@ public class MapGenerator : MonoBehaviour
 
             go.AddComponent<Movable>();
             go.AddComponent<Breakable>();
+            go.AddComponent<Explosive>(); // 부서질 때 폭발(범위 피해 + 폭발음 90m + 연쇄)
             var mo = go.AddComponent<MapObject>();
             mo.role = TDS.Core.MapObjectClassifier.Classify(h, isCover: false, breakable: true, movable: true);
             placed++;

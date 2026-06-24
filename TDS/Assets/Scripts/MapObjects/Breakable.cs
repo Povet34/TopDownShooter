@@ -16,6 +16,9 @@ public class Breakable : MonoBehaviour, IDamagable
 
     public bool IsBroken => broken;
 
+    /// <summary>막 파괴되는 순간 1회 발생(파편/Destroy 직전). Explosive 등이 구독해 폭발을 얹는다.</summary>
+    public event System.Action Broken;
+
     private void Awake() => currentHealth = maxHealth;
 
     public void TakeDamage(int damage)
@@ -31,6 +34,7 @@ public class Breakable : MonoBehaviour, IDamagable
     private void Break()
     {
         broken = true;
+        Broken?.Invoke(); // 폭발 등 부가 효과(파편/Destroy 전에 — 폭발 범위피해가 옆 배럴을 연쇄로 깸)
 
         if (debrisFX != null)
         {
