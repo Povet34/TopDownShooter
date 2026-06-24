@@ -50,5 +50,5 @@ MonoBehaviour:
   barrelCount: 45
   barrelPrefab: {fileID: 0}
   cullRadius: 70
-  floorMaterial: {fileID: 2100000, guid: 6c241723bbf2b5a4f92b5af6d7985941, type: 2}
+  floorMaterial: {fileID: 2100000, guid: e558f7c833d9e1e4094f6c89648814a3, type: 2}
   floorTileWorldUnits: 8

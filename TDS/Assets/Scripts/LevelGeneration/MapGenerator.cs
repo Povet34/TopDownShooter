@@ -171,9 +171,20 @@ public class MapGenerator : MonoBehaviour
             {
                 rend.sharedMaterial = config.floorMaterial;
                 // 큰 맵에서 텍스처가 늘어나지 않게 타일링(머티리얼 인스턴스에만 — 공유 에셋 안 건드림).
+                // base뿐 아니라 normal/AO도 같은 스케일로(안 그러면 노멀이 늘어나 평평해 보임).
                 float tile = config.floorTileWorldUnits;
                 if (tile > 0f)
-                    rend.material.mainTextureScale = new Vector2(worldW / tile, worldL / tile);
+                {
+                    Vector2 s = new Vector2(worldW / tile, worldL / tile);
+                    var mat = rend.material;
+                    // _BaseMap을 명시적으로 스케일(URP Lit/커스텀 셰이더 둘 다 동작, _MainTex 경고 회피).
+                    if (mat.HasProperty("_BaseMap")) mat.SetTextureScale("_BaseMap", s);
+                    else mat.mainTextureScale = s;
+                    if (mat.HasProperty("_BumpMap")) mat.SetTextureScale("_BumpMap", s);
+                    if (mat.HasProperty("_SecondMap")) mat.SetTextureScale("_SecondMap", s);
+                    if (mat.HasProperty("_SecondBump")) mat.SetTextureScale("_SecondBump", s);
+                    if (mat.HasProperty("_OcclusionMap")) mat.SetTextureScale("_OcclusionMap", s);
+                }
             }
         }
     }
