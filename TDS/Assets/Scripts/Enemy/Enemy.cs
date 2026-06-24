@@ -23,7 +23,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected float viewHalfAngle = 70f;
     [Tooltip("이 반경 안이면 콘 밖/뒤라도 인지(몰래 바로 옆 접근 차단)")]
     [SerializeField] protected float senseRadius = 2f;
-    [Tooltip("분대 소속일 때의 청각 반경(§6.2.1). 이 안의 소음은 크기와 무관하게 무조건 들린다.")]
+    [Tooltip("분대 소속일 때 발포음(muzzle) 청각 반경(§6.2.1). 이 안의 발포음은 크기와 무관하게 들린다. 피격음은 미적용(발신 반경 그대로).")]
     [SerializeField] protected float squadHearingRadius = 50f;
     [SerializeField] protected float eyeHeight = 1.6f;
     [Tooltip("시야를 가리는 환경 레이어(0이면 Default+Environment 자동)")]
@@ -205,10 +205,12 @@ public class Enemy : MonoBehaviour
         var m = NoisePing.Muzzle;
         var im = NoisePing.Impact;
         Vector3 pos = transform.position;
-        // 분대원은 청각이 좋다 — squadHearingRadius(기본 50m) 안이면 소음 크기와 무관하게 들린다.
-        float hear = Squad != null ? squadHearingRadius : 0f;
-        bool muzzleHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, m.position), Mathf.Max(m.radius, hear), Time.time - m.time, NoiseMaxAge);
-        bool impactHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, im.position), Mathf.Max(im.radius, hear), Time.time - im.time, NoiseMaxAge);
+        // 발포음(muzzle)은 분대원이 멀리서도 듣는다(squadHearingRadius, 기본 50m).
+        // 피격음(impact)은 실탄 기준 근거리만(발신 반경 그대로, ~10m) — 분대 청각 부스트 미적용.
+        // (폭발성 공격 등 큰 피격음은 추후 발신 반경을 키워 표현.)
+        float muzzleHear = Squad != null ? squadHearingRadius : 0f;
+        bool muzzleHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, m.position), Mathf.Max(m.radius, muzzleHear), Time.time - m.time, NoiseMaxAge);
+        bool impactHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, im.position), im.radius, Time.time - im.time, NoiseMaxAge);
         return TDS.Core.NoiseModel.Investigate(muzzleHeard, m.position, impactHeard, im.position, out noisePos) != TDS.Core.NoiseKind.None;
     }
 

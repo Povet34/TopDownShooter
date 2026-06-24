@@ -22,8 +22,8 @@ public class Player_WeaponController : MonoBehaviour
     [SerializeField] private Light fireEffectLight;
     [Tooltip("총성이 적에게 들리는 반경(§6.2 소음). 이 안의 적은 뒤돌아 있어도 이쪽을 조사하러 옴")]
     [SerializeField] private float gunshotNoiseRadius = 18f;
-    [Tooltip("총알이 땅·벽에 박힐 때 나는 소리 반경(§6.2.1 피격음, 총성보다 작게). 발사음을 못 들은 적도 근처에 박히면 그쪽을 수색")]
-    [SerializeField] private float impactNoiseRadius = 8f;
+    [Tooltip("총알이 땅·벽에 박힐 때 나는 소리 반경(§6.2.1 피격음, 실탄은 근거리 ~10m). 발사음을 못 들은 적도 이 안에 박히면 그쪽을 수색. 폭발성 공격은 추후 더 크게.")]
+    [SerializeField] private float impactNoiseRadius = 10f;
 
 
     [SerializeField] private Transform weaponHolder;

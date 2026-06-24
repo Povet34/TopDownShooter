@@ -11,6 +11,14 @@
 
 ---
 
+## ⚠️ 다음 MCP 세션에서 먼저 확인할 것 (사용자 요청 2026-06-25)
+
+> **AI(클로드)에게**: 다음에 Unity MCP를 다시 쓸 때, 작업 시작 전에 **이 항목을 사용자에게 먼저 상기**시켜라.
+
+- **발포음 vs 피격음 우선순위 재검토 (고민 중)**: 분대가 **발포음(50m)을 충분히 들을 수 있는데도 피격음을 따라가려는** 경우가 관찰됨. 현재 `NoiseModel.Investigate`는 단순히 "총구음 들리면 총구음 우선, 아니면 피격음". 하지만 2채널이 독립 타임스탬프라, 발포음이 0.3s 지나 stale 되고 피격음만 fresh인 순간엔 피격음을 좇을 수 있음. **기대**: 발포음을 들을 수 있는 상황이면 (조금 늦더라도) 발포음=플레이어 방향을 우선/유지하고 싶음. 해결책은 사용자가 더 고민할 예정 → **구현 전 사용자와 합의**. (관련: §6.2.1, `NoiseModel.Investigate`, `Enemy.HeardNoise`.)
+
+---
+
 ## 1. 현재 코드 상태 (직접 확인함 — 유지보수 기준선)
 
 ### 1.1 맵 생성 — `Assets/Scripts/LevelGeneration/`
@@ -198,7 +206,8 @@
      - ✅ **글루 (2026-06-22)**: `NoisePing` muzzle/impact 2채널(`EmitMuzzle`/`EmitImpact`) · `Player_WeaponController`가 발사 muzzle + `impactNoiseRadius` 전달 · `Bullet.EmitImpactNoise`(비-적 충돌, 플레이어 총알만) · `Enemy.HeardNoise`가 두 핑 → `Investigate`. PlayMode 2(`SquadTests`: impact만으로 경계 전환 / 먼 impact 무시).
   7. ✅ **로밍 순찰 방향 정정 + 분대 청각 (2026-06-25, 사용자)** — ① **순찰 방향**: 매 틱 플레이어 추적하던 것을 **첫 스폰 시에만 플레이어 쪽, 이후 고정 직진**으로 변경(가장자리 스폰 후 랜덤 방향이 벽에 박혀 즉시 디스폰되던 버그 수정). 순수 `InitialPatrolDirection`(첫 방향=대상 쪽)+`NextPatrolDirection`(고정, 막히면 반전), `Squad`가 경계 동안 흩어지면 앵커 재설정으로 가던 방향 이어감. ② **분대 청각 50m**: `Enemy.squadHearingRadius`(기본 50) — 분대원은 소음 크기와 무관하게 50m 안이면 무조건 들음(`HeardNoise`가 `max(반경,50)`). EditMode 5(Initial/Next/Hearing 등) + PlayMode 2(방향 고정·50m 청각). in-game: 분대가 가장자리→플레이어 쪽 진입 후 교전(즉시 디스폰 없음).
   8. ✅ **분대 그룹 소음 조사 (2026-06-25, 사용자)** — 경계 시 "확인 시간이 너무 짧아" 소리 난 곳에 도착하기도 전에 순찰 복귀하던 문제. 이제 분대원이 소음을 들으면 **분대가 함께 그 지점으로 이동(`Squad.OnMemberHeardNoise`→앵커 이동) → 도착해서 `investigateDwell`(4s) 동안 살펴봄 → 없으면 순찰 복귀(patrolDir 유지)**. 개별 수색은 솔로만(`Enemy.UpdateAggro`가 분대원은 분대로 라우팅). 도달 실패는 `investigateMaxTravel`(25s) 포기, 교전 우선. PlayMode `Squad_targets_heard_noise_for_investigation`(앵커→소음). in-game: 분대가 플레이어 총성(50m)을 듣고 그쪽으로 조사 이동.
-     - 🐛 **이동 중 조사 지점 갱신 추종 (2026-06-25)**: 기즈모(앵커)는 갱신되는데 멤버는 첫 지점까지 가던 버그 — `MoveState`가 진입 시 목적지를 1회만 잡던 것. `MoveState_Melee/Range`가 분대원일 때 이동 중 0.2s마다 대형 목표로 재설정 → 갱신된 소음 위치를 즉시 추종. PlayMode `Squad_members_follow_updated_investigate_target`. **EditMode 195 / PlayMode 46 green.**
+     - 🐛 **이동 중 조사 지점 갱신 추종 (2026-06-25)**: 기즈모(앵커)는 갱신되는데 멤버는 첫 지점까지 가던 버그 — `MoveState`가 진입 시 목적지를 1회만 잡던 것. `MoveState_Melee/Range`가 분대원일 때 이동 중 0.2s마다 대형 목표로 재설정 → 갱신된 소음 위치를 즉시 추종. PlayMode `Squad_members_follow_updated_investigate_target`.
+     - ✅ **피격음 청각 10m로 (2026-06-25, 사용자)**: 발포음은 분대 50m 유지, **피격음은 분대 부스트 미적용 → 발신 반경(`impactNoiseRadius=10`)만** (실탄=근거리). 폭발성 공격 등 큰 피격음은 추후. `Enemy.HeardNoise` impact는 `im.radius` 직접 사용. PlayMode `Impact_noise_is_not_boosted_by_squad_hearing`(12m 무시). **EditMode 195 / PlayMode 47 green.**
 - 📋 **🆕 이동 중 사격 페널티 (기획 2026-06-21)** — 이동하면서 쏘면 ① 캐릭터 이동속도 감소 ② 총 반동/탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **크기/시점 평가: 소~중.** ①은 작음(`Player_Movement` 속도에 isShooting 배수). ②는 중간 — 무기 spread 모델이 **이동속도**를 인자로 받게(현재 `Weapon.ApplySpread`는 고정 스프레드). 순수 시임 `MovingSpread.Compute(baseSpread, moveSpeed, maxSpeed)` + 글루로 TDD.
   - **권장 시점**: 전투 감각 폴리시 묶음(현재 코어 AI/맵 정리 이후, FoV 전·후 어디든). 의존성 없음 → 짧은 단독 슬라이스로 가능.

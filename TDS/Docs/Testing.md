@@ -21,7 +21,9 @@ run_tests(mode="EditMode", assembly_names=["TDS.Tests.EditMode"], include_failed
 run_tests(mode="PlayMode", assembly_names=["TDS.Tests.PlayMode"], init_timeout=120000, include_failed_tests=true)
 get_test_job(job_id, wait_timeout=60)   # 폴링
 ```
-또는 에디터 Test Runner 창. **현재 baseline: EditMode 195 / PlayMode 46 green.**
+또는 에디터 Test Runner 창. **현재 baseline: EditMode 195 / PlayMode 47 green.**
+
+> ⚠️ **`NoisePing`은 static이라 PlayMode 테스트 간 상태가 남는다.** 소음 관련 테스트는 시작 시 두 채널을 들리지 않게 중화할 것(`SquadTests.BuildSquad` 참고) — 안 그러면 이전 테스트 핑에 오염돼 단독은 통과/전체는 실패하는 플레이크가 난다.
 
 > ⚠️ **PlayMode 이동 테스트는 프레임 수가 아니라 실제 시간으로 대기**할 것. 러너는 프레임 dt가 작아 느린 agent(speed ~1.5)가 N프레임 기준으론 거의 안 움직인다 → `while (t < seconds) { yield return null; t += Time.deltaTime; }` 패턴 사용(`BattleMoveIntegrationTests` 참고).
 
