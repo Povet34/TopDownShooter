@@ -11,11 +11,9 @@
 
 ---
 
-## ⚠️ 다음 MCP 세션에서 먼저 확인할 것 (사용자 요청 2026-06-25)
+## ⚠️ 빠른 시일 내 해결할 것
 
-> **AI(클로드)에게**: 다음에 Unity MCP를 다시 쓸 때, 작업 시작 전에 **이 항목을 사용자에게 먼저 상기**시켜라.
-
-- **발포음 vs 피격음 우선순위 재검토 (고민 중)**: 분대가 **발포음(50m)을 충분히 들을 수 있는데도 피격음을 따라가려는** 경우가 관찰됨. 현재 `NoiseModel.Investigate`는 단순히 "총구음 들리면 총구음 우선, 아니면 피격음". 하지만 2채널이 독립 타임스탬프라, 발포음이 0.3s 지나 stale 되고 피격음만 fresh인 순간엔 피격음을 좇을 수 있음. **기대**: 발포음을 들을 수 있는 상황이면 (조금 늦더라도) 발포음=플레이어 방향을 우선/유지하고 싶음. 해결책은 사용자가 더 고민할 예정 → **구현 전 사용자와 합의**. (관련: §6.2.1, `NoiseModel.Investigate`, `Enemy.HeardNoise`.)
+- **🐛 플레이어가 적과 겹치면 Y축으로 솟구침/낮은 곳 타고 올라감 (2026-06-25, 우선 수정)**: 플레이어가 적과 겹치거나 낮은 지형/오브젝트에 닿으면 `CharacterController`가 Y를 무시하고 하늘로 떠오르거나 낮은 곳을 그냥 넘어 올라가 버림. **빠르게 고쳐야 함.** 원인 후보: CharacterController vs 적 충돌/스텝오프셋, 적 NavMeshAgent와의 상호 밀림, 지면 슬로프 한계. (관련: `Player_Movement`, Player `CharacterController` 설정, 적 충돌 레이어.)
 
 ---
 
@@ -210,7 +208,12 @@
      - ✅ **피격음 청각 10m로 (2026-06-25, 사용자)**: 발포음은 분대 50m 유지, **피격음은 분대 부스트 미적용 → 발신 반경(`impactNoiseRadius=10`)만** (실탄=근거리). 폭발성 공격 등 큰 피격음은 추후. `Enemy.HeardNoise` impact는 `im.radius` 직접 사용. PlayMode `Impact_noise_is_not_boosted_by_squad_hearing`(12m 무시). **EditMode 195 / PlayMode 47 green.**
 - ✅ **이동 중 사격 페널티 (2026-06-25)** — 이동하면서 쏘면 ① 이동속도 감소 ② 탄퍼짐 증가 → 정조준하려면 멈춰야 함(킬존 압박).
   - **순수 시임/테스트**: `MovingSpread`(`SpreadMultiplier`(speed/maxSpeed→1+penalty), `MoveSpeedFactor`(사격 중 감속), EditMode 7).
-  - **글루**: `Weapon.ApplySpread(dir, spreadMultiplier)`(탄퍼짐 배수) · `Player_WeaponController.FireSingleBullet`이 `player.movement.CurrentPlanarSpeed/MaxSpeed`로 배수 계산(`movingSpreadPenalty=2`) + `IsShooting()` 노출 · `Player_Movement`가 사격 중 `shootingMoveFactor=0.5`로 감속. **EditMode 202 / PlayMode 47 green.** (손맛=WASD+사격은 사용자 최종 확인.)
+  - **글루**: `Weapon.ApplySpread(dir, spreadMultiplier)`(탄퍼짐 배수) · `Player_WeaponController.FireSingleBullet`이 `player.movement.CurrentPlanarSpeed/MaxSpeed`로 배수 계산(`movingSpreadPenalty=2`) + `IsShooting()` 노출 · `Player_Movement`가 사격 중 `shootingMoveFactor=0.5`로 감속. (손맛=WASD+사격은 사용자 최종 확인.)
+- ✅ **소음 테이블 재설계 — 발포음/피격음 우선순위 해결 (2026-06-25, 사용자)** — 이전 "발포음 들리는데 피격음 따라가던" 문제 해결. 자세히 [Wiki §6.2.1](Wiki.md).
+  - **데이터 테이블 `NoiseCatalog`**(TDS.Core): 수치=가청 거리. 발포음 35(발생자=플레이어), 피격음 9(박힌 위치), 폭발음 90(발생자=플레이어 — 폭발은 플레이어 위치 광역 광고), 발소리 8/재장전 12(추후). **플레이어 소리만 적 반응**(적끼리 X).
+  - **우선순위 = 가장 큰 소리 승**: `NoiseModel.Resolve`(순수)가 들리는 것 중 loudness 최대 선택 → 발포음(35)>피격음(9). revealsSource면 플레이어, 아니면 소음 위치.
+  - **글루**: `NoisePing` 종류별 채널(`Emit(type,noisePos,sourcePos)`+`EmitGunshot/EmitImpact/EmitExplosion`) · `Player_WeaponController`=`EmitGunshot` · `Bullet`=비-적 충돌 시 `EmitImpact`(플레이어 총알만, `emitImpactNoise` 플래그) · `Enemy.HeardNoise`가 `ActiveChannels`→`Resolve`. 분대 청각 부스트/`squadHearingRadius` 제거(loudness가 사거리), `gunshotNoiseRadius`/`impactNoiseRadius` 필드 제거. **EditMode 205 / PlayMode 47 green.**
+  - **추후**: 유탄/폭발 실제 발신(현재 테이블만), 발소리/재장전 발신 연결. `NoiseCatalog` SO화(디자이너 튜닝).
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 
 ### D5. 통합 전 모듈화 = 실용적 디커플링 ✅ (확정 2026-06-20)

@@ -36,9 +36,8 @@ namespace TDS.Tests.PlayMode
             GameServices.ResetForTests();
             GameBootstrap.EnsureSystems();
 
-            // NoisePing은 static이라 테스트 간 상태가 남는다 → 두 채널을 들리지 않게 중화(이전 테스트 핑 오염 방지).
-            NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
-            NoisePing.EmitImpact(new Vector3(9999f, 0f, 9999f), 0.01f);
+            // NoisePing은 static이라 테스트 간 상태가 남는다 → 초기화(이전 테스트 핑 오염 방지).
+            NoisePing.ClearForTests();
 
             floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             floor.transform.localScale = new Vector3(40f, 1f, 40f);
@@ -97,11 +96,10 @@ namespace TDS.Tests.PlayMode
             var e = members[0];
             Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState, "초기엔 순찰");
 
-            // 총구음은 멀리/작게(안 들림), 피격음만 적 위에 발신
+            // 피격음만 적 위에 발신(근거리 → 들림)
             for (int i = 0; i < 6; i++)
             {
-                NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
-                NoisePing.EmitImpact(e.transform.position, 10f);
+                NoisePing.EmitImpact(e.transform.position);
                 yield return null;
             }
 
@@ -146,8 +144,8 @@ namespace TDS.Tests.PlayMode
 
             Vector3 noise = new Vector3(8f, 0f, 16f); // 테스트 바닥(±20) 안
 
-            // 발포음 발신(분대 발포음 청각 50m로 들림) → 분대 조사 시작
-            for (int i = 0; i < 6; i++) { NoisePing.EmitMuzzle(noise, 3f); yield return null; }
+            // 발포음 발신(테이블 35m로 들림) → 분대 조사 시작
+            for (int i = 0; i < 6; i++) { NoisePing.EmitGunshot(noise); yield return null; }
             Assert.IsTrue(squad.Investigating, "소음을 듣고도 분대가 조사를 시작하지 않음");
 
             yield return null; yield return null; // 앵커 갱신 한두 틱
@@ -191,63 +189,50 @@ namespace TDS.Tests.PlayMode
             return n > 0 ? sum / n : 999f;
         }
 
-        // §6.2.1 분대 발포음 청각: 분대원은 발포음(muzzle) 반경이 작아도 squadHearingRadius(50m) 안이면 듣는다.
+        // §6.2.1 발포음 청각: 발포음은 테이블 35m까지 들린다(30m는 들림).
         [UnityTest]
-        public IEnumerator Squad_member_hears_distant_gunshot_within_hearing_radius()
+        public IEnumerator Squad_member_hears_gunshot_within_table_radius()
         {
             yield return BuildSquad(1);
             var e = members[0];
             Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState);
 
-            // 멤버에서 ~40m 떨어진 곳에 아주 작은 반경(2)의 발포음 — 일반 가청이면 안 들리지만 분대 발포음 청각(50m)이면 들림
-            Vector3 far = e.transform.position + new Vector3(0f, 0f, 40f);
-            for (int i = 0; i < 6; i++)
-            {
-                NoisePing.EmitMuzzle(far, 2f);
-                NoisePing.EmitImpact(new Vector3(9999f, 0f, 9999f), 0.01f);
-                yield return null;
-            }
+            // 멤버에서 30m 발포음(테이블 35m) → 들림
+            Vector3 far = e.transform.position + new Vector3(0f, 0f, 30f);
+            for (int i = 0; i < 6; i++) { NoisePing.EmitGunshot(far); yield return null; }
 
-            Assert.AreEqual(PerceptionState.Alert, e.PerceptionState, "분대원이 50m 안의 작은 발포음을 못 들음");
+            Assert.AreEqual(PerceptionState.Alert, e.PerceptionState, "35m 안의 발포음을 못 들음");
         }
 
-        // §6.2.1 피격음은 근거리(발신 반경 ~10m)만 — 분대 청각 부스트 미적용. 12m 밖 피격음은 안 들림.
+        // §6.2.1 피격음은 근거리(테이블 9m)만. 12m 밖 피격음은 안 들림.
         [UnityTest]
-        public IEnumerator Impact_noise_is_not_boosted_by_squad_hearing()
+        public IEnumerator Impact_noise_is_close_range_only()
         {
             yield return BuildSquad(1);
             var e = members[0];
             Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState);
 
-            // 12m 떨어진 피격음(반경 10) — 분대여도 부스트 안 되므로 안 들려야(거리 12 > 10)
+            // 12m 떨어진 피격음(테이블 9m) → 안 들려야
             Vector3 far = e.transform.position + new Vector3(0f, 0f, 12f);
-            for (int i = 0; i < 6; i++)
-            {
-                NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
-                NoisePing.EmitImpact(far, 10f);
-                yield return null;
-            }
+            for (int i = 0; i < 6; i++) { NoisePing.EmitImpact(far); yield return null; }
 
-            float d = Vector3.Distance(e.transform.position, NoisePing.Impact.position);
-            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState,
-                $"12m 밖 피격음에 반응함(피격음은 ~10m만이어야). dist={d:0.0} impactR={NoisePing.Impact.radius} muzzleR={NoisePing.Muzzle.radius} muzzleAge={(Time.time-NoisePing.Muzzle.time):0.00}");
+            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState, "12m 밖 피격음에 반응함(피격음은 ~9m만이어야)");
         }
 
-        // 피격음이 가청 반경 밖이면 반응하지 않는다(거짓 양성 방지).
+        // 발포음도 테이블 사거리(35m) 밖이면 반응하지 않는다(거짓 양성 방지).
         [UnityTest]
-        public IEnumerator Distant_impact_noise_is_ignored()
+        public IEnumerator Distant_gunshot_is_ignored()
         {
             yield return BuildSquad(1);
             var e = members[0];
 
             for (int i = 0; i < 6; i++)
             {
-                NoisePing.EmitMuzzle(new Vector3(9999f, 0f, 9999f), 0.01f);
-                NoisePing.EmitImpact(e.transform.position + new Vector3(60f, 0f, 0f), 8f); // 반경 8, 거리 60
+                NoisePing.EmitGunshot(e.transform.position + new Vector3(60f, 0f, 0f)); // 거리 60 > 35
                 yield return null;
             }
 
-            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState, "먼 피격음엔 반응 없음");
+            Assert.AreEqual(PerceptionState.Patrol, e.PerceptionState, "먼 발포음엔 반응 없음");
         }
     }
 }

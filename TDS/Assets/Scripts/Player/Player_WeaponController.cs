@@ -20,10 +20,6 @@ public class Player_WeaponController : MonoBehaviour
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private float bulletSpeed;
     [SerializeField] private Light fireEffectLight;
-    [Tooltip("총성이 적에게 들리는 반경(§6.2 소음). 이 안의 적은 뒤돌아 있어도 이쪽을 조사하러 옴")]
-    [SerializeField] private float gunshotNoiseRadius = 18f;
-    [Tooltip("총알이 땅·벽에 박힐 때 나는 소리 반경(§6.2.1 피격음, 실탄은 근거리 ~10m). 발사음을 못 들은 적도 이 안에 박히면 그쪽을 수색. 폭발성 공격은 추후 더 크게.")]
-    [SerializeField] private float impactNoiseRadius = 10f;
     [Tooltip("이동 중 사격 탄퍼짐 페널티 배수(§MovingSpread). 전속 이동 시 탄퍼짐 = 기본×(1+이 값).")]
     [SerializeField] private float movingSpreadPenalty = 2f;
 
@@ -204,7 +200,7 @@ public class Player_WeaponController : MonoBehaviour
         Rigidbody rbNewBullet = newBullet.GetComponent<Rigidbody>();
 
         Bullet bulletScript = newBullet.GetComponent<Bullet>();
-        bulletScript.BulletSetup(whatIsAlly,currentWeapon.bulletDamage, currentWeapon.gunDistance,bulletImpactForce, impactNoiseRadius);
+        bulletScript.BulletSetup(whatIsAlly,currentWeapon.bulletDamage, currentWeapon.gunDistance,bulletImpactForce, emitImpactNoise: true); // 플레이어 총알만 피격음 발신
 
 
         // 이동 중 사격 페널티: 빠를수록 탄퍼짐↑(§MovingSpread).
@@ -216,8 +212,8 @@ public class Player_WeaponController : MonoBehaviour
         rbNewBullet.mass = REFERENCE_BULLET_SPEED / currentWeapon.weaponData.bulletSpeed;
         rbNewBullet.linearVelocity = bulletsDirection * currentWeapon.weaponData.bulletSpeed;
 
-        // §6.2 소음: 총성은 주변 적이 이쪽을 조사하게 만든다(뒤돌아 있어도).
-        NoisePing.EmitMuzzle(player.transform.position, gunshotNoiseRadius);
+        // §6.2.1 소음: 발포음(테이블 35m)은 주변 적이 플레이어를 조사하게 만든다(뒤돌아 있어도).
+        NoisePing.EmitGunshot(player.transform.position);
     }
 
     private IEnumerator ShowFireEffectLight()

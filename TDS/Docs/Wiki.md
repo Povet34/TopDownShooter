@@ -132,19 +132,27 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - **소음 = "발각"이 아니라 "고개를 돌리게 하는 트리거"**: 소리 나면 그쪽으로 시야를 돌려 조사 → 그 결과 콘에 들어오면 발각.
 - **거리 = 시야의 게이트**: 시야 안이어도 너무 멀면 미발각, 가까우면 확정. 시야 밖이면 거리 무의미.
 
-#### 6.2.1 소음원 2종 — 총구음 / 피격음 — **구현 완료 (2026-06-22)**
-> **순찰·경계 상태**의 적이 소리에 반응하는 채널이 둘이다(우선순위 = 총구음 > 피격음).
-- **총구음(Muzzle)**: 발사 시 **총구(=플레이어) 위치**에 큰 반경(`gunshotNoiseRadius` 18)으로 발신. 들리면 그쪽으로 조사 → 플레이어에 직접 다가감.
-- **피격음(Impact)**: 총알이 **땅·벽에 박힌 위치**에 작은 반경(`impactNoiseRadius` 8, 총구음보다 조용)으로 발신. 발사음은 멀어서 못 들었지만 **총알이 내 근처에 박히면** 그 소리를 듣고 **박힌 곳 근처로 가 플레이어를 수색**(기존 경계 수색 흐름 재사용).
-- **순수 시임 `NoiseModel.Investigate`**(`TDS.Core`, EditMode 4): `(muzzleHeard, muzzlePos, impactHeard, impactPos) → NoiseKind(None/Muzzle/Impact) + target`. 총구음 들리면 Muzzle 우선, 아니면 Impact, 둘 다 없으면 None. 가청 판정은 소음원별로 `NoiseModel.Heard`(거리·반경·나이).
-- **글루(구현됨)**: `NoisePing`을 **muzzle/impact 2채널**(`Ping` 구조체 2개)로 — `EmitMuzzle`/`EmitImpact`. `Player_WeaponController`가 발사 시 muzzle 발신 + `BulletSetup`에 `impactNoiseRadius` 전달. `Bullet.EmitImpactNoise`가 **비-적(땅/벽) 충돌** 시 임팩트 위치에 피격 핑 발신(플레이어 총알만 — `impactNoiseRadius>0`; 적 명중은 GetHit→분대 교전이 따로 처리). `Enemy.HeardNoise`가 두 핑을 `Heard`로 각각 판정 → `Investigate`로 조사 위치 결정.
-- **분대 청각 — 발포음 50m / 피격음 10m (2026-06-25)**: 채널별로 다름.
-  - **발포음(muzzle)**: 분대원은 `max(소음반경, squadHearingRadius=50)` → **50m 안이면 무조건 들음**(솔로는 발신 반경 18).
-  - **피격음(impact)**: **분대 부스트 미적용** — `Bullet`의 발신 반경(`impactNoiseRadius=10`) 그대로라 **~10m만**. 실탄 피격음은 근거리만 들리게 한 의도. (폭발성 공격 등 큰 피격음은 추후 발신 반경을 키워 표현.)
+#### 6.2.1 소음 테이블 — 데이터 기반 (재설계 2026-06-25)
+> **수치 = 최소 가청 거리(m).** 동시에 여러 소리가 들리면 **가장 큰 소리(loudness 최대)가 이긴다** →
+> 발포음(35)이 피격음(9)을 이겨, "발포음 들리는데 피격음 따라가던" 문제 해결.
+> **플레이어가 내는 소리만 적이 반응** — 적끼리는 소리에 반응 안 함(적 무기/총알은 발신 안 함).
+
+| 소리 | loudness(가청 m) | 조사 위치(revealsSource) | 발신 |
+|---|---|---|---|
+| 발포음 `Gunshot` | 35 | **발생자=플레이어**(총구가 플레이어에) | `Player_WeaponController` 발사 시 |
+| 피격음 `BulletImpact` | 9 | 박힌 위치(플레이어 안 알림) | `Bullet`이 비-적(땅/벽) 충돌 시(플레이어 총알만) |
+| 폭발음 `Explosion`(유탄) | 90 | **발생자=플레이어**(던진 사람) — 폭발은 사실상 플레이어가 자기 위치를 광역 광고 | 미구현(유탄 추가 시) |
+| 발소리 `Footstep` | 8 | 플레이어 | 미구현(추후) |
+| 재장전 `Reload` | 12 | 플레이어 | 미구현(추후) |
+
+- **`NoiseCatalog`**(`TDS.Core`): 위 테이블(`Profile(type)→{loudness, revealsSource}`). 게임플레이 상수 — 추후 SO로 빼도 됨.
+- **`NoiseModel.Resolve`**(순수, EditMode): `NoiseReading[]`(종류·거리·나이·소음위치·발생자위치) → 들리는 것 중 **loudness 최대** 선택 → revealsSource면 발생자(플레이어), 아니면 소음 위치 반환. `Heard`(거리≤loudness + 최근)로 가청 판정.
+- **`NoisePing`**(전역, 플레이어 전용): 종류별 최근 1건(`Emit(type,noisePos,sourcePos)` + `EmitGunshot`/`EmitImpact`/`EmitExplosion`…). `ActiveChannels`로 적이 읽음. **폭발음은 발신 위치(폭발 지점)와 발생자(플레이어) 위치가 다름** → 폭발음 들은 적은 폭발 지점이 아니라 **플레이어**로 조사.
+- **`Enemy.HeardNoise`**: `NoisePing.ActiveChannels` → `NoiseReading` 빌드 → `NoiseModel.Resolve`로 조사 위치 결정(가장 큰 소리). 솔로·분대 동일(분대 청각 부스트 제거 — loudness가 곧 사거리).
 - **분대 그룹 조사 (2026-06-25)**: 분대원이 소음을 들으면 개별 수색 대신 **분대가 함께** 그 지점을 조사한다 — `Enemy.UpdateAggro`가 분대원이면 `Squad.OnMemberHeardNoise(pos)`를 호출(개별 `OnEnterAlert` 수색은 솔로만). `Squad`가 **앵커를 소음 지점으로 옮겨**(멤버가 대형으로 따라 이동) → **도착하면 `investigateDwell`(기본 4s) 동안 머물며 살펴봄** → 없으면 **순찰 복귀**(현재 위치에서 `patrolDir` 그대로). 도달 실패는 `investigateMaxTravel`(25s)로 포기. 교전(시야/피격)이 조사보다 우선. `Squad.Investigating` 프로퍼티.
   - **경계 중 새 소음 → 조사 지점 갱신**: 경계 상태에서도 새 소음이 들리면(`Enemy.UpdateAggro`의 `heard && Squad`) `OnMemberHeardNoise`가 `investigatePoint`를 최신 위치로 덮어쓴다(1m 이상 변할 때). 그래서 플레이어가 계속 쏘면 분대가 최신 총성 위치로 방향을 계속 따라간다.
   - **멤버가 갱신을 즉시 추종 (버그 수정 2026-06-25)**: `MoveState`는 진입 시 목적지를 1회만 잡아 앵커가 갱신돼도 멤버가 첫 목적지까지 다 가던 문제 → `MoveState_Melee/Range`가 **분대원일 때 이동 중 0.2s마다 `GetPatrolDestination`(대형 목표)으로 목적지 재설정**. 솔로는 제외(순찰 인덱스 부수효과).
-- **검증**: PlayMode `SquadTests` — `Impact_noise_alone_makes_member_investigate`(근거리 impact → 경계), `Distant_impact_noise_is_ignored`/`Impact_noise_is_not_boosted_by_squad_hearing`(먼 피격음 무시, 12m도 안 들림), `Squad_member_hears_distant_gunshot_within_hearing_radius`(40m 발포음 청취), `Squad_targets_heard_noise_for_investigation`(앵커→소음), `Squad_members_follow_updated_investigate_target`(갱신 추종). (NoisePing은 static이라 `BuildSquad`에서 두 채널 중화 — 테스트 간 오염 방지.)
+- **검증**: EditMode `NoiseModelTests`(테이블 값·revealsSource·loudest 우선·폭발음=플레이어). PlayMode `SquadTests` — `Impact_noise_alone_makes_member_investigate`(근거리 impact→경계), `Impact_noise_is_close_range_only`(12m 피격음 무시), `Squad_member_hears_gunshot_within_table_radius`(30m 발포음 청취), `Distant_gunshot_is_ignored`(60m 발포음 무시), `Squad_targets_heard_noise_for_investigation`(앵커→소음), `Squad_members_follow_updated_investigate_target`(갱신 추종). (NoisePing은 static이라 `BuildSquad`에서 `ClearForTests()` — 테스트 간 오염 방지.)
 
 ### 6.3 3상태 FSM + 공용 칠판(blackboard)
 ```

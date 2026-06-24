@@ -4,7 +4,7 @@ public class Bullet : MonoBehaviour
 {
     private int bulletDamage;
     private float impactForce;
-    private float impactNoiseRadius; // >0이면 비-적(땅/벽)에 박힐 때 피격음 발신(§6.2.1). 플레이어 총알만 설정.
+    private bool emitImpactNoise; // true면 비-적(땅/벽)에 박힐 때 피격음 발신(§6.2.1). 플레이어 총알만 true.
 
     private BoxCollider cd;
     private Rigidbody rb;
@@ -34,12 +34,12 @@ public class Bullet : MonoBehaviour
         trailRenderer = GetComponent<TrailRenderer>();
     }
 
-    public void BulletSetup(LayerMask allyLayerMask, int bulletDamage, float flyDistance = 100, float impactForce = 100, float impactNoiseRadius = 0f)
+    public void BulletSetup(LayerMask allyLayerMask, int bulletDamage, float flyDistance = 100, float impactForce = 100, bool emitImpactNoise = false)
     {
         this.allyLayerMask = allyLayerMask;
         this.impactForce = impactForce;
         this.bulletDamage = bulletDamage;
-        this.impactNoiseRadius = impactNoiseRadius;
+        this.emitImpactNoise = emitImpactNoise;
 
         bulletDisabled = false;
         cd.enabled = true;
@@ -111,14 +111,14 @@ public class Bullet : MonoBehaviour
         EmitImpactNoise(collision);
     }
 
-    // 적이 아닌 표면(땅/벽 등)에 박히면 피격음 발신(§6.2.1). 발사음을 못 들은 적도 근처 박힘이면 수색.
+    // 적이 아닌 표면(땅/벽 등)에 박히면 피격음 발신(§6.2.1, 테이블 ~9m). 발사음을 못 들은 적도 근처 박힘이면 수색.
     private void EmitImpactNoise(Collision collision)
     {
-        if (impactNoiseRadius <= 0f)
-            return; // 플레이어 총알만(enemy 총알은 muzzle 핑도 안 냄 — 일관성)
+        if (!emitImpactNoise)
+            return; // 플레이어 총알만(enemy 총알은 발포음도 안 냄 — 일관성)
         if (collision.gameObject.GetComponentInParent<Enemy>() != null)
             return; // 적 명중은 피격(GetHit→분대 교전)이 따로 처리 — 땅 박힘 소리는 비-적만
-        NoisePing.EmitImpact(collision.contacts[0].point, impactNoiseRadius);
+        NoisePing.EmitImpact(collision.contacts[0].point);
     }
 
     private void ApplyImpactToMovable(Collision collision)

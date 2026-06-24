@@ -23,8 +23,6 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected float viewHalfAngle = 70f;
     [Tooltip("이 반경 안이면 콘 밖/뒤라도 인지(몰래 바로 옆 접근 차단)")]
     [SerializeField] protected float senseRadius = 2f;
-    [Tooltip("분대 소속일 때 발포음(muzzle) 청각 반경(§6.2.1). 이 안의 발포음은 크기와 무관하게 들린다. 피격음은 미적용(발신 반경 그대로).")]
-    [SerializeField] protected float squadHearingRadius = 50f;
     [SerializeField] protected float eyeHeight = 1.6f;
     [Tooltip("시야를 가리는 환경 레이어(0이면 Default+Environment 자동)")]
     [SerializeField] protected LayerMask viewOccluderMask = 0;
@@ -197,21 +195,27 @@ public class Enemy : MonoBehaviour
     }
 
     /// <summary>
-    /// 총구음/피격음 2채널 중 들리는 게 있으면 true(+ 조사 위치). 경계 진입 트리거(§6.2).
-    /// 총구음 우선(플레이어에 더 가까운 단서) → 없으면 피격음 위치로 수색. 판정은 순수 NoiseModel.
+    /// 플레이어 소리가 들리면 true(+ 조사 위치). 경계 진입 트리거(§6.2.1). 가청 거리=소음 테이블 loudness,
+    /// 동시에 여러 소리면 **가장 큰 소리 우선**(발포음>피격음). 조사 위치는 종류에 따라 발생자(플레이어)/소음 위치.
     /// </summary>
     protected virtual bool HeardNoise(out Vector3 noisePos)
     {
-        var m = NoisePing.Muzzle;
-        var im = NoisePing.Impact;
         Vector3 pos = transform.position;
-        // 발포음(muzzle)은 분대원이 멀리서도 듣는다(squadHearingRadius, 기본 50m).
-        // 피격음(impact)은 실탄 기준 근거리만(발신 반경 그대로, ~10m) — 분대 청각 부스트 미적용.
-        // (폭발성 공격 등 큰 피격음은 추후 발신 반경을 키워 표현.)
-        float muzzleHear = Squad != null ? squadHearingRadius : 0f;
-        bool muzzleHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, m.position), Mathf.Max(m.radius, muzzleHear), Time.time - m.time, NoiseMaxAge);
-        bool impactHeard = TDS.Core.NoiseModel.Heard(Vector3.Distance(pos, im.position), im.radius, Time.time - im.time, NoiseMaxAge);
-        return TDS.Core.NoiseModel.Investigate(muzzleHeard, m.position, impactHeard, im.position, out noisePos) != TDS.Core.NoiseKind.None;
+        var channels = NoisePing.ActiveChannels;
+        var readings = new System.Collections.Generic.List<TDS.Core.NoiseReading>(channels.Count);
+        for (int i = 0; i < channels.Count; i++)
+        {
+            var c = channels[i];
+            readings.Add(new TDS.Core.NoiseReading
+            {
+                type = c.type,
+                distance = Vector3.Distance(pos, c.noisePos),
+                age = Time.time - c.time,
+                noisePos = c.noisePos,
+                sourcePos = c.sourcePos,
+            });
+        }
+        return TDS.Core.NoiseModel.Resolve(readings, NoiseMaxAge, out noisePos, out _);
     }
 
     /// <summary>경계 중 수색할 지점(마지막 목격/소음 위치). MoveState가 순찰점 대신 사용.</summary>
