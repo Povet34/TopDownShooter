@@ -131,6 +131,28 @@ namespace TDS.Tests.PlayMode
             Assert.GreaterOrEqual(Mathf.Abs(dot), 0.999f, $"순찰 방향이 회전함(플레이어 추적 의심) dot={dot:0.000}");
         }
 
+        // §6.2.1 분대 소음 조사: 분대원이 소음을 들으면 분대가 그 지점을 조사 목표(앵커)로 삼아 그쪽으로 향한다.
+        // (멤버가 앵커를 따라 이동하는 것은 로코모션의 일이고, 여기선 분대 조사 로직을 검증.)
+        [UnityTest]
+        public IEnumerator Squad_targets_heard_noise_for_investigation()
+        {
+            yield return BuildSquad(3);
+            var squad = squadGo.GetComponent<Squad>();
+            var fAnchor = typeof(Squad).GetField("patrolAnchor", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            Vector3 noise = new Vector3(8f, 0f, 16f); // 테스트 바닥(±20) 안
+
+            // 소음 발신(분대 청각 50m로 들림) → 분대 조사 시작
+            for (int i = 0; i < 6; i++) { NoisePing.EmitImpact(noise, 3f); yield return null; }
+            Assert.IsTrue(squad.Investigating, "소음을 듣고도 분대가 조사를 시작하지 않음");
+
+            yield return null; yield return null; // 앵커 갱신 한두 틱
+
+            Vector3 anchor = (Vector3)fAnchor.GetValue(squad);
+            float dist = new Vector2(anchor.x - noise.x, anchor.z - noise.z).magnitude;
+            Assert.Less(dist, 5f, $"분대 조사 앵커가 소음 지점으로 향하지 않음 anchor=({anchor.x:0.0},{anchor.z:0.0}) noise=({noise.x:0.0},{noise.z:0.0})");
+        }
+
         // §6.2.1 분대 청각: 분대원은 소음 반경이 작아도(여기선 2) squadHearingRadius(기본 50m) 안이면 듣는다.
         [UnityTest]
         public IEnumerator Squad_member_hears_quiet_noise_within_hearing_radius()

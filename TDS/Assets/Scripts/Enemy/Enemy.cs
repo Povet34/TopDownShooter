@@ -150,9 +150,20 @@ public class Enemy : MonoBehaviour
         if (inBattleMode)
             ExitBattleMode();
 
-        // 경계로 막 진입 → 조사 지점으로 이동(소음이면 소음 위치, 시야상실이면 마지막 목격 위치).
-        if (state == TDS.Core.PerceptionState.Alert && prev != TDS.Core.PerceptionState.Alert)
-            OnEnterAlert(heard ? noisePos : lastKnownPlayerPos);
+        // 경계 → 조사 지점으로 이동. 분대 소속이면 분대가 그룹으로 조사(앵커 이동), 솔로면 개별 수색.
+        if (state == TDS.Core.PerceptionState.Alert)
+        {
+            if (prev != TDS.Core.PerceptionState.Alert)
+            {
+                Vector3 point = heard ? noisePos : lastKnownPlayerPos;
+                if (Squad != null) Squad.OnMemberHeardNoise(point);
+                else OnEnterAlert(point);
+            }
+            else if (heard && Squad != null)
+            {
+                Squad.OnMemberHeardNoise(noisePos); // 경계 중 새 소음 → 분대 조사 지점 갱신
+            }
+        }
     }
 
     /// <summary>경계 진입 시 호출 — 서브클래스가 조사 지점으로 이동(수색)시킨다. Boss는 사용 안 함.</summary>

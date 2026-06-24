@@ -137,7 +137,9 @@ spawnInterval = lerp(최대간격, 최소간격, intensity)   // 최소간격으
 - **피격음(Impact)**: 총알이 **땅·벽에 박힌 위치**에 작은 반경(`impactNoiseRadius` 8, 총구음보다 조용)으로 발신. 발사음은 멀어서 못 들었지만 **총알이 내 근처에 박히면** 그 소리를 듣고 **박힌 곳 근처로 가 플레이어를 수색**(기존 경계 수색 흐름 재사용).
 - **순수 시임 `NoiseModel.Investigate`**(`TDS.Core`, EditMode 4): `(muzzleHeard, muzzlePos, impactHeard, impactPos) → NoiseKind(None/Muzzle/Impact) + target`. 총구음 들리면 Muzzle 우선, 아니면 Impact, 둘 다 없으면 None. 가청 판정은 소음원별로 `NoiseModel.Heard`(거리·반경·나이).
 - **글루(구현됨)**: `NoisePing`을 **muzzle/impact 2채널**(`Ping` 구조체 2개)로 — `EmitMuzzle`/`EmitImpact`. `Player_WeaponController`가 발사 시 muzzle 발신 + `BulletSetup`에 `impactNoiseRadius` 전달. `Bullet.EmitImpactNoise`가 **비-적(땅/벽) 충돌** 시 임팩트 위치에 피격 핑 발신(플레이어 총알만 — `impactNoiseRadius>0`; 적 명중은 GetHit→분대 교전이 따로 처리). `Enemy.HeardNoise`가 두 핑을 `Heard`로 각각 판정 → `Investigate`로 조사 위치 결정.
-- **검증**: PlayMode `SquadTests` — `Impact_noise_alone_makes_member_investigate`(muzzle 없이 impact만 → 적 경계 전환), `Distant_impact_noise_is_ignored`(먼 피격음 무시).
+- **분대 청각 50m (2026-06-25)**: `Enemy.squadHearingRadius`(기본 50) — **분대원**은 `HeardNoise`에서 `max(소음반경, 50)`을 써서 소음 크기와 무관하게 **50m 안이면 무조건 들음**. (솔로 적은 소음원 반경 그대로.)
+- **분대 그룹 조사 (2026-06-25)**: 분대원이 소음을 들으면 개별 수색 대신 **분대가 함께** 그 지점을 조사한다 — `Enemy.UpdateAggro`가 분대원이면 `Squad.OnMemberHeardNoise(pos)`를 호출(개별 `OnEnterAlert` 수색은 솔로만). `Squad`가 **앵커를 소음 지점으로 옮겨**(멤버가 대형으로 따라 이동) → **도착하면 `investigateDwell`(기본 4s) 동안 머물며 살펴봄** → 없으면 **순찰 복귀**(현재 위치에서 `patrolDir` 그대로). 도달 실패는 `investigateMaxTravel`(25s)로 포기. 교전(시야/피격)이 조사보다 우선. `Squad.Investigating` 프로퍼티.
+- **검증**: PlayMode `SquadTests` — `Impact_noise_alone_makes_member_investigate`(impact만 → 적 경계), `Distant_impact_noise_is_ignored`(먼 소음 무시), `Squad_member_hears_quiet_noise_within_hearing_radius`(50m 작은 소음 청취), `Squad_targets_heard_noise_for_investigation`(분대 앵커가 소음 지점으로). in-game: 분대가 플레이어 총성(50m)을 듣고 그쪽으로 조사 이동.
 
 ### 6.3 3상태 FSM + 공용 칠판(blackboard)
 ```

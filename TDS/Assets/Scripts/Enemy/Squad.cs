@@ -37,8 +37,22 @@ public class Squad : MonoBehaviour
     private bool hasLeftEdge; // 스폰 가장자리를 한 번 벗어나야 반대편 가장자리에서 디스폰(스폰 즉시 디스폰 방지)
     private Transform player;  // 첫 순찰 방향 계산용(1회). 이후 방향 재조정엔 안 씀.
 
+    [Header("소음 조사(§6.2.1)")]
+    [Tooltip("소리 난 곳 도착 판정 반경")]
+    [SerializeField] private float investigateArriveRadius = 3.5f;
+    [Tooltip("도착해서 살펴보는 시간(초). 이 동안 머물다 없으면 순찰 복귀")]
+    [SerializeField] private float investigateDwell = 4f;
+    [Tooltip("도달 실패 시 조사 포기까지 최대 이동 시간(초)")]
+    [SerializeField] private float investigateMaxTravel = 25f;
+
+    private bool investigating;
+    private Vector3 investigatePoint;
+    private float investigateArrivedAt = -1f; // 도착 시각(-1=아직 가는 중)
+    private float investigateStartAt;
+
     public IReadOnlyList<Enemy> Members => members;
     public bool Engaged { get; private set; }
+    public bool Investigating => investigating;
 
     /// <summary>
     /// 상시 로밍 모드 켜기(§6.3.2): 플레이어 쪽으로 순찰 전진 + 순찰 상태로 맵 가장자리 도달 시 디스폰.
@@ -64,6 +78,23 @@ public class Squad : MonoBehaviour
     public void OnMemberHit()
     {
         hitAlertUntil = Time.time + hitAlertDuration;
+    }
+
+    /// <summary>
+    /// 분대원이 소음을 들음(§6.2.1) → 분대가 함께 그 지점으로 가 살펴본다(교전 중이 아니면).
+    /// 개별 멤버가 따로 수색하지 않고 분대 앵커가 그쪽으로 이동 → 도착 후 dwell → 순찰 복귀.
+    /// </summary>
+    public void OnMemberHeardNoise(Vector3 pos)
+    {
+        if (Engaged)
+            return;
+        // 같은 소음 재통지(여러 멤버·여러 프레임)는 무시 — 도착 타이머 리셋 방지.
+        if (investigating && Flat(pos - investigatePoint).sqrMagnitude < 1f)
+            return;
+        investigating = true;
+        investigatePoint = pos;
+        investigateArrivedAt = -1f;
+        investigateStartAt = Time.time;
     }
 
     private void Update()
@@ -92,12 +123,20 @@ public class Squad : MonoBehaviour
         Engaged = trigger;
         if (!trigger)
         {
+            if (investigating)
+            {
+                UpdateInvestigate(); // 소리 난 곳으로 가 살펴봄 → 끝나면 순찰 복귀
+                return;
+            }
             switch (CurrentIntent())
             {
                 case SquadIntent.Despawning: Despawn(); return;        // 순찰 상태로 반대편 가장자리 도달
                 default:                     AdvancePatrol(); return;  // Patrolling — 함께 로밍(앵커 전진)
             }
         }
+
+        // 교전이 조사보다 우선 — 교전 진입 시 조사 종료.
+        investigating = false;
 
         // ForceEngage는 시야 상실 타이머를 리셋하므로, 트리거가 유지되는 한 전원 교전을 유지한다.
         // 트리거가 사라지면(아무도 안 보이고 피격도 오래됨) 각 적이 제 lose-sight 타이머로 개별 이탈.
@@ -106,24 +145,62 @@ public class Squad : MonoBehaviour
                 members[i].SquadEngage();
     }
 
+    // 소음 조사: 앵커를 소리 난 곳으로 옮겨 분대가 그쪽으로 이동 → 도착하면 dwell 동안 머물며 살펴봄 →
+    // 없으면(없을 수밖에) 순찰 복귀(현재 위치에서 patrolDir 그대로). 도달 실패는 maxTravel로 포기.
+    private void UpdateInvestigate()
+    {
+        EnsurePatrolInit();
+
+        Vector3 c = Centroid();
+        if (investigateArrivedAt < 0f)
+        {
+            // 앵커=소음 지점(네브메시로 스냅) → 멤버가 그 주변 대형으로 이동
+            patrolAnchor = NavMesh.SamplePosition(investigatePoint, out var hit, 6f, NavMesh.AllAreas)
+                ? hit.position : investigatePoint;
+
+            if (Flat(c - patrolAnchor).magnitude <= investigateArriveRadius)
+                investigateArrivedAt = Time.time;                      // 도착 → 살펴보기 시작
+            else if (Time.time - investigateStartAt > investigateMaxTravel)
+                EndInvestigate(c);                                     // 너무 오래 못 감 → 포기
+        }
+        else if (Time.time - investigateArrivedAt >= investigateDwell)
+        {
+            EndInvestigate(c);                                         // 다 살펴봄 → 순찰 복귀
+        }
+        // dwell 중엔 앵커를 소음 지점에 둔 채 대기(멤버는 주변 대형 유지 = "둘러봄").
+    }
+
+    private void EndInvestigate(Vector3 resumeCentroid)
+    {
+        investigating = false;
+        patrolAnchor = resumeCentroid; // 현재 위치에서 patrolDir 그대로 순찰 재개
+    }
+
+    // 순찰 앵커/방향 1회 초기화. 첫 방향은 플레이어 쪽(가장자리 스폰이라 안쪽으로 들어가야 함),
+    // 플레이어를 못 찾으면 랜덤. 이후엔 재조정 없이 고정.
+    private void EnsurePatrolInit()
+    {
+        if (patrolInit)
+            return;
+        patrolAnchor = Centroid();
+        if (PlayerPos(out var pp))
+            patrolDir = SquadRoam.InitialPatrolDirection(patrolAnchor, pp);
+        else
+        {
+            Vector2 r = Random.insideUnitCircle.normalized;
+            patrolDir = new Vector3(r.x, 0f, r.y);
+            if (patrolDir.sqrMagnitude < 1e-4f) patrolDir = Vector3.forward;
+        }
+        patrolInit = true;
+    }
+
+    private static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+
     // 분대 앵커를 처음 정한 방향으로 직진시킨다(벽/네브메시 끝에서만 반전). 멤버는 앵커 주변 대형으로 따라온다.
     // 플레이어를 추적하지 않는다 — 그냥 정해진 방향으로 순찰. 경계→순찰 복귀 시 방향이 유지돼 가던 길 계속.
     private void AdvancePatrol()
     {
-        if (!patrolInit)
-        {
-            patrolAnchor = Centroid();
-            // 첫 방향은 플레이어 쪽(가장자리 스폰이라 안쪽으로 들어가야 함). 이후엔 재조정 없이 고정.
-            if (PlayerPos(out var pp))
-                patrolDir = SquadRoam.InitialPatrolDirection(patrolAnchor, pp);
-            else
-            {
-                Vector2 r = Random.insideUnitCircle.normalized;
-                patrolDir = new Vector3(r.x, 0f, r.y);
-                if (patrolDir.sqrMagnitude < 1e-4f) patrolDir = Vector3.forward;
-            }
-            patrolInit = true;
-        }
+        EnsurePatrolInit();
 
         // 경계 등으로 분대가 앵커에서 크게 벗어났으면(흩어졌다 복귀) 현재 중심으로 앵커 재설정 →
         // 옛 앵커로 되돌아가지 않고 "있던 자리에서 같은 방향으로" 순찰을 이어간다.
