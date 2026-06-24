@@ -218,6 +218,12 @@
   - **데이터 테이블 `NoiseCatalog`**(TDS.Core): 수치=가청 거리. 발포음 35(발생자=플레이어), 피격음 9(박힌 위치), 폭발음 90(발생자=플레이어 — 폭발은 플레이어 위치 광역 광고), 발소리 8/재장전 12(추후). **플레이어 소리만 적 반응**(적끼리 X).
   - **우선순위 = 가장 큰 소리 승**: `NoiseModel.Resolve`(순수)가 들리는 것 중 loudness 최대 선택 → 발포음(35)>피격음(9). revealsSource면 플레이어, 아니면 소음 위치.
   - **글루**: `NoisePing` 종류별 채널(`Emit(type,noisePos,sourcePos)`+`EmitGunshot/EmitImpact/EmitExplosion`) · `Player_WeaponController`=`EmitGunshot` · `Bullet`=비-적 충돌 시 `EmitImpact`(플레이어 총알만, `emitImpactNoise` 플래그) · `Enemy.HeardNoise`가 `ActiveChannels`→`Resolve`. 분대 청각 부스트/`squadHearingRadius` 제거(loudness가 사거리), `gunshotNoiseRadius`/`impactNoiseRadius` 필드 제거. **EditMode 205 / PlayMode 47 green.**
+- ✅ **대형 절차적 맵 1024×1024 (2026-06-24, 사용자)** — "1024 정도를 아주 깔끔하게". 자세히 [Wiki §3](Wiki.md).
+  - **카운트 상한**: `MapConfig.obstacleCount`(>0이면 셀별 확률 대신 카운트, 같은 셀 중복 방지) — 256²×density 수천 객체 폭발 방지. `MapConfig_Default`=grid 256×256×cell4=1024, 장애물500+cover60+배럴30=~595.
+  - **NavMesh 콜라이더 베이크**: `NavMeshSurface.useGeometry=PhysicsColliders` — 정적배칭 결합메시 Read/Write off로 **빌드 런타임 베이크 실패**(`does not allow read access`)하던 것 해결. 적 18/18 navmesh 위.
+  - **바닥 타일링**: `floorTileWorldUnits=8`(머티리얼 인스턴스에만).
+  - **실측(에디터)**: 런타임 ~95fps(10.6ms), draw call 50/batch 49, tris ~95k. 생성+베이크 일회성 ~2.9s. PlayMode `Large_map_bounds_obstacle_count`(1024서 카운트 상한). **EditMode 205 / PlayMode 51 green.**
+  - **추후(선택)**: 베이크 시간 단축(voxel size 튜닝/비동기), 광역 맵 청크 스티칭(§ 미래), 바이옴/구역.
   - **추후**: 유탄/폭발 실제 발신(현재 테이블만), 발소리/재장전 발신 연결. `NoiseCatalog` SO화(디자이너 튜닝).
 - ⏸️ Phase D — 사운드 (보류) · 트레일 수정
 

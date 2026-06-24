@@ -58,6 +58,7 @@ public class MapGenerator : MonoBehaviour
         int   gh     = config != null ? config.gridHeight      : 16;
         float wallH  = config != null ? config.wallHeight      : 3f;
         float dens   = config != null ? config.obstacleDensity : 0.12f;
+        int   obsCnt = config != null ? config.obstacleCount   : 0;
         int   covers = config != null ? config.coverCount      : 12;
         float clearR = config != null ? config.centerClearRadius : 6f;
 
@@ -68,7 +69,7 @@ public class MapGenerator : MonoBehaviour
         PrepareRoot();
         BuildFloor(worldW, worldL);
         BuildPerimeterWalls(worldW, worldL, cell, wallH);
-        ScatterObstacles(gw, gh, cell, wallH, origin, dens, clearR, rng);
+        ScatterObstacles(gw, gh, cell, wallH, origin, dens, obsCnt, clearR, rng);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         BakeNavMesh();
@@ -113,7 +114,14 @@ public class MapGenerator : MonoBehaviour
         if (config != null && config.floorMaterial != null)
         {
             var rend = prim.GetComponent<Renderer>();
-            if (rend != null) rend.sharedMaterial = config.floorMaterial;
+            if (rend != null)
+            {
+                rend.sharedMaterial = config.floorMaterial;
+                // 큰 맵에서 텍스처가 늘어나지 않게 타일링(머티리얼 인스턴스에만 — 공유 에셋 안 건드림).
+                float tile = config.floorTileWorldUnits;
+                if (tile > 0f)
+                    rend.material.mainTextureScale = new Vector2(worldW / tile, worldL / tile);
+            }
         }
     }
 
@@ -147,8 +155,29 @@ public class MapGenerator : MonoBehaviour
     }
 
     private void ScatterObstacles(int gw, int gh, float cell, float wallH, Vector3 origin,
-                                  float density, float clearR, System.Random rng)
+                                  float density, int count, float clearR, System.Random rng)
     {
+        // count>0: 카운트 기반(셀 1개당 최대 1개, 상한 — 큰 맵 성능). 0: 셀별 확률(레거시 소형 맵).
+        if (count > 0)
+        {
+            var used = new System.Collections.Generic.HashSet<long>();
+            int placed = 0, attempts = 0, maxAttempts = count * 20;
+            while (placed < count && attempts++ < maxAttempts)
+            {
+                int x = 1 + rng.Next(Mathf.Max(1, gw - 2));
+                int z = 1 + rng.Next(Mathf.Max(1, gh - 2));
+                long key = ((long)x << 32) ^ (uint)z;
+                if (!used.Add(key)) continue; // 같은 셀 중복 방지
+
+                Vector3 pos = CellCenter(x, z, cell, origin);
+                if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue; // 중앙 스폰존 비움
+
+                SpawnObstacle(pos, cell, wallH, rng);
+                placed++;
+            }
+            return;
+        }
+
         density = Mathf.Clamp01(density);
         for (int x = 1; x < gw - 1; x++)
         {

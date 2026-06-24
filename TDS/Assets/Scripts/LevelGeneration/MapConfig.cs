@@ -18,6 +18,8 @@ public class MapConfig : ScriptableObject
     [Min(0.5f)] public float wallHeight = 3f;
 
     [Header("콘텐츠 밀도")]
+    [Tooltip("장애물 개수(>0이면 obstacleDensity 대신 이 수만큼만 배치 — 큰 맵 성능). 0이면 셀별 확률 사용")]
+    [Min(0)] public int obstacleCount = 0;
     [Range(0f, 0.6f)] public float obstacleDensity = 0.12f;
     [Min(0)] public int coverCount = 12;
     [Tooltip("중앙 플레이어 스폰 주변은 비워둠 (월드 단위 반경)")]
@@ -52,4 +54,6 @@ public class MapConfig : ScriptableObject
     [Header("바닥 머티리얼 (프리미티브 바닥용)")]
     [Tooltip("프리미티브 바닥에 입힐 머티리얼(사막 모래 등). 비우면 기본 흰색")]
     public Material floorMaterial;
+    [Tooltip("바닥 텍스처를 이 월드 단위마다 1회 반복(큰 맵에서 늘어남 방지). 0이면 타일링 안 함")]
+    [Min(0f)] public float floorTileWorldUnits = 0f;
 }

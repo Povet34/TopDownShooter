@@ -104,6 +104,31 @@ namespace TDS.Tests.PlayMode
             }
         }
 
+        // 1024x1024 큰 맵에서도 장애물 수가 obstacleCount로 상한된다(셀별 확률 폭발 방지 = 성능).
+        [UnityTest]
+        public IEnumerator Large_map_bounds_obstacle_count()
+        {
+            var mg = MakeGenerator();
+            var cfg = ScriptableObject.CreateInstance<MapConfig>();
+            cfg.cellSize = 4f; cfg.gridWidth = 256; cfg.gridHeight = 256; // 1024 x 1024
+            cfg.obstacleCount = 300; cfg.coverCount = 0; cfg.barrelCount = 0;
+            cfg.centerClearRadius = 6f;
+            typeof(MapGenerator).GetField("config", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(mg, cfg);
+
+            mg.Generate(123);
+            yield return null;
+
+            int obstacles = 0;
+            foreach (Transform child in CurrentRoot(mg))
+                if (child.name == "Obstacle") obstacles++;
+
+            Assert.LessOrEqual(obstacles, 300, $"장애물이 상한 초과({obstacles}) — 카운트 상한 실패");
+            Assert.Greater(obstacles, 250, $"장애물이 너무 적음({obstacles}) — 배치 실패");
+            Assert.AreEqual(1024f, mg.LastBounds.size.x, 0.1f, "1024 폭이 아님");
+
+            Object.DestroyImmediate(cfg);
+        }
+
         [UnityTest]
         public IEnumerator Reports_bounds_and_seed()
         {

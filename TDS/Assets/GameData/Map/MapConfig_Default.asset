@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 015666e874a68504e8afacfacf515b5e, type: 3}
   m_Name: MapConfig_Default
   m_EditorClassIdentifier: TDS.Game::MapConfig
-  defaultSeed: 12345
+  defaultSeed: 11123
   cellSize: 4
-  gridWidth: 26
-  gridHeight: 26
+  gridWidth: 256
+  gridHeight: 256
   wallHeight: 3
-  obstacleDensity: 0.12
-  coverCount: 20
+  obstacleCount: 500
+  obstacleDensity: 0.6
+  coverCount: 60
   centerClearRadius: 8
   floorPrefab: {fileID: 0}
   wallPrefab: {fileID: 0}
@@ -32,8 +33,6 @@ MonoBehaviour:
   - {fileID: 7132551019396708166, guid: a8d8d79bb4169e64e93d99575e930778, type: 3}
   - {fileID: 6242321528552401562, guid: 486c877e0086c5046ab062d95cff2aa5, type: 3}
   - {fileID: 6242321528552401562, guid: 486c877e0086c5046ab062d95cff2aa5, type: 3}
-  - {fileID: 4653915258050879752, guid: 4d2e1a1896c9c7c46a1a6c1d70bc5396, type: 3}
-  - {fileID: 7074494925854948337, guid: a428da4338eee904a9f208f9f3d5010d, type: 3}
   - {fileID: 25590379544874509, guid: 9b0c7e945e66f7b4191b7ea6b6cc999e, type: 3}
   - {fileID: 25590379544874509, guid: 9b0c7e945e66f7b4191b7ea6b6cc999e, type: 3}
   - {fileID: 4897850535604665809, guid: 95cc7113e8a853c40ae9042ad435ac57, type: 3}
@@ -43,6 +42,7 @@ MonoBehaviour:
   lowCoverHeight: 0.7
   coverPointPrefab: {fileID: 8085336480767451092, guid: 7e4fb28d054f1ad469b06aee210fe65f, type: 3}
   coverPointOffset: {x: 1.5, y: 2.8}
-  barrelCount: 10
+  barrelCount: 30
   barrelPrefab: {fileID: 0}
   floorMaterial: {fileID: 2100000, guid: 6c241723bbf2b5a4f92b5af6d7985941, type: 2}
+  floorTileWorldUnits: 8
