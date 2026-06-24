@@ -109,6 +109,7 @@ public class MapGenerator : MonoBehaviour
         ScatterObstacles(gw, gh, cell, wallH, origin, dens, obsCnt, clearR, rng);
         PlaceClusters(worldW, worldL, cell, wallH, clearR, rng);
         PlaceInteriorWalls(worldW, worldL, wallH, clearR, rng);
+        PlaceCliffs(worldW, worldL, clearR, rng);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         BakeNavMesh();
@@ -191,16 +192,21 @@ public class MapGenerator : MonoBehaviour
 
     private void BuildPerimeterWalls(float worldW, float worldL, float cell, float wallH)
     {
+        // boundaryAsCliff면 경계를 절벽 높이/머티리얼로 — '절벽으로 갇힌 맵' 느낌.
+        bool asCliff = config != null && config.boundaryAsCliff;
+        float h = asCliff ? config.cliffHeight : wallH;
+        Material mat = asCliff ? config.cliffMaterial : null;
         float t = Mathf.Max(0.5f, cell * 0.25f); // 벽 두께
-        float y = wallH * 0.5f;
+        if (asCliff) t = Mathf.Max(t, 3f);        // 절벽은 두껍게
+        float y = h * 0.5f;
 
-        SpawnWall(new Vector3(0f, y, -worldL * 0.5f), new Vector3(worldW + t, wallH, t), "Wall_S");
-        SpawnWall(new Vector3(0f, y,  worldL * 0.5f), new Vector3(worldW + t, wallH, t), "Wall_N");
-        SpawnWall(new Vector3(-worldW * 0.5f, y, 0f), new Vector3(t, wallH, worldL + t), "Wall_W");
-        SpawnWall(new Vector3( worldW * 0.5f, y, 0f), new Vector3(t, wallH, worldL + t), "Wall_E");
+        SpawnWall(new Vector3(0f, y, -worldL * 0.5f), new Vector3(worldW + t, h, t), "Wall_S", mat);
+        SpawnWall(new Vector3(0f, y,  worldL * 0.5f), new Vector3(worldW + t, h, t), "Wall_N", mat);
+        SpawnWall(new Vector3(-worldW * 0.5f, y, 0f), new Vector3(t, h, worldL + t), "Wall_W", mat);
+        SpawnWall(new Vector3( worldW * 0.5f, y, 0f), new Vector3(t, h, worldL + t), "Wall_E", mat);
     }
 
-    private void SpawnWall(Vector3 localPos, Vector3 size, string label)
+    private void SpawnWall(Vector3 localPos, Vector3 size, string label, Material mat = null)
     {
         GameObject go;
         if (config != null && config.wallPrefab != null)
@@ -216,6 +222,74 @@ public class MapGenerator : MonoBehaviour
         }
         go.name = label;
         go.transform.localPosition = localPos;
+        if (mat != null) ApplyRockMaterial(go, size, mat);
+    }
+
+    // 절벽/바위 머티리얼을 입히고 풋프린트에 맞춰 타일링(2K 텍스처가 늘어나지 않게).
+    private void ApplyRockMaterial(GameObject go, Vector3 size, Material mat)
+    {
+        var rend = go.GetComponentInChildren<Renderer>();
+        if (rend == null) return;
+        rend.sharedMaterial = mat;
+        var inst = rend.material; // 인스턴스(타일링만 변경, 공유 에셋 안 건드림)
+        Vector2 s = new Vector2(Mathf.Max(1f, size.x / 4f), Mathf.Max(1f, size.y / 4f));
+        if (inst.HasProperty("_BaseMap")) inst.SetTextureScale("_BaseMap", s);
+        else inst.mainTextureScale = s;
+        if (inst.HasProperty("_BumpMap")) inst.SetTextureScale("_BumpMap", s);
+        if (inst.HasProperty("_OcclusionMap")) inst.SetTextureScale("_OcclusionMap", s);
+    }
+
+    // 내부 절벽(메사): 못 올라가는 임패서블 바위 덩어리. 가팔라 navmesh가 자동 제외 → 엔티티 우회.
+    private void PlaceCliffs(float worldW, float worldL, float clearR, System.Random rng)
+    {
+        int count = config != null ? config.interiorCliffCount : 0;
+        if (count <= 0) return;
+        float h    = config != null ? config.cliffHeight : 10f;
+        float minF = config != null ? config.cliffMinFootprint : 5f;
+        float maxF = config != null ? Mathf.Max(config.cliffMinFootprint, config.cliffMaxFootprint) : 14f;
+        Material mat = config != null ? config.cliffMaterial : null;
+        float halfW = Mathf.Max(0f, worldW * 0.5f - maxF);
+        float halfL = Mathf.Max(0f, worldL * 0.5f - maxF);
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 center = Vector3.zero;
+            bool ok = false;
+            float keepOut = clearR + maxF;
+            for (int guard = 0; guard < 20; guard++)
+            {
+                center = new Vector3((float)(rng.NextDouble() * 2 - 1) * halfW, 0f, (float)(rng.NextDouble() * 2 - 1) * halfL);
+                if (center.x * center.x + center.z * center.z >= keepOut * keepOut) { ok = true; break; }
+            }
+            if (!ok) continue;
+
+            // 메사 1개 = 1~3개 지터된 블록(덜 박스답게)
+            int blocks = 1 + rng.Next(3);
+            float baseF = minF + (float)rng.NextDouble() * (maxF - minF);
+            for (int b = 0; b < blocks; b++)
+            {
+                Vector2 o = b == 0 ? Vector2.zero : RandomInCircle(rng) * (baseF * 0.4f);
+                float fx = baseF * (0.6f + (float)rng.NextDouble() * 0.5f);
+                float fz = baseF * (0.6f + (float)rng.NextDouble() * 0.5f);
+                float bh = h * (0.7f + (float)rng.NextDouble() * 0.4f);
+                SpawnCliffBlock(center + new Vector3(o.x, 0f, o.y), new Vector3(fx, bh, fz), mat, rng);
+            }
+        }
+    }
+
+    private void SpawnCliffBlock(Vector3 localXZ, Vector3 size, Material mat, System.Random rng)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.transform.SetParent(mapRoot, false);
+        go.name = "Cliff";
+        go.transform.localScale = size;
+        Vector3 p = localXZ; p.y = size.y * 0.5f;
+        go.transform.localPosition = p;
+        go.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+        if (mat != null) ApplyRockMaterial(go, size, mat);
+
+        var mo = go.AddComponent<MapObject>();
+        mo.role = TDS.Core.MapObjectRole.Blocking;
     }
 
     private void ScatterObstacles(int gw, int gh, float cell, float wallH, Vector3 origin,

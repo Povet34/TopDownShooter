@@ -166,6 +166,38 @@ namespace TDS.Tests.PlayMode
             Assert.AreEqual(0, farActive, "반경 밖 오브젝트가 비활성되지 않음");
         }
 
+        // 내부 절벽: 중앙 스폰존 밖 + 충분히 높음(못 올라감) + 결정적.
+        [UnityTest]
+        public IEnumerator Interior_cliffs_outside_center_and_tall()
+        {
+            var mg = MakeGenerator();
+            var cfg = ScriptableObject.CreateInstance<MapConfig>();
+            cfg.cellSize = 4f; cfg.gridWidth = 60; cfg.gridHeight = 60; // 240 world
+            cfg.obstacleCount = 0; cfg.coverCount = 0; cfg.barrelCount = 0;
+            cfg.centerClearRadius = 10f;
+            cfg.interiorCliffCount = 8; cfg.cliffHeight = 10f;
+            cfg.cliffMinFootprint = 5f; cfg.cliffMaxFootprint = 12f;
+            typeof(MapGenerator).GetField("config", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(mg, cfg);
+
+            mg.Generate(99);
+            yield return null;
+
+            int cliffs = 0;
+            foreach (Transform c in CurrentRoot(mg))
+            {
+                if (c.name != "Cliff") continue;
+                cliffs++;
+                float dXZ = new Vector2(c.localPosition.x, c.localPosition.z).magnitude;
+                Assert.GreaterOrEqual(dXZ, cfg.centerClearRadius - 0.01f,
+                    $"절벽이 중앙 스폰존 안에 있음: {c.localPosition}");
+                Assert.GreaterOrEqual(c.localScale.y, cfg.cliffHeight * 0.7f - 0.01f,
+                    $"절벽이 너무 낮음(못 올라가야 함): {c.localScale.y}");
+            }
+            Assert.Greater(cliffs, 0, "절벽이 하나도 생성되지 않음");
+
+            Object.DestroyImmediate(cfg);
+        }
+
         [UnityTest]
         public IEnumerator Reports_bounds_and_seed()
         {

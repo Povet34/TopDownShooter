@@ -21,7 +21,7 @@ run_tests(mode="EditMode", assembly_names=["TDS.Tests.EditMode"], include_failed
 run_tests(mode="PlayMode", assembly_names=["TDS.Tests.PlayMode"], init_timeout=120000, include_failed_tests=true)
 get_test_job(job_id, wait_timeout=60)   # 폴링
 ```
-또는 에디터 Test Runner 창. **현재 baseline: EditMode 211 / PlayMode 54 green.**
+또는 에디터 Test Runner 창. **현재 baseline: EditMode 211 / PlayMode 56 green.**
 
 > ⚠️ **`NoisePing`은 static이라 PlayMode 테스트 간 상태가 남는다.** 소음 관련 테스트는 시작 시 두 채널을 들리지 않게 중화할 것(`SquadTests.BuildSquad` 참고) — 안 그러면 이전 테스트 핑에 오염돼 단독은 통과/전체는 실패하는 플레이크가 난다.
 

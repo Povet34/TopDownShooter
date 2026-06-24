@@ -63,6 +63,19 @@ public class MapConfig : ScriptableObject
     [Tooltip("배럴 프리팹. 비우면 프리미티브 실린더(≤0.9)로 대체")]
     public GameObject barrelPrefab;
 
+    [Header("절벽 (못 올라가는 지형 — 경계 + 내부)")]
+    [Tooltip("내부 절벽(메사) 수. 못 올라가는 임패서블 바위 덩어리 — 동선을 막아 우회/엄폐 유발. navmesh가 자동 제외(가팔라 못 걸음). 0이면 끔")]
+    [Min(0)] public int interiorCliffCount = 0;
+    [Tooltip("절벽 높이(월드 단위) — CharacterController/navmesh 경사 한도를 넘게 충분히 높이. 권장 ≥6")]
+    [Min(1f)] public float cliffHeight = 10f;
+    [Tooltip("절벽 1개 풋프린트(가로) 최소/최대(월드 단위). 메사 1개는 1~3개 블록으로 구성")]
+    [Min(1f)] public float cliffMinFootprint = 5f;
+    [Min(1f)] public float cliffMaxFootprint = 14f;
+    [Tooltip("경계 벽도 이 절벽 머티리얼/높이로 올려 '절벽으로 갇힌' 느낌. 비우면 경계는 기본 벽")]
+    public Material cliffMaterial;
+    [Tooltip("true면 경계 둘레 벽을 cliffHeight로 높이고 cliffMaterial을 입힘")]
+    public bool boundaryAsCliff = false;
+
     [Header("주변만 렌더링 (거리 컬링)")]
     [Tooltip("플레이어에서 이 반경 밖 맵 오브젝트는 비활성(렌더+물리 절약 — 밀도 높여도 깔끔). 0이면 끔. 카메라 시야보다 넉넉히 크게(예 70). 바닥/navmesh는 영향 없음.")]
     [Min(0f)] public float cullRadius = 0f;
