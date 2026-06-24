@@ -45,7 +45,9 @@
   - **장애물 카운트 상한**: `obstacleCount`(>0이면 셀별 확률 대신 그 수만큼만, 같은 셀 중복 방지). 셀 순회 폭발(256²×density ≈ 수천 객체) 방지. 현재 장애물 500 + cover 60 + 배럴 30 = ~595 객체.
   - **NavMesh = 콜라이더 베이크**: `NavMeshSurface.useGeometry=PhysicsColliders`. 정적배칭 결합 렌더메시는 Read/Write가 꺼져 **빌드에서 런타임 베이크 실패**(`does not allow read access`) → 콜라이더로 베이크해 빌드 안전. 적 18/18 navmesh 위.
   - **바닥 타일링**: `floorTileWorldUnits`(예 8) — 큰 바닥에서 텍스처 늘어남 방지(머티리얼 인스턴스에만).
-  - **실측(에디터 플레이)**: 런타임 ~95fps(10.6ms), draw call 50 / batches 49(사막 props 머티리얼 공유로 정적배칭), tris ~95k. 생성+베이크 일회성 ~2.9s.
+  - **복잡도(2026-06-24)**: 균일 산포 + **장애물 군집**(`clusterCount`×`clusterSize`/`clusterRadius`, 밀집 포켓) + **내부 벽**(`interiorWallCount`/`interiorWallLength`, 초크포인트). 시드 결정적.
+  - **주변만 렌더링(거리 컬링, 2026-06-24)**: `cullRadius`(기본 70) — `MapGenerator.Update`가 0.4s마다 플레이어 반경 밖 맵 오브젝트를 비활성(바닥 제외, navmesh는 베이크라 무관). 밀도 올려도 렌더+물리 저렴. in-game: 919개 중 7개만 활성, 130fps.
+  - **실측(에디터 플레이)**: 런타임 ~95~130fps, draw call 50 / batches 49(사막 props 머티리얼 공유로 정적배칭), tris ~95k. 생성+베이크 일회성 ~2.2~2.9s.
 - **데이터 기반 콘텐츠** (`Assets/GameData/Map/MapConfig_Default`): 사막 황무지 테마 — 바닥 머티리얼(`Mat_DesertSand`), 장애물 풀(부서진 차/연료탱크/콘크리트관/사막바위/돌/선인장), 엄폐물(`sea_container`). 임포트 프리팹은 바닥(y=0) 배치, 정적 MeshCollider는 `convex=false`(navmesh 카빙 + 충돌).
 - **엄폐 실작동**: 배치된 엄폐물에 `Cover` 컴포넌트 + `CoverPoint` 4지점(오프셋 `coverPointOffset`로 풋프린트 밖, **NavMesh.SamplePosition으로 스냅 → 도달 가능한 지점만 생성**, 못 닿아 비비는 버그 방지). 원거리 적(coverPerk)이 `OverlapSphere`로 찾아 엄폐 → §4 적 AI와 연결. CoverPoint 마커 렌더러는 비활성(디버그용).
 - **Cover 높이 가중치** (기획 2026-06-21): `Cover.CoverHeight`(렌더러 bounds) 기준 — **낮은 단상(≤0.8)=사격 가능(`IsShootable`, 교전 시 선호), 높은 것=은폐 전용**. 순수 `CoverEvaluation`(ShootFrom/HideOnly/Unusable). 교전 중 `Enemy_Range.AttemptToFindCover`는 **사격 가능한 cover만** 수집. 맵 생성은 낮은 단상(`lowCoverRatio`, 높이 ≤0.8)+높은 cover를 섞음. `Cover.AuditForRange()`로 검증(PlayMode `CoverAuditTests`).

@@ -21,6 +21,11 @@ MonoBehaviour:
   obstacleDensity: 0.6
   coverCount: 60
   centerClearRadius: 8
+  clusterCount: 30
+  clusterSize: 10
+  clusterRadius: 6
+  interiorWallCount: 25
+  interiorWallLength: 14
   floorPrefab: {fileID: 0}
   wallPrefab: {fileID: 0}
   obstaclePrefabs:
@@ -44,5 +49,6 @@ MonoBehaviour:
   coverPointOffset: {x: 1.5, y: 2.8}
   barrelCount: 30
   barrelPrefab: {fileID: 0}
+  cullRadius: 70
   floorMaterial: {fileID: 2100000, guid: 6c241723bbf2b5a4f92b5af6d7985941, type: 2}
   floorTileWorldUnits: 8

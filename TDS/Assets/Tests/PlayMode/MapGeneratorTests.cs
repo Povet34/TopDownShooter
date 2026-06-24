@@ -129,6 +129,43 @@ namespace TDS.Tests.PlayMode
             Object.DestroyImmediate(cfg);
         }
 
+        // 주변만 렌더링: cullRadius 밖 맵 오브젝트는 비활성, 안쪽은 활성.
+        [UnityTest]
+        public IEnumerator Proximity_culling_disables_far_objects()
+        {
+            var mg = MakeGenerator();
+            var cfg = ScriptableObject.CreateInstance<MapConfig>();
+            cfg.cellSize = 4f; cfg.gridWidth = 40; cfg.gridHeight = 40; // 160 world
+            cfg.obstacleCount = 80; cfg.coverCount = 0; cfg.barrelCount = 0;
+            cfg.centerClearRadius = 4f; cfg.cullRadius = 20f;
+            typeof(MapGenerator).GetField("config", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(mg, cfg);
+
+            var player = new GameObject("Player") { tag = "Player" };
+            player.transform.position = Vector3.zero;
+
+            mg.Generate(5);
+            // CullInterval(0.4s) 지나도록 진행
+            float t = 0f;
+            while (t < 0.7f) { yield return null; t += Time.deltaTime; }
+
+            int nearTotal = 0, nearActive = 0, farTotal = 0, farActive = 0;
+            foreach (Transform c in CurrentRoot(mg))
+            {
+                if (c.name == "Floor") continue;
+                float d = new Vector2(c.position.x, c.position.z).magnitude;
+                if (d <= 20f) { nearTotal++; if (c.gameObject.activeSelf) nearActive++; }
+                else { farTotal++; if (c.gameObject.activeSelf) farActive++; }
+            }
+
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(cfg);
+
+            Assert.Greater(nearTotal, 0, "반경 안 오브젝트가 없음(테스트 전제)");
+            Assert.Greater(farTotal, 0, "반경 밖 오브젝트가 없음(테스트 전제)");
+            Assert.AreEqual(nearTotal, nearActive, "반경 안 오브젝트가 비활성됨");
+            Assert.AreEqual(0, farActive, "반경 밖 오브젝트가 비활성되지 않음");
+        }
+
         [UnityTest]
         public IEnumerator Reports_bounds_and_seed()
         {

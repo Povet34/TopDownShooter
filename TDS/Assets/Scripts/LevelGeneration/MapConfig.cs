@@ -25,6 +25,18 @@ public class MapConfig : ScriptableObject
     [Tooltip("중앙 플레이어 스폰 주변은 비워둠 (월드 단위 반경)")]
     [Min(0f)] public float centerClearRadius = 6f;
 
+    [Header("복잡도 — 군집 / 내부 구조")]
+    [Tooltip("장애물 군집(밀집 포켓) 수. 균일 산포에 더해 덜 휑하게")]
+    [Min(0)] public int clusterCount = 0;
+    [Tooltip("군집 1개당 장애물 수")]
+    [Min(1)] public int clusterSize = 8;
+    [Tooltip("군집 반경(월드 단위)")]
+    [Min(1f)] public float clusterRadius = 6f;
+    [Tooltip("내부 벽 세그먼트 수(초크포인트/엄폐선 — 구조 복잡도)")]
+    [Min(0)] public int interiorWallCount = 0;
+    [Tooltip("내부 벽 1개 길이(월드 단위)")]
+    [Min(1f)] public float interiorWallLength = 12f;
+
     [Header("프리팹 (비우면 프리미티브로 폴백)")]
     public GameObject floorPrefab;
     public GameObject wallPrefab;
@@ -50,6 +62,10 @@ public class MapConfig : ScriptableObject
     public int barrelCount = 6;
     [Tooltip("배럴 프리팹. 비우면 프리미티브 실린더(≤0.9)로 대체")]
     public GameObject barrelPrefab;
+
+    [Header("주변만 렌더링 (거리 컬링)")]
+    [Tooltip("플레이어에서 이 반경 밖 맵 오브젝트는 비활성(렌더+물리 절약 — 밀도 높여도 깔끔). 0이면 끔. 카메라 시야보다 넉넉히 크게(예 70). 바닥/navmesh는 영향 없음.")]
+    [Min(0f)] public float cullRadius = 0f;
 
     [Header("바닥 머티리얼 (프리미티브 바닥용)")]
     [Tooltip("프리미티브 바닥에 입힐 머티리얼(사막 모래 등). 비우면 기본 흰색")]

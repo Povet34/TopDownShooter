@@ -33,10 +33,47 @@ public class MapGenerator : MonoBehaviour
     private Transform mapRoot;
     private const string MapRootName = "MapRoot";
 
+    // 주변만 렌더링: 컬링 대상(바닥/벽 제외) + 스로틀. navmesh는 베이크돼 있어 비활성해도 경로엔 영향 없음.
+    private readonly System.Collections.Generic.List<Transform> cullables = new System.Collections.Generic.List<Transform>();
+    private Transform cullPlayer;
+    private float cullTimer;
+    private const float CullInterval = 0.4f;
+
     private void Start()
     {
         if (generateOnStart)
             Generate();
+    }
+
+    private void Update()
+    {
+        float r = config != null ? config.cullRadius : 0f;
+        if (r <= 0f || cullables.Count == 0)
+            return;
+
+        cullTimer -= Time.deltaTime;
+        if (cullTimer > 0f)
+            return;
+        cullTimer = CullInterval;
+
+        if (cullPlayer == null)
+        {
+            var p = GameObject.FindWithTag("Player");
+            if (p == null) return;
+            cullPlayer = p.transform;
+        }
+
+        Vector3 pp = cullPlayer.position;
+        float r2 = r * r;
+        for (int i = 0; i < cullables.Count; i++)
+        {
+            var t = cullables[i];
+            if (t == null) continue;
+            Vector3 d = t.position - pp; d.y = 0f;
+            bool near = d.sqrMagnitude <= r2;
+            if (t.gameObject.activeSelf != near)
+                t.gameObject.SetActive(near);
+        }
     }
 
     [ContextMenu("Generate")]
@@ -70,9 +107,12 @@ public class MapGenerator : MonoBehaviour
         BuildFloor(worldW, worldL);
         BuildPerimeterWalls(worldW, worldL, cell, wallH);
         ScatterObstacles(gw, gh, cell, wallH, origin, dens, obsCnt, clearR, rng);
+        PlaceClusters(worldW, worldL, cell, wallH, clearR, rng);
+        PlaceInteriorWalls(worldW, worldL, wallH, clearR, rng);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         BakeNavMesh();
+        BuildCullList();
 
         LastBounds = new MapBounds
         {
@@ -90,9 +130,22 @@ public class MapGenerator : MonoBehaviour
         var existing = transform.Find(MapRootName);
         if (existing != null) DestroySafe(existing.gameObject);
 
+        cullables.Clear();
+        cullPlayer = null;
+
         mapRoot = new GameObject(MapRootName).transform;
         mapRoot.SetParent(transform, false);
         mapRoot.localPosition = Vector3.zero;
+    }
+
+    // 거리 컬링 대상 수집(바닥은 제외 — 항상 보여야 함). navmesh는 이미 베이크돼 비활성해도 경로 영향 없음.
+    private void BuildCullList()
+    {
+        cullables.Clear();
+        if (mapRoot == null) return;
+        foreach (Transform child in mapRoot)
+            if (child.name != "Floor")
+                cullables.Add(child);
     }
 
     private void BuildFloor(float worldW, float worldL)
@@ -191,6 +244,61 @@ public class MapGenerator : MonoBehaviour
                 SpawnObstacle(pos, cell, wallH, rng);
             }
         }
+    }
+
+    // 장애물 군집(밀집 포켓) — 균일 산포에 더해 "덜 휑한" 국소 밀도. 중앙 스폰존은 비움.
+    private void PlaceClusters(float worldW, float worldL, float cell, float wallH, float clearR, System.Random rng)
+    {
+        int clusters = config != null ? config.clusterCount : 0;
+        if (clusters <= 0) return;
+        int size = config != null ? Mathf.Max(1, config.clusterSize) : 8;
+        float cr = config != null ? config.clusterRadius : 6f;
+        float halfW = Mathf.Max(0f, worldW * 0.5f - cell);
+        float halfL = Mathf.Max(0f, worldL * 0.5f - cell);
+
+        for (int c = 0; c < clusters; c++)
+        {
+            Vector3 center = Vector3.zero;
+            for (int guard = 0; guard < 20; guard++)
+            {
+                center = new Vector3((float)(rng.NextDouble() * 2 - 1) * halfW, 0f, (float)(rng.NextDouble() * 2 - 1) * halfL);
+                if (center.x * center.x + center.z * center.z >= (clearR + cr) * (clearR + cr)) break;
+            }
+            for (int i = 0; i < size; i++)
+            {
+                Vector2 o = RandomInCircle(rng) * cr;
+                Vector3 pos = center + new Vector3(o.x, 0f, o.y);
+                if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue;
+                SpawnObstacle(pos, cell, wallH, rng);
+            }
+        }
+    }
+
+    // 내부 벽 세그먼트 — 초크포인트/엄폐선으로 구조 복잡도. 중앙 스폰존은 비움.
+    private void PlaceInteriorWalls(float worldW, float worldL, float wallH, float clearR, System.Random rng)
+    {
+        int count = config != null ? config.interiorWallCount : 0;
+        if (count <= 0) return;
+        float len = config != null ? config.interiorWallLength : 12f;
+        const float t = 0.6f; // 두께
+        float halfW = Mathf.Max(0f, worldW * 0.5f - len);
+        float halfL = Mathf.Max(0f, worldL * 0.5f - len);
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 p = new Vector3((float)(rng.NextDouble() * 2 - 1) * halfW, wallH * 0.5f, (float)(rng.NextDouble() * 2 - 1) * halfL);
+            if (p.x * p.x + p.z * p.z < clearR * clearR) continue;
+            bool alongX = rng.Next(2) == 0;
+            Vector3 size = alongX ? new Vector3(len, wallH, t) : new Vector3(t, wallH, len);
+            SpawnWall(p, size, "InnerWall");
+        }
+    }
+
+    private static Vector2 RandomInCircle(System.Random rng)
+    {
+        double a = rng.NextDouble() * System.Math.PI * 2.0;
+        double r = System.Math.Sqrt(rng.NextDouble());
+        return new Vector2((float)(System.Math.Cos(a) * r), (float)(System.Math.Sin(a) * r));
     }
 
     private void SpawnObstacle(Vector3 localPos, float cell, float wallH, System.Random rng)
