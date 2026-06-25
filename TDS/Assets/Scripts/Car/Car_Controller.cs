@@ -110,7 +110,8 @@ public class Car_Controller : MonoBehaviour
 
 
         speed = rb.linearVelocity.magnitude;
-        ui.inGameUI.UpdateSpeedText(Mathf.RoundToInt(speed * 5) + "km/h");
+        if (ui != null) // 맵 씬엔 UI 싱글톤 없음 — MapHUD가 Speed를 읽어 표시
+            ui.inGameUI.UpdateSpeedText(Mathf.RoundToInt(speed * 5) + "km/h");
 
         driftTimer -= Time.deltaTime;
 
@@ -143,11 +144,13 @@ public class Car_Controller : MonoBehaviour
 
         foreach(var wheel in wheels)
         {
+            if (wheel.trail == null) continue; // 트레일 없는 휠 프리팹 안전
+
             WheelHit hit;
 
             if(wheel.cd.GetGroundHit(out hit))
             {
-                bool isGrounded = whatIsGround == (whatIsGround | (1 << hit.collider.gameObject.layer)); 
+                bool isGrounded = whatIsGround == (whatIsGround | (1 << hit.collider.gameObject.layer));
                 wheel.trail.emitting = isGrounded;
             }
         }
@@ -258,10 +261,9 @@ public class Car_Controller : MonoBehaviour
         if (carSounds != null)
             carSounds.ActivateCarSFX(activate);
 
-        //if(!activate)
-        //    rb.constraints = RigidbodyConstraints.FreezeAll;
-        //else
-        //    rb.constraints = RigidbodyConstraints.None;
+        // 주차 중(비활성)엔 완전 고정 → 절차 배치 후 떨어지거나 떠밀리지 않음. 탑승 시에만 물리.
+        if (rb != null)
+            rb.constraints = activate ? RigidbodyConstraints.None : RigidbodyConstraints.FreezeAll;
     }
 
     public void BrakeTheCar()
@@ -270,7 +272,7 @@ public class Car_Controller : MonoBehaviour
 
         foreach(var wheel in wheels)
         {
-            wheel.trail.emitting = false;
+            if (wheel.trail != null) wheel.trail.emitting = false;
         }
 
         rb.linearDamping = 1;
@@ -313,6 +315,10 @@ public class Car_Controller : MonoBehaviour
     public void TestThisCar()
     {
         ActivateCar(true);
-        CameraManager.instance.ChangeCameraTarget(transform, 12);
+        if (CameraManager.instance != null)
+            CameraManager.instance.ChangeCameraTarget(transform, 12);
     }
+
+    /// <summary>현재 속도(km/h 표기용 원시값). MapHUD 등이 읽음.</summary>
+    public float Speed => speed;
 }

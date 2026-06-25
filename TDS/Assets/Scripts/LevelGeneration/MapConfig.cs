@@ -65,6 +65,13 @@ public class MapConfig : ScriptableObject
     [Tooltip("배럴 폭발 시 스폰할 시각 FX 프리팹(CFXR 등). 비우면 파편만")]
     public GameObject explosionFXPrefab;
 
+    [Header("차량 (탑승 가능 — 풀에서 랜덤)")]
+    [Tooltip("배치할 차량 프리팹 풀(Car_Controller 포함). 비우면 차량 없음")]
+    public List<GameObject> carPrefabs = new List<GameObject>();
+    [Min(0)]
+    [Tooltip("맵에 배치할 차량 수")]
+    public int carCount = 0;
+
     [Header("절벽 (못 올라가는 지형 — 경계 + 내부)")]
     [Tooltip("내부 절벽(메사) 수. 못 올라가는 임패서블 바위 덩어리 — 동선을 막아 우회/엄폐 유발. navmesh가 자동 제외(가팔라 못 걸음). 0이면 끔")]
     [Min(0)] public int interiorCliffCount = 0;

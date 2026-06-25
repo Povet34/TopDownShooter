@@ -18,14 +18,14 @@ MonoBehaviour:
   gridHeight: 256
   wallHeight: 3
   obstacleCount: 600
-  obstacleDensity: 0.6
-  coverCount: 40
-  centerClearRadius: 7
-  clusterCount: 30
+  obstacleDensity: 0.301
+  coverCount: 25
+  centerClearRadius: 5
+  clusterCount: 15
   clusterSize: 10
   clusterRadius: 10
-  interiorWallCount: 15
-  interiorWallLength: 14
+  interiorWallCount: 5
+  interiorWallLength: 5
   floorPrefab: {fileID: 0}
   wallPrefab: {fileID: 0}
   obstaclePrefabs:
@@ -50,6 +50,11 @@ MonoBehaviour:
   barrelCount: 45
   barrelPrefab: {fileID: 0}
   explosionFXPrefab: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
+  carPrefabs:
+  - {fileID: 7681473427590625113, guid: 19dbe7a632176134ebf22d4707201855, type: 3}
+  - {fileID: 6630811048521316626, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
+  - {fileID: 4838821308409759786, guid: 66640c5c6c3fe2f4999bac7a9116e66d, type: 3}
+  carCount: 3
   interiorCliffCount: 10
   cliffHeight: 10
   cliffMinFootprint: 4
@@ -65,6 +70,6 @@ MonoBehaviour:
   extractionOffset: {x: 0.6, y: 0.6}
   extractionRadius: 7
   extractionBoardTime: 4
-  cullRadius: 70
+  cullRadius: 150
   floorMaterial: {fileID: 2100000, guid: e558f7c833d9e1e4094f6c89648814a3, type: 2}
   floorTileWorldUnits: 8

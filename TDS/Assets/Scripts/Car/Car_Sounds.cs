@@ -31,6 +31,8 @@ public class Car_Sounds : MonoBehaviour
 
     private void UpdateEngineSound()
     {
+        if (car == null || workingEngine == null) // 프리팹에 오디오 소스 미할당 시(맵/사운드 보류) 안전
+            return;
 
         float currentSpeed = car.speed;
         float pitch = Mathf.Lerp(minPitch, maxPitch, currentSpeed / maxSpeed);
@@ -42,15 +44,18 @@ public class Car_Sounds : MonoBehaviour
         if (allowCarSounds == false)
             return;
 
+        // 맵 씬엔 AudioManager 싱글톤 없음(사운드 보류) + 프리팹에 오디오 소스 미할당일 수 있음 → 가드.
         if (activate)
         {
-            engineStart.Play();
-            AudioManager.instance.SFXDelayAndFade(workingEngine, true, engineVolume, 1);
+            if (engineStart != null) engineStart.Play();
+            if (AudioManager.instance != null && workingEngine != null)
+                AudioManager.instance.SFXDelayAndFade(workingEngine, true, engineVolume, 1);
         }
         else
         {
-            AudioManager.instance.SFXDelayAndFade(workingEngine,false, 0f, .25f);
-            engineOff.Play();
+            if (AudioManager.instance != null && workingEngine != null)
+                AudioManager.instance.SFXDelayAndFade(workingEngine, false, 0f, .25f);
+            if (engineOff != null) engineOff.Play();
         }
     }
 

@@ -19,10 +19,14 @@ public class Car_Wheel : MonoBehaviour
         cd = GetComponent<WheelCollider>();
         trail = GetComponentInChildren<TrailRenderer>();
 
-        trail.emitting = false;
+        if (trail != null) // 스키드 트레일이 없는 휠 프리팹도 안전
+            trail.emitting = false;
 
         if (model == null)
-            model = GetComponentInChildren<MeshRenderer>().gameObject;
+        {
+            var mr = GetComponentInChildren<MeshRenderer>();
+            if (mr != null) model = mr.gameObject;
+        }
     }
 
     public void SetDefaultStiffnes(float newValue)

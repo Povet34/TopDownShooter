@@ -43,6 +43,18 @@ public class ControlsManager : MonoBehaviour, IControlsService
             SwitchToCharacterControls();
     }
 
+    // 맵 씬엔 GameManager가 없어 player 필드가 비어있다 → 태그 "Player"로 해석(파괴 시 재해석).
+    // SampleScene은 Start에서 GameManager.player가 채워져 그대로 사용.
+    private Player ResolvePlayer()
+    {
+        if (player == null)
+        {
+            var go = GameObject.FindWithTag("Player");
+            player = go != null ? go.GetComponent<Player>() : null;
+        }
+        return player;
+    }
+
     public void SwitchToCharacterControls()
     {
         controls.Character.Enable();
@@ -50,8 +62,8 @@ public class ControlsManager : MonoBehaviour, IControlsService
         controls.Car.Disable();
         controls.UI.Disable();
 
-        player.SetControlsEnabledTo(true);
-        UI.instance.inGameUI.SwitchToCharcaterUI();
+        ResolvePlayer()?.SetControlsEnabledTo(true);
+        if (UI.instance != null) UI.instance.inGameUI.SwitchToCharcaterUI();
     }
 
     public void SwitchToUIControls()
@@ -60,7 +72,7 @@ public class ControlsManager : MonoBehaviour, IControlsService
 
         controls.Car.Disable();
         controls.Character.Disable();
-        player.SetControlsEnabledTo(false);
+        ResolvePlayer()?.SetControlsEnabledTo(false);
     }
 
     public void SwitchToCarControls()
@@ -70,8 +82,8 @@ public class ControlsManager : MonoBehaviour, IControlsService
         controls.UI.Disable();
         controls.Character.Disable();
 
-        player.SetControlsEnabledTo(false);
-        UI.instance.inGameUI.SwitchToCarUI();
+        ResolvePlayer()?.SetControlsEnabledTo(false);
+        if (UI.instance != null) UI.instance.inGameUI.SwitchToCarUI();
     }
 
 

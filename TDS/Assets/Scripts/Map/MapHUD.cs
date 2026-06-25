@@ -19,9 +19,12 @@ public class MapHUD : MonoBehaviour
     private SpawnDirector director;
     private ExtractionZone extraction;
 
-    private TextMeshProUGUI healthText, ammoText, waveText, lootText, extractText, endText;
+    private TextMeshProUGUI healthText, ammoText, waveText, lootText, extractText, carText, endText;
     private GameObject endPanel;
     private bool ended;
+
+    private Car_Controller activeCar;
+    private float carScanTimer;
 
     private void Start()
     {
@@ -44,6 +47,8 @@ public class MapHUD : MonoBehaviour
 
         if (lootText != null)
             lootText.text = $"SALVAGE  {(playerLoot != null ? playerLoot.Wallet.Carried : 0)}";
+
+        UpdateCarReadout();
 
         if (director != null)
             waveText.text = director.IsRoaming
@@ -104,6 +109,29 @@ public class MapHUD : MonoBehaviour
             extraction = FindObjectOfType<ExtractionZone>();
     }
 
+    // 차량 탑승 중이면 속도 + 차 HP 표시(주차 차량은 비활성이라 안 뜸). 스캔은 스로틀.
+    private void UpdateCarReadout()
+    {
+        if (carText == null) return;
+
+        carScanTimer -= Time.deltaTime;
+        if (carScanTimer <= 0f || activeCar == null || !activeCar.carActive)
+        {
+            carScanTimer = 0.25f;
+            activeCar = null;
+            foreach (var c in FindObjectsByType<Car_Controller>(FindObjectsSortMode.None))
+                if (c != null && c.carActive) { activeCar = c; break; }
+        }
+
+        if (activeCar != null && activeCar.carActive)
+        {
+            var hp = activeCar.GetComponent<Car_HealthController>();
+            string hpStr = hp != null ? $"     CAR  {Mathf.Max(0, hp.currentHealth)} / {hp.maxHealth}" : "";
+            carText.text = $"<size=130%>{Mathf.RoundToInt(activeCar.Speed * 5)}</size> km/h{hpStr}";
+        }
+        else carText.text = "";
+    }
+
     private void EndGame(string msg, Color color)
     {
         ended = true;
@@ -134,6 +162,7 @@ public class MapHUD : MonoBehaviour
         lootText.color = new Color(1f, 0.82f, 0.2f); // 금색
         extractText = MakeText(canvas.transform, "Extract", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), TextAlignmentOptions.Center, 44f);
         extractText.color = new Color(0.3f, 0.85f, 0.95f); // 시안
+        carText = MakeText(canvas.transform, "Car", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), TextAlignmentOptions.Bottom, 30f);
 
         // 종료 패널 (반투명 + 중앙 메시지)
         endPanel = new GameObject("EndPanel");

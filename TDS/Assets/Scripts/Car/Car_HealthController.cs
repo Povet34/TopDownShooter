@@ -32,7 +32,7 @@ public class Car_HealthController : MonoBehaviour, IDamagable
 
     private void Update()
     {
-        if(fireFx.gameObject.activeSelf)
+        if(fireFx != null && fireFx.gameObject.activeSelf)
         {
             fireFx.transform.rotation = Quaternion.identity;
         }
@@ -40,7 +40,8 @@ public class Car_HealthController : MonoBehaviour, IDamagable
 
     public void UpdateCarHealthUI()
     {
-        UI.instance.inGameUI.UpdateCarHealthUI(currentHealth,maxHealth);
+        if (UI.instance != null) // 맵 씬엔 UI 싱글톤 없음 — MapHUD가 currentHealth를 읽어 표시
+            UI.instance.inGameUI.UpdateCarHealthUI(currentHealth, maxHealth);
     }
 
     private void ReduceHealth(int damage)
@@ -59,7 +60,7 @@ public class Car_HealthController : MonoBehaviour, IDamagable
         carBroken = true;
         carController.BrakeTheCar();
 
-        fireFx.gameObject.SetActive(true);
+        if (fireFx != null) fireFx.gameObject.SetActive(true);
         StartCoroutine(ExplosionCo(explosionDelay));
     }
 
@@ -72,17 +73,18 @@ public class Car_HealthController : MonoBehaviour, IDamagable
     IEnumerator ExplosionCo(float delay)
     {
         yield return new WaitForSeconds(delay);
-        explosionFx.gameObject.SetActive(true);
+        if (explosionFx != null) explosionFx.gameObject.SetActive(true);
 
-        carController.rb.AddExplosionForce(explosionForce, explosionPoint.position, explosionRadius, explosionUpwardsModifier, ForceMode.Impulse);
+        Vector3 center = explosionPoint != null ? explosionPoint.position : transform.position;
+        carController.rb.AddExplosionForce(explosionForce, center, explosionRadius, explosionUpwardsModifier, ForceMode.Impulse);
 
-        Explode();
+        Explode(center);
     }
 
-    private void Explode()
+    private void Explode(Vector3 center)
     {
         HashSet<GameObject> unieqEntites = new HashSet<GameObject>();
-        Collider[] colliders = Physics.OverlapSphere(explosionPoint.position, explosionRadius);
+        Collider[] colliders = Physics.OverlapSphere(center, explosionRadius);
 
         foreach (Collider collider in colliders)
         {
@@ -92,7 +94,7 @@ public class Car_HealthController : MonoBehaviour, IDamagable
                 damagable.TakeDamage(explosionDamage);
                 unieqEntites.Add(collider.gameObject);
 
-                collider.GetComponentInChildren<Rigidbody>()?.AddExplosionForce(explosionForce, explosionPoint.position, explosionRadius, explosionUpwardsModifier, ForceMode.VelocityChange);
+                collider.GetComponentInChildren<Rigidbody>()?.AddExplosionForce(explosionForce, center, explosionRadius, explosionUpwardsModifier, ForceMode.VelocityChange);
             }
         }
     }

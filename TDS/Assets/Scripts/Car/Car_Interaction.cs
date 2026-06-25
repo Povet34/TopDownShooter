@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Car_Interaction : Interactable
@@ -7,8 +5,9 @@ public class Car_Interaction : Interactable
     private Car_HealthController carHealthController;
     private Car_Controller carController;
     private Transform player;
+    private Player playerComp;
 
-    private float defaultPlayerScale;
+    private float defaultPlayerScale = 1f;
 
     [Header("Exit details")]
     [SerializeField] private float exitCheckRadius = .2f;
@@ -19,13 +18,23 @@ public class Car_Interaction : Interactable
     {
         carHealthController = GetComponent<Car_HealthController>();
         carController = GetComponent<Car_Controller>();
-        player = GameManager.instance.player.transform;
 
         foreach (var point in exitPoints)
         {
-            point.GetComponent<MeshRenderer>().enabled = false;
-            point.GetComponent<SphereCollider>().enabled = false;
+            var mr = point.GetComponent<MeshRenderer>();
+            if (mr != null) mr.enabled = false;
+            var sc = point.GetComponent<SphereCollider>();
+            if (sc != null) sc.enabled = false;
         }
+    }
+
+    // 현재 아키텍처 호환: GameManager가 있으면(SampleScene) 그 플레이어, 없으면(맵) 태그 "Player"로 해석.
+    private Player ResolvePlayer()
+    {
+        if (GameManager.instance != null && GameManager.instance.player != null)
+            return GameManager.instance.player;
+        var go = GameObject.FindWithTag("Player");
+        return go != null ? go.GetComponent<Player>() : null;
     }
 
     public override void Interaction()
@@ -36,19 +45,26 @@ public class Car_Interaction : Interactable
 
     private void GetIntoTheCar()
     {
+        playerComp = ResolvePlayer();
+        if (playerComp == null)
+            return;
+        player = playerComp.transform;
+
         ControlsManager.instance.SwitchToCarControls();
-        carHealthController.UpdateCarHealthUI();
+        carHealthController.UpdateCarHealthUI(); // UI 없으면 내부에서 no-op
         carController.ActivateCar(true);
 
         defaultPlayerScale = player.localScale.x;
-        weaponController.ShowTacticalLight(false);
+        if (weaponController != null)
+            weaponController.ShowTacticalLight(false);
 
+        // 플레이어를 차량에 태움 — CameraFollow(태그 "Player")가 따라오므로 카메라가 자동으로 차량 추적.
         player.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-        player.transform.parent = transform;
-        player.transform.localPosition = Vector3.up / 2;
+        player.parent = transform;
+        player.localPosition = Vector3.up / 2;
 
-        CameraManager.instance.ChangeCameraTarget(transform,12,.5f);
-
+        if (CameraManager.instance != null) // SampleScene 경로(맵은 parent+CameraFollow로 충분)
+            CameraManager.instance.ChangeCameraTarget(transform, 12, .5f);
     }
 
     public void GetOutOfTheCar()
@@ -58,27 +74,29 @@ public class Car_Interaction : Interactable
 
         carController.ActivateCar(false);
 
-        weaponController.ShowTacticalLight(true);
+        if (weaponController != null)
+            weaponController.ShowTacticalLight(true);
 
-        player.parent = null;
-        player.position = GetExitPoint();
-        player.transform.localScale = new Vector3(defaultPlayerScale,defaultPlayerScale,defaultPlayerScale);
+        if (player != null)
+        {
+            player.parent = null;
+            player.position = GetExitPoint();
+            player.localScale = new Vector3(defaultPlayerScale, defaultPlayerScale, defaultPlayerScale);
+        }
 
         ControlsManager.instance.SwitchToCharacterControls();
-        Player_AimController aim = GameManager.instance.player.aim;
 
-        CameraManager.instance.ChangeCameraTarget(aim.GetAimCameraTarget(),8.5f);
+        if (CameraManager.instance != null && playerComp != null && playerComp.aim != null)
+            CameraManager.instance.ChangeCameraTarget(playerComp.aim.GetAimCameraTarget(), 8.5f);
     }
 
     private Vector3 GetExitPoint()
     {
-       for (int i = 0; i < exitPoints.Length; i++)
-        {
-            if (IsExitClear(exitPoints[i].position))
-                return exitPoints[i].position;
-        }
+        var pts = new Vector3[exitPoints.Length];
+        for (int i = 0; i < exitPoints.Length; i++)
+            pts[i] = exitPoints[i].position;
 
-        return exitPoints[0].position;
+        return TDS.Core.CarExit.TryPickClearPoint(pts, IsExitClear, out var r) ? r : transform.position;
     }
 
     private bool IsExitClear(Vector3 point)

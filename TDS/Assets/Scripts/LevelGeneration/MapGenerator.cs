@@ -119,6 +119,7 @@ public class MapGenerator : MonoBehaviour
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         PlaceDropship(worldW, worldL); // 맵을 다 깐 뒤 — 착륙 지점 주변을 비우고 배치(파묻힘 방지)
         BakeNavMesh();
+        PlaceCars(gw, gh, cell, origin, clearR, rng); // 베이크 후 — 차량은 NavMeshObstacle로 런타임 카브(동적)
         BuildCullList();
 
         LastBounds = new MapBounds
@@ -583,6 +584,53 @@ public class MapGenerator : MonoBehaviour
 
         var mo = go.AddComponent<MapObject>();
         mo.role = TDS.Core.MapObjectRole.Blocking;
+    }
+
+    // 탑승 가능 차량을 풀에서 랜덤 배치(베이크 후 — 동적, NavMeshObstacle 런타임 카브).
+    // 스폰 지점 주변 겹치는 오브젝트를 치워 물리 튕김 방지. 시드 결정적.
+    private void PlaceCars(int gw, int gh, float cell, Vector3 origin, float clearR, System.Random rng)
+    {
+        int count = config != null ? config.carCount : 0;
+        var pool = config != null ? config.carPrefabs : null;
+        if (count <= 0 || pool == null || pool.Count == 0) return;
+
+        Physics.SyncTransforms(); // 방금 배치한 장애물 콜라이더를 물리월드에 반영(OverlapBox 정확도)
+        Vector3 half = new Vector3(2.6f, 0.6f, 2.6f);    // 차량 점유 체크 박스(바닥 위, y≈0.4~1.6)
+
+        int placed = 0, attempts = 0, maxAttempts = count * 40;
+        while (placed < count && attempts++ < maxAttempts)
+        {
+            int x = 1 + rng.Next(Mathf.Max(1, gw - 2));
+            int z = 1 + rng.Next(Mathf.Max(1, gh - 2));
+            Vector3 pos = CellCenter(x, z, cell, origin);
+            if (pos.x * pos.x + pos.z * pos.z < clearR * clearR) continue; // 중앙 스폰존 비움
+
+            // 바닥 위(y=1)에서 박스 검사 — 장애물/절벽/엄폐물/다른 차량이 있으면 다른 셀로(바닥은 y≤0이라 안 잡힘).
+            if (Physics.OverlapBox(pos + Vector3.up * 1f, half, Quaternion.identity).Length > 0)
+                continue;
+
+            var prefab = pool[rng.Next(pool.Count)];
+            if (prefab == null) continue;
+
+            var go = Instantiate(prefab, mapRoot);
+            go.name = "Car";
+            go.transform.localPosition = pos;
+            go.transform.localRotation = Quaternion.Euler(0f, rng.Next(4) * 90f, 0f);
+            SnapToGround(go);
+            go.transform.position += Vector3.up * 0.5f; // 바퀴가 바닥에 약간 묻히지 않게(SnapToGround는 바디 기준)
+
+            // 즉시 고정(스폰~Car_Controller.Start 사이 프레임에 떨어지지 않게) + 주행 시 관통 방지.
+            var rb = go.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                rb.constraints = RigidbodyConstraints.FreezeAll; // Car_Controller.Start의 ActivateCar(false)가 유지
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+
+            placed++;
+        }
     }
 
     private void PlaceBarrels(int gw, int gh, float cell, Vector3 origin, int count, float clearR, System.Random rng)

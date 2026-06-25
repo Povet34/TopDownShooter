@@ -47,6 +47,15 @@
   - **시드 변경해도 같은 맵** → 씬 `MapGenerator.seedOverride=100`이 `config.defaultSeed`를 무시하던 것 → `seedOverride=-1`로(이제 config.defaultSeed가 맵 결정).
   - **"incompatible keyword space" assert** (스택: `BuildFloor`의 `rend.material` + 렌더 컬링) → 커스텀 셰이더 `TDS/DesertGroundBlend`의 `FallBack "Universal Render Pipeline/Lit"`가 폴백과 **로컬 키워드 스페이스 충돌**을 일으킴. **폴백 제거 + ShadowCaster/DepthOnly/DepthNormals 패스를 셰이더에 직접 추가**(자족적, 포워드 렌더 확인 — 모든 렌더러 `m_RenderingMode:0`). assert 사라짐 + 바닥 그림자 캐스팅/뎁스·노멀 prepass 정상(볼류메트릭/시야 포그 뎁스에도 이로움). 블렌드 비주얼 그대로. **EditMode 240 / PlayMode 64 green.**
 
+### 🚗 차량 재통합 + 모듈화 (사용자 승인 2026-06-25) — "기존 차량을 지금 시스템에서도"
+> P3 "차량/운전 재통합". 핵심 = Car 시스템(이미 구현됨)을 **옛 SampleScene 싱글톤 4종에서 디커플링**해 현재 맵(태그 플레이어·MapHUD·CameraFollow·Systems ControlsManager, AudioManager 없음)에서 동작시키기. **모듈화 = 디커플링**. SampleScene 회귀 없음(전부 null-가드).
+- ✅ **싱글톤 디커플링** — `UI.instance`(속도/차HP UI · Car_Controller/Car_HealthController), `GameManager.player`(Car_Interaction/ControlsManager → **태그 "Player" 해석**), `CameraManager`(Car_Interaction → **null-가드**; 탑승 시 플레이어를 차에 parent → `CameraFollow`가 차 자동 추적), `AudioManager`(Car_Sounds → null-가드). `ControlsManager.Switch*`는 태그로 플레이어 해석 + UI 가드. 프리팹 미할당 FX/오디오/트레일 가드(`fireFx`/`explosionFx`/`workingEngine`/`Car_Wheel.trail`).
+- ✅ **데이터 기반 배치** — `MapConfig.carPrefabs` 풀 + `carCount`. `MapGenerator.PlaceCars`(베이크 후, `Physics.OverlapBox`로 빈 셀만 선택, `SnapToGround`+0.5 리프트, **스폰 즉시 `FreezeAll`**로 떨어짐/터널링 방지 — 주차=고정, 탑승 시 `ContinuousDynamic`로 주행). `Car_Controller.ActivateCar`가 비활성=FreezeAll/활성=None. `MapConfig_Default`=풀(PickUp/Jeep/Truck) 3대. cullable(주차 차량은 멀면 컬링, 주행 차는 플레이어 동승이라 안 컬링).
+- ✅ **모듈화(순수 시임)** — 하차 지점 선택을 순수 `CarExit.PickClearPoint`로 추출(EditMode 4).
+- ✅ **HUD** — `MapHUD`가 탑승 중 속도(km/h)+차 HP 표시(활성 차량 스로틀 스캔).
+- **검증**: in-game(1024 맵) 탑승→주행(16m, 바닥 유지)→하차 전 흐름 **NullRef 0**, 카메라 차 추적, 차량 3대 정상 배치(고정). SampleScene 회귀 0(싱글톤 경로 보존). PlayMode `CarIntegrationTests`(맵 컨텍스트 컨트롤 전환 NullRef 0) + EditMode `CarExitTests`. **EditMode 244 / PlayMode 65 green.**
+  - 추후: 차량을 레이더 블립으로(찾기 쉽게), 차량 HP/파괴 연출 밸런스, 엔진 사운드(사운드 패스와 함께).
+
 ## ⚠️ 빠른 시일 내 해결할 것
 
 - (없음 — 아래 해결 기록 참조)
@@ -122,7 +131,7 @@
 
 ### P3 — 추후(보류)
 - 인벤토리 시스템 · 파밍 시스템 · interaction 아이템 확장(현재 `Interactable`/`Player_Interaction` 존재 → 확장).
-- **차량/운전 시스템 재통합** — `Car_Controller`/`Car_Interaction`/`Car_Sounds`/`Car_HealthController` **이미 구현됨**(SampleScene 기준). 새 맵/스폰/부트 구조에 맞춰 재배선 필요(맵에 차량 배치, 탑승 시 `ControlsManager.SwitchToCarControls` 등). **지금은 보류 — 기록만.**
+- ✅ **차량/운전 시스템 재통합 + 모듈화 (2026-06-25, 사용자)** — 기존 Car 시스템을 옛 싱글톤에서 디커플링해 현재 맵에서 동작. 자세히 아래.
 
 ---
 
