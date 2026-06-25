@@ -161,8 +161,94 @@ Shader "TDS/DesertGroundBlend"
             }
             ENDHLSL
         }
-    }
 
-    // 그림자 캐스터/뎁스 패스는 폴백에서 가져온다(바닥 자체는 단순).
-    FallBack "Universal Render Pipeline/Lit"
+        // 폴백(URP Lit)을 쓰면 키워드 스페이스가 달라 "incompatible keyword space" assert가 난다.
+        // → 폴백 대신 그림자/뎁스/노멀 패스를 직접 둔다(자족적, 충돌 없음).
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            ZWrite On ZTest LEqual ColorMask 0 Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            struct A { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
+            struct V { float4 positionCS : SV_POSITION; };
+
+            V vert(A IN)
+            {
+                V OUT;
+                float3 posWS = TransformObjectToWorld(IN.positionOS.xyz);
+                float3 nWS = TransformObjectToWorldNormal(IN.normalOS);
+            #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                float3 ld = normalize(_LightPosition - posWS);
+            #else
+                float3 ld = _LightDirection;
+            #endif
+                float4 cs = TransformWorldToHClip(ApplyShadowBias(posWS, nWS, ld));
+            #if UNITY_REVERSED_Z
+                cs.z = min(cs.z, UNITY_NEAR_CLIP_VALUE);
+            #else
+                cs.z = max(cs.z, UNITY_NEAR_CLIP_VALUE);
+            #endif
+                OUT.positionCS = cs;
+                return OUT;
+            }
+            half4 frag(V IN) : SV_Target { return 0; }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            ZWrite On ColorMask R Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct A { float4 positionOS : POSITION; };
+            struct V { float4 positionCS : SV_POSITION; };
+
+            V vert(A IN) { V OUT; OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz); return OUT; }
+            half frag(V IN) : SV_Target { return 0; }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode"="DepthNormals" }
+            ZWrite On Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct A { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
+            struct V { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; };
+
+            V vert(A IN)
+            {
+                V OUT;
+                OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
+                return OUT;
+            }
+            half4 frag(V IN) : SV_Target { return half4(normalize(IN.normalWS), 0.0); }
+            ENDHLSL
+        }
+    }
 }

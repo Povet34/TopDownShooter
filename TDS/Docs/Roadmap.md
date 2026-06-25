@@ -44,7 +44,8 @@
 - 🐛 **버그 수정 3종 (2026-06-25, 사용자 리포트)**:
   - **수송선 파묻힘** → `PlaceDropship`를 맵 배치 맨 뒤로 옮기고 착륙 지점 반경(`extractionRadius+6`) 안의 맵 오브젝트를 `DestroyImmediate`(베이크 전)로 비움 + 프리팹 `SnapToGround`(렌더러 바운드 바닥을 y=0에 — 피벗 중앙이어도 안 파묻힘). 사용자가 `dropshipPrefab=airplane` 할당함(프리미티브 패드 대체).
   - **분대가 맵에 끼임/방향 못 따라감** → 근본 원인: navmesh 연결성 66%(영역이 절벽·고밀도로 분리돼 가장자리 스폰 분대가 앵커로 경로 못 찾음). **절벽이 주범**(91%→77%). + `MapConfig_Default` 격자가 32×32(128m)로 깨져 있었고 장애물은 그대로 고밀도여서 악화. 수정: 격자 256×256(1024) 복원 + 밀도 튜닝(장애물 800→600, 절벽 14→10 풋프린트 14→4~8, 내부벽 45→15) → **연결성 85%**(적 17/18가 플레이어로 경로 가능). 회귀 가드 PlayMode `NavMeshConnectivityTests`(연결성 >80% 단언).
-  - **시드 변경해도 같은 맵** → 씬 `MapGenerator.seedOverride=100`이 `config.defaultSeed`를 무시하던 것 → `seedOverride=-1`로(이제 config.defaultSeed가 맵 결정). **EditMode 240 / PlayMode 64 green.**
+  - **시드 변경해도 같은 맵** → 씬 `MapGenerator.seedOverride=100`이 `config.defaultSeed`를 무시하던 것 → `seedOverride=-1`로(이제 config.defaultSeed가 맵 결정).
+  - **"incompatible keyword space" assert** (스택: `BuildFloor`의 `rend.material` + 렌더 컬링) → 커스텀 셰이더 `TDS/DesertGroundBlend`의 `FallBack "Universal Render Pipeline/Lit"`가 폴백과 **로컬 키워드 스페이스 충돌**을 일으킴. **폴백 제거 + ShadowCaster/DepthOnly/DepthNormals 패스를 셰이더에 직접 추가**(자족적, 포워드 렌더 확인 — 모든 렌더러 `m_RenderingMode:0`). assert 사라짐 + 바닥 그림자 캐스팅/뎁스·노멀 prepass 정상(볼류메트릭/시야 포그 뎁스에도 이로움). 블렌드 비주얼 그대로. **EditMode 240 / PlayMode 64 green.**
 
 ## ⚠️ 빠른 시일 내 해결할 것
 
