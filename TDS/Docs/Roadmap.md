@@ -41,6 +41,10 @@
 - ✅ **수송선 탈출 존 = 승리 (2026-06-25)** — 맵 고정 위치(`extractionOffset` 비율, 기본 0.6,0.6) 수송선에 도달해 `extractionBoardTime`(4s) 머물면 탈출(승리) + 휴대 전리품 반출(Bank). 순수 `ExtractionProgress`(머문 시간 누적/완료) + `GameOutcome` 탈출 승리 인자(패배 우선 유지, 하위호환) EditMode 8 + 글루 `ExtractionZone`(근접 감지, 완료 시 `LootWallet.Bank`)·`MapGenerator.PlaceDropship`(프리미티브=시안 착륙패드+비콘, 콜라이더 없음=항법/시각만, 컬링 제외 랜드마크, `HasExtraction`/`ExtractionPosition` 노출)·`MapHUD`("EXTRACTING N%" + "EXTRACTED — N salvage" 승리)·`Minimap` 수송선 시안 블립(항상 표시, 가장자리 클램프로 방향 안내). PlayMode 2(탑승 탈출+반출 / 존 밖 미탈출). `MapConfig_Default.spawnExtraction=true`. in-game: 패드·비콘·레이더 블립·EXTRACTED 승리 확인.
   - **로밍 모드 승리 조건 확립**: 상시 로밍(웨이브 없음)은 클리어 승리가 없었음 → **탈출이 곧 승리**. 게임명대로 "수송선 타고 탈출".
   - 추후: 실제 수송선 3D 모델/이착륙 연출, 반출 메타 저장(집/영속), 탈출 중 적 압박(존 근처 스폰), resetOnLeave 긴장 옵션.
+- 🐛 **버그 수정 3종 (2026-06-25, 사용자 리포트)**:
+  - **수송선 파묻힘** → `PlaceDropship`를 맵 배치 맨 뒤로 옮기고 착륙 지점 반경(`extractionRadius+6`) 안의 맵 오브젝트를 `DestroyImmediate`(베이크 전)로 비움 + 프리팹 `SnapToGround`(렌더러 바운드 바닥을 y=0에 — 피벗 중앙이어도 안 파묻힘). 사용자가 `dropshipPrefab=airplane` 할당함(프리미티브 패드 대체).
+  - **분대가 맵에 끼임/방향 못 따라감** → 근본 원인: navmesh 연결성 66%(영역이 절벽·고밀도로 분리돼 가장자리 스폰 분대가 앵커로 경로 못 찾음). **절벽이 주범**(91%→77%). + `MapConfig_Default` 격자가 32×32(128m)로 깨져 있었고 장애물은 그대로 고밀도여서 악화. 수정: 격자 256×256(1024) 복원 + 밀도 튜닝(장애물 800→600, 절벽 14→10 풋프린트 14→4~8, 내부벽 45→15) → **연결성 85%**(적 17/18가 플레이어로 경로 가능). 회귀 가드 PlayMode `NavMeshConnectivityTests`(연결성 >80% 단언).
+  - **시드 변경해도 같은 맵** → 씬 `MapGenerator.seedOverride=100`이 `config.defaultSeed`를 무시하던 것 → `seedOverride=-1`로(이제 config.defaultSeed가 맵 결정). **EditMode 240 / PlayMode 64 green.**
 
 ## ⚠️ 빠른 시일 내 해결할 것
 

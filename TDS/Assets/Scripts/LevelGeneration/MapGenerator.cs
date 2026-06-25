@@ -115,9 +115,9 @@ public class MapGenerator : MonoBehaviour
         PlaceInteriorWalls(worldW, worldL, wallH, clearR, rng);
         PlaceCliffs(worldW, worldL, clearR, rng);
         PlaceRockProps(worldW, worldL, clearR, rng);
-        PlaceDropship(worldW, worldL);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
+        PlaceDropship(worldW, worldL); // 맵을 다 깐 뒤 — 착륙 지점 주변을 비우고 배치(파묻힘 방지)
         BakeNavMesh();
         BuildCullList();
 
@@ -169,11 +169,25 @@ public class MapGenerator : MonoBehaviour
         pos.x = Mathf.Clamp(pos.x, -hx + 12f, hx - 12f); // 경계 안쪽
         pos.z = Mathf.Clamp(pos.z, -hz + 12f, hz - 12f);
 
+        // 착륙 지점 주변을 비운다(맵 오브젝트가 패드에 파묻히거나 막지 않게). 바닥은 유지.
+        float clearR = config.extractionRadius + 6f;
+        float clearR2 = clearR * clearR;
+        var toRemove = new System.Collections.Generic.List<GameObject>();
+        foreach (Transform child in mapRoot)
+        {
+            if (child.name == "Floor" || child.name == "Dropship") continue;
+            Vector3 dxz = child.localPosition - pos; dxz.y = 0f;
+            if (dxz.sqrMagnitude < clearR2) toRemove.Add(child.gameObject);
+        }
+        // 즉시 제거(베이크 전에 사라져야 navmesh가 착륙 지점을 walkable로 잡음).
+        foreach (var rm in toRemove) DestroyImmediate(rm);
+
         GameObject go;
         if (config.dropshipPrefab != null)
         {
             go = Instantiate(config.dropshipPrefab, mapRoot);
             go.transform.localPosition = pos;
+            SnapToGround(go); // 프리팹 피벗이 중앙이어도 땅에 안 파묻히게 바닥을 y=0에
         }
         else
         {
@@ -186,6 +200,17 @@ public class MapGenerator : MonoBehaviour
 
         HasExtraction = true;
         ExtractionPosition = go.transform.position;
+    }
+
+    // 프리팹 렌더러 바운드의 바닥이 y=0에 오도록 올림(피벗이 중앙이어도 땅에 안 파묻힘).
+    private void SnapToGround(GameObject go)
+    {
+        var rends = go.GetComponentsInChildren<Renderer>();
+        if (rends.Length == 0) return;
+        Bounds b = rends[0].bounds;
+        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+        float below = b.min.y; // 음수면 땅 아래로 파묻힌 양
+        if (below < 0f) go.transform.position += Vector3.up * (-below);
     }
 
     // 프리미티브 수송선: 시안 착륙 패드(평평) + 중앙 비콘 기둥(멀리서 보이게). 콜라이더 제거(시각·항법만).

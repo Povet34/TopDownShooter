@@ -17,14 +17,14 @@ MonoBehaviour:
   gridWidth: 256
   gridHeight: 256
   wallHeight: 3
-  obstacleCount: 800
+  obstacleCount: 600
   obstacleDensity: 0.6
-  coverCount: 90
-  centerClearRadius: 5
-  clusterCount: 50
-  clusterSize: 12
+  coverCount: 40
+  centerClearRadius: 7
+  clusterCount: 30
+  clusterSize: 10
   clusterRadius: 10
-  interiorWallCount: 45
+  interiorWallCount: 15
   interiorWallLength: 14
   floorPrefab: {fileID: 0}
   wallPrefab: {fileID: 0}
@@ -50,10 +50,10 @@ MonoBehaviour:
   barrelCount: 45
   barrelPrefab: {fileID: 0}
   explosionFXPrefab: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
-  interiorCliffCount: 14
+  interiorCliffCount: 10
   cliffHeight: 10
-  cliffMinFootprint: 5
-  cliffMaxFootprint: 14
+  cliffMinFootprint: 4
+  cliffMaxFootprint: 8
   cliffMaterial: {fileID: 2100000, guid: ab4a026e6b647ec469ed6a806f85b9c6, type: 2}
   boundaryAsCliff: 1
   rockMaterial: {fileID: 2100000, guid: b352b478b70659841b7137706a620364, type: 2}
@@ -61,7 +61,7 @@ MonoBehaviour:
   rockPropSize: 1.5
   capCliffsWithRocks: 1
   spawnExtraction: 1
-  dropshipPrefab: {fileID: 0}
+  dropshipPrefab: {fileID: 2856594223827017140, guid: fcb9417b4dec32d40a6ca6befe2bfcec, type: 3}
   extractionOffset: {x: 0.6, y: 0.6}
   extractionRadius: 7
   extractionBoardTime: 4

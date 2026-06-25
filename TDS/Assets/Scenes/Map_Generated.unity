@@ -672,7 +672,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapGenerator
   config: {fileID: 11400000, guid: 4204898f962ce984196c85a06f0069ed, type: 2}
-  seedOverride: 100
+  seedOverride: -1
   navMeshSurface: {fileID: 1102438504}
   generateOnStart: 1
 --- !u!114 &1102438504
@@ -871,6 +871,10 @@ MonoBehaviour:
   despawnMargin: 4
   roamIdleTime: 1
   mapGenerator: {fileID: 1102438503}
+  lootPrefab: {fileID: 0}
+  lootDropChance: 0.7
+  lootMin: 1
+  lootMax: 2
   seed: 1
   requirePlayer: 1
   autoStart: 1
