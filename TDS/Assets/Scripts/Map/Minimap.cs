@@ -24,6 +24,8 @@ public class Minimap : MonoBehaviour
     private Transform player;
     private RectTransform blipRoot;   // 블립 좌표계(중심=플레이어)
     private RectTransform noseMarker; // 플레이어 진행방향 표시
+    private Image extractionBlip;      // 수송선(탈출 목표) — 항상 표시(가장자리 클램프로 방향 안내)
+    private MapGenerator mapGen;
     private GameObject radarRoot;
     private readonly List<Image> blips = new List<Image>();
     private float timer;
@@ -62,6 +64,19 @@ public class Minimap : MonoBehaviour
         {
             Vector2 dir = new Vector2(fwd.x, fwd.z).normalized;
             noseMarker.anchoredPosition = dir * (radiusPixels * 0.7f);
+        }
+
+        // 수송선(탈출 목표) — 항상 표시, 범위 밖이면 가장자리에 붙여 방향 안내.
+        if (extractionBlip != null)
+        {
+            if (mapGen == null) mapGen = FindObjectOfType<MapGenerator>();
+            if (mapGen != null && mapGen.HasExtraction)
+            {
+                Vector2 eXZ = new Vector2(mapGen.ExtractionPosition.x, mapGen.ExtractionPosition.z);
+                extractionBlip.rectTransform.anchoredPosition = MinimapProjection.ToMinimap(eXZ, pXZ, worldRange, radiusPixels, out _);
+                extractionBlip.gameObject.SetActive(true);
+            }
+            else extractionBlip.gameObject.SetActive(false);
         }
 
         int used = 0;
@@ -178,6 +193,17 @@ public class Minimap : MonoBehaviour
         nose.raycastTarget = false;
         noseMarker.sizeDelta = new Vector2(7f, 7f);
         noseMarker.anchorMin = noseMarker.anchorMax = noseMarker.pivot = new Vector2(0.5f, 0.5f);
+
+        // 수송선(탈출 목표) 블립 — 시안, 크게
+        extractionBlip = new GameObject("ExtractionBlip").AddComponent<Image>();
+        extractionBlip.transform.SetParent(blipRoot, false);
+        extractionBlip.sprite = CircleSprite();
+        extractionBlip.color = new Color(0.3f, 0.9f, 0.95f, 1f);
+        extractionBlip.raycastTarget = false;
+        extractionBlip.gameObject.SetActive(false);
+        var ert = extractionBlip.rectTransform;
+        ert.sizeDelta = new Vector2(13f, 13f);
+        ert.anchorMin = ert.anchorMax = ert.pivot = new Vector2(0.5f, 0.5f);
 
         // 플레이어 중심 마커
         var pm = new GameObject("PlayerMarker").AddComponent<Image>();

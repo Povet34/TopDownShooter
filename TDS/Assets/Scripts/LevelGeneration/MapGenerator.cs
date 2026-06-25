@@ -30,6 +30,10 @@ public class MapGenerator : MonoBehaviour
     public int LastSeed { get; private set; }
     public MapBounds LastBounds { get; private set; }
 
+    /// <summary>탈출 수송선 위치(레이더가 가리킴). 없으면 false.</summary>
+    public bool HasExtraction { get; private set; }
+    public Vector3 ExtractionPosition { get; private set; }
+
     private Transform mapRoot;
     private const string MapRootName = "MapRoot";
 
@@ -111,6 +115,7 @@ public class MapGenerator : MonoBehaviour
         PlaceInteriorWalls(worldW, worldL, wallH, clearR, rng);
         PlaceCliffs(worldW, worldL, clearR, rng);
         PlaceRockProps(worldW, worldL, clearR, rng);
+        PlaceDropship(worldW, worldL);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
         BakeNavMesh();
@@ -146,8 +151,90 @@ public class MapGenerator : MonoBehaviour
         cullables.Clear();
         if (mapRoot == null) return;
         foreach (Transform child in mapRoot)
-            if (child.name != "Floor")
+            if (child.name != "Floor" && child.name != "Dropship") // 바닥/수송선은 항상 보임(랜드마크)
                 cullables.Add(child);
+    }
+
+    // 수송선 탈출 존을 맵 고정 위치에 배치(콜라이더 없는 시각 랜드마크 + ExtractionZone 근접 감지).
+    private void PlaceDropship(float worldW, float worldL)
+    {
+        HasExtraction = false;
+        if (config == null || !config.spawnExtraction) return;
+
+        float hx = worldW * 0.5f, hz = worldL * 0.5f;
+        Vector3 pos = new Vector3(
+            Mathf.Clamp(config.extractionOffset.x, -1f, 1f) * hx,
+            0f,
+            Mathf.Clamp(config.extractionOffset.y, -1f, 1f) * hz);
+        pos.x = Mathf.Clamp(pos.x, -hx + 12f, hx - 12f); // 경계 안쪽
+        pos.z = Mathf.Clamp(pos.z, -hz + 12f, hz - 12f);
+
+        GameObject go;
+        if (config.dropshipPrefab != null)
+        {
+            go = Instantiate(config.dropshipPrefab, mapRoot);
+            go.transform.localPosition = pos;
+        }
+        else
+        {
+            go = BuildPrimitiveDropship(pos, config.extractionRadius);
+        }
+        go.name = "Dropship";
+
+        var zone = go.GetComponent<ExtractionZone>() ?? go.AddComponent<ExtractionZone>();
+        zone.Configure(config.extractionRadius, config.extractionBoardTime);
+
+        HasExtraction = true;
+        ExtractionPosition = go.transform.position;
+    }
+
+    // 프리미티브 수송선: 시안 착륙 패드(평평) + 중앙 비콘 기둥(멀리서 보이게). 콜라이더 제거(시각·항법만).
+    private GameObject BuildPrimitiveDropship(Vector3 localPos, float radius)
+    {
+        var root = new GameObject("Dropship");
+        root.transform.SetParent(mapRoot, false);
+        root.transform.localPosition = localPos;
+        var padMat = MakeEmissive(new Color(0.2f, 0.85f, 0.95f));
+
+        var pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        pad.name = "Pad";
+        pad.transform.SetParent(root.transform, false);
+        pad.transform.localScale = new Vector3(radius * 2f, 0.1f, radius * 2f);
+        pad.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+        StripCollider(pad);
+        SetRendererMaterial(pad, padMat);
+
+        var beacon = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        beacon.name = "Beacon";
+        beacon.transform.SetParent(root.transform, false);
+        beacon.transform.localScale = new Vector3(0.6f, 5f, 0.6f); // 높이 10m
+        beacon.transform.localPosition = new Vector3(0f, 5f, 0f);
+        StripCollider(beacon);
+        SetRendererMaterial(beacon, padMat);
+
+        return root;
+    }
+
+    private Material MakeEmissive(Color c)
+    {
+        var sh = Shader.Find("Universal Render Pipeline/Lit");
+        var m = new Material(sh != null ? sh : Shader.Find("Standard"));
+        if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
+        m.EnableKeyword("_EMISSION");
+        if (m.HasProperty("_EmissionColor")) m.SetColor("_EmissionColor", c * 1.6f);
+        return m;
+    }
+
+    private static void StripCollider(GameObject go)
+    {
+        var col = go.GetComponent<Collider>();
+        if (col != null) { if (Application.isPlaying) Destroy(col); else DestroyImmediate(col); }
+    }
+
+    private static void SetRendererMaterial(GameObject go, Material m)
+    {
+        var r = go.GetComponent<Renderer>();
+        if (r != null) r.sharedMaterial = m;
     }
 
     private void BuildFloor(float worldW, float worldL)

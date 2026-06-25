@@ -60,6 +60,11 @@ MonoBehaviour:
   rockPropCount: 60
   rockPropSize: 1.5
   capCliffsWithRocks: 1
+  spawnExtraction: 1
+  dropshipPrefab: {fileID: 0}
+  extractionOffset: {x: 0.6, y: 0.6}
+  extractionRadius: 7
+  extractionBoardTime: 4
   cullRadius: 70
   floorMaterial: {fileID: 2100000, guid: e558f7c833d9e1e4094f6c89648814a3, type: 2}
   floorTileWorldUnits: 8

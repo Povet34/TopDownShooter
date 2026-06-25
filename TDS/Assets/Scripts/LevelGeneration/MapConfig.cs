@@ -88,6 +88,17 @@ public class MapConfig : ScriptableObject
     [Tooltip("true면 절벽(메사) 위를 작은 바위들로 덮음")]
     public bool capCliffsWithRocks = false;
 
+    [Header("수송선 탈출 존")]
+    [Tooltip("탈출 수송선을 맵 고정 위치에 배치. 도달해 머무르면 탈출(승리)")]
+    public bool spawnExtraction = false;
+    [Tooltip("수송선 프리팹. 비우면 프리미티브(착륙패드+비콘)")]
+    public GameObject dropshipPrefab;
+    [Tooltip("탈출 존 위치(맵 half-extent 비율 -1~1). 예 (0.6,0.6)=한쪽 구역")]
+    public Vector2 extractionOffset = new Vector2(0.6f, 0.6f);
+    [Min(1f)] public float extractionRadius = 7f;
+    [Tooltip("탈출까지 머물러야 하는 시간(초)")]
+    [Min(0f)] public float extractionBoardTime = 4f;
+
     [Header("주변만 렌더링 (거리 컬링)")]
     [Tooltip("플레이어에서 이 반경 밖 맵 오브젝트는 비활성(렌더+물리 절약 — 밀도 높여도 깔끔). 0이면 끔. 카메라 시야보다 넉넉히 크게(예 70). 바닥/navmesh는 영향 없음.")]
     [Min(0f)] public float cullRadius = 0f;

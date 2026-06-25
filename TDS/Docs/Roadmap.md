@@ -38,7 +38,9 @@
 ### 🚁 탈출 루프 (사용자 승인 2026-06-25) — "적 죽이면 떨구고, 주울 수 있고, 수송선 타면 탈출"
 > P2 "수송선 탈출 + 전리품 반출"을 사용자가 명시 승인 → 구현 착수. 게임명(Escape From Desert Planet)의 핵심 루프.
 - ✅ **전리품 드랍 + 픽업 (2026-06-25)** — 적 처치 시 전리품을 떨구고 플레이어가 주워 모은다. 순수 `LootWallet`(Carried/Bank/DropCarried)·`LootDrop`(ShouldDrop/Amount, EditMode 6) + 글루 `LootDropper`(적에 부착, `Enemy.Die`가 `DropLoot` 호출 — `SpawnDirector`가 스폰 시 부착·확률/수량 설정, 기본 70%/1~2)·`LootPickup`(프리미티브 금색 코인, **근접 반경 1.3m 자동 획득** — CC 트리거 물리 비의존)·`PlayerLoot`(플레이어 지갑, 런타임 부착). `MapHUD` "SALVAGE N" 표시. PlayMode 3(드랍/획득/중복방지). in-game: 처치→코인→근접 자동획득→HUD 증가.
-- 📋 **수송선 탈출 존** (다음 슬라이스) — 맵 고정 위치 수송선, 도달/탑승 시 탈출(승리). 휴대 전리품 반출.
+- ✅ **수송선 탈출 존 = 승리 (2026-06-25)** — 맵 고정 위치(`extractionOffset` 비율, 기본 0.6,0.6) 수송선에 도달해 `extractionBoardTime`(4s) 머물면 탈출(승리) + 휴대 전리품 반출(Bank). 순수 `ExtractionProgress`(머문 시간 누적/완료) + `GameOutcome` 탈출 승리 인자(패배 우선 유지, 하위호환) EditMode 8 + 글루 `ExtractionZone`(근접 감지, 완료 시 `LootWallet.Bank`)·`MapGenerator.PlaceDropship`(프리미티브=시안 착륙패드+비콘, 콜라이더 없음=항법/시각만, 컬링 제외 랜드마크, `HasExtraction`/`ExtractionPosition` 노출)·`MapHUD`("EXTRACTING N%" + "EXTRACTED — N salvage" 승리)·`Minimap` 수송선 시안 블립(항상 표시, 가장자리 클램프로 방향 안내). PlayMode 2(탑승 탈출+반출 / 존 밖 미탈출). `MapConfig_Default.spawnExtraction=true`. in-game: 패드·비콘·레이더 블립·EXTRACTED 승리 확인.
+  - **로밍 모드 승리 조건 확립**: 상시 로밍(웨이브 없음)은 클리어 승리가 없었음 → **탈출이 곧 승리**. 게임명대로 "수송선 타고 탈출".
+  - 추후: 실제 수송선 3D 모델/이착륙 연출, 반출 메타 저장(집/영속), 탈출 중 적 압박(존 근처 스폰), resetOnLeave 긴장 옵션.
 
 ## ⚠️ 빠른 시일 내 해결할 것
 

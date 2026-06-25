@@ -14,13 +14,16 @@ namespace TDS.Core
     public static class GameOutcome
     {
         /// <summary>
-        /// 체력·웨이브 완료·생존 적 수로 매치 상태를 판정한다.
-        /// 패배(체력 0 이하)가 승리보다 우선.
+        /// 체력·웨이브 완료·생존 적 수·탈출 여부로 매치 상태를 판정한다.
+        /// 패배(체력 0 이하)가 승리보다 우선. 탈출(수송선 탑승) 또는 전 웨이브 클리어 시 승리.
         /// </summary>
-        public static MatchState Evaluate(int playerHealth, bool allWavesFinished, int aliveEnemies)
+        public static MatchState Evaluate(int playerHealth, bool allWavesFinished, int aliveEnemies, bool extracted = false)
         {
             if (playerHealth <= 0)
                 return MatchState.Defeat;
+
+            if (extracted)
+                return MatchState.Victory;
 
             if (allWavesFinished && aliveEnemies <= 0)
                 return MatchState.Victory;

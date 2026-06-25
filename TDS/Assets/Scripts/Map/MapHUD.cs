@@ -17,8 +17,9 @@ public class MapHUD : MonoBehaviour
     private Player_WeaponController playerWeapon;
     private PlayerLoot playerLoot;
     private SpawnDirector director;
+    private ExtractionZone extraction;
 
-    private TextMeshProUGUI healthText, ammoText, waveText, lootText, endText;
+    private TextMeshProUGUI healthText, ammoText, waveText, lootText, extractText, endText;
     private GameObject endPanel;
     private bool ended;
 
@@ -51,17 +52,32 @@ public class MapHUD : MonoBehaviour
                     ? "ALL WAVES CLEARED"
                     : $"WAVE  {director.CurrentWaveNumber} / {director.TotalWaves}     enemies: {director.AliveCount}";
 
+        // 탈출 진행 프롬프트(존 안에 있을 때)
+        if (extractText != null)
+        {
+            bool boarding = extraction != null && extraction.PlayerInZone && !extraction.IsExtracted;
+            extractText.text = boarding ? $"EXTRACTING…  {Mathf.RoundToInt(extraction.Progress01 * 100f)}%" : "";
+        }
+
         if (!ended)
         {
             // 판정은 순수 GameOutcome(EditMode 테스트). 플레이어/디렉터 미존재 시 진행 중으로 간주.
             int hp = playerHealth != null ? playerHealth.currentHealth : 1;
             bool finished = director != null && director.Finished;
             int alive = director != null ? director.AliveCount : 1;
+            bool extracted = extraction != null && extraction.IsExtracted;
 
-            switch (GameOutcome.Evaluate(hp, finished, alive))
+            switch (GameOutcome.Evaluate(hp, finished, alive, extracted))
             {
-                case MatchState.Defeat: EndGame("DEFEATED", new Color(0.85f, 0.27f, 0.27f)); break;
-                case MatchState.Victory: EndGame("VICTORY", new Color(0.35f, 0.8f, 0.45f)); break;
+                case MatchState.Defeat:
+                    EndGame("DEFEATED", new Color(0.85f, 0.27f, 0.27f));
+                    break;
+                case MatchState.Victory:
+                    if (extracted)
+                        EndGame($"EXTRACTED\n<size=40%>{extraction.BankedOnExtract} salvage secured</size>", new Color(0.35f, 0.8f, 0.45f));
+                    else
+                        EndGame("VICTORY", new Color(0.35f, 0.8f, 0.45f));
+                    break;
             }
         }
         else if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
@@ -84,6 +100,8 @@ public class MapHUD : MonoBehaviour
         }
         if (director == null)
             director = FindObjectOfType<SpawnDirector>();
+        if (extraction == null)
+            extraction = FindObjectOfType<ExtractionZone>();
     }
 
     private void EndGame(string msg, Color color)
@@ -114,6 +132,8 @@ public class MapHUD : MonoBehaviour
         waveText = MakeText(canvas.transform, "Wave", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -20f), TextAlignmentOptions.Top, 30f);
         lootText = MakeText(canvas.transform, "Loot", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -22f), TextAlignmentOptions.TopLeft, 30f);
         lootText.color = new Color(1f, 0.82f, 0.2f); // 금색
+        extractText = MakeText(canvas.transform, "Extract", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), TextAlignmentOptions.Center, 44f);
+        extractText.color = new Color(0.3f, 0.85f, 0.95f); // 시안
 
         // 종료 패널 (반투명 + 중앙 메시지)
         endPanel = new GameObject("EndPanel");
