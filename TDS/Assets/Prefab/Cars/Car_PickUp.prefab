@@ -2097,12 +2097,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7862b3d71700b3e44a8aa299b062ea90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 1000
+  maxHealth: 150
   currentHealth: 0
   explosionDamage: 350
   fireFx: {fileID: 0}
   explosionFx: {fileID: 0}
   explosionPoint: {fileID: 0}
+  fireFxPrefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
+  explosionFxPrefab: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
   explosionRadius: 3
   explosionDelay: 3
   explosionForce: 7
