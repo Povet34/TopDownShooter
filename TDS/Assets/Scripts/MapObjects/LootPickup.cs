@@ -34,10 +34,16 @@ public class LootPickup : MonoBehaviour
             Collect(player.gameObject);
     }
 
-    /// <summary>플레이어가 획득. 지갑에 더하고 자신을 제거.</summary>
+    /// <summary>플레이어가 획득. 그리드 인벤토리에 수납 + 지갑에 더하고 자신을 제거. 인벤토리 가득이면 보류.</summary>
     public void Collect(GameObject player)
     {
         if (collected || player == null) return;
+
+        // 그리드 인벤토리에 수납(타르코프식). 가득 차면 못 주움 — 자리 비우고 다시.
+        var inv = PlayerInventory.Ensure(player);
+        if (inv != null && !inv.TryStore(PlayerInventory.LootItem(value)))
+            return;
+
         var loot = PlayerLoot.Ensure(player);
         if (loot == null) return;
         loot.Wallet.Add(value);

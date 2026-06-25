@@ -57,11 +57,13 @@
 - ✅ **차량 폴리시 (2026-06-25, 사용자 피드백)** — ① 속도 ↑(prefab maxSpeed 7→14, motorForce/accel ↑, Range [7,30]) ② 피격 들썩임 수정(주행 중 `FreezeRotationX|Z`로 똑바로 유지) ③ **레이더에 차량 주황 블립**(`MapGenerator.CarTransforms` 노출 → `Minimap`, 컬링돼도 위치 유효) + `carCount` 5 ④ **차량/대형맵 FoV 수정**: `VisionMaskCpu`의 fog 쿼드가 고정 원점이라 멀리 가면 전맵이 보이던 것 → **fog 쿼드를 플레이어(차량 탑승 시 차) 따라 이동**(마스크는 이미 따라옴). in-game: fog가 플레이어 추종, 차량 블립 표시, maxSpeed 14, 똑바로 유지 확인.
 - ✅ **차량 폭발 = 불 + 잔해 날림 (2026-06-25, 사용자 피드백)** — "폭발하면 불이라도 좀 나있어야". 프로젝트에 Chaos/프랙처 에셋 없음 → 진짜 파쇄는 보류, 대신: `Car_HealthController`에 **스폰형 FX 프리팹 필드**(`fireFxPrefab`/`explosionFxPrefab`, 프리팹 차일드 미할당 대응) 추가 → 부서질 때 차에 **CFXR Fire**(타오름) + 폭발 순간 **CFXR3 Fire Explosion B**. `maxHealth` 0→150(첫 피격에 즉사 방지). 폭발 시 **rb 구속 해제 + 질량 비례 임펄스**로 잔해를 날림(직립/고정 구속이면 안 날아감). 컬링된 차는 콜라이더도 비활성이라 실제 플레이서 피격 불가 → 폭발 코루틴 항상 활성서 시작. in-game: 불 타오름 확인(폭발 fuse는 에디터 sim-time 정지로 MCP 검증 불가 — 배럴 `Explosive`와 동일 배선).
   - 추후: **진짜 카오스/프랙처 파괴**(에셋 필요), 차량 HP/파괴 연출 밸런스, 엔진 사운드(사운드 패스와 함께), 차량 탑승 시 CC 경고(스케일 0.01 → step offset) 정리, 차량용 넓은 시야(현재는 일반 콘 추종).
+- ✅ **차량 탑승 트리거 확대 (2026-06-25, 사용자 피드백)** — "차를 한번에 탈 수가 없다". 원인: 상호작용 트리거 BoxCollider가 **차체와 거의 같은 크기** → 플레이어 CC가 차체(MeshCollider)에 막히는 지점이 트리거 경계와 일치 → `OnTriggerEnter`가 겨우 닿아 등록 불안정(어느 방향서도). 수정: 각 차 프리팹 루트 트리거를 **차체보다 ~1.1m씩 바깥으로 확장**(PickUp 2.55×4.62→4.75×6.82 등, 높이 2.2). in-game: 차 옆 1.7m(기존 트리거 밖)서 `interactables=1` 등록 + `Interaction()`으로 탑승(carActive, parent=Car) 확인.
 
 ### 🎒 그리드 인벤토리 (사용자 승인 2026-06-25) — "타르코프/디아블로식 멀티셀, I키로 수납"
 > P3 "인벤토리/파밍"을 사용자 명시 승인. 파밍한 루트를 **격자 인벤토리**(아이템이 W×H 셀 차지)에 수납. 사용자 지시: **md 추가 + 테스트 우선**(TDD) → 순수 로직+테스트 먼저, UI 글루는 다음 슬라이스.
 - ✅ **순수 시임 (TDS.Core, EditMode 15)** — `InventoryItem`(Id/DisplayName/Width/Height 풋프린트) + `PlacedItem`(앵커 X,Y + 회전 → 유효 W/H swap) + `InventoryGrid`(W×H, `CanPlace`/`Place`/`TryAutoPlace`(첫 빈자리 행우선, 필요시 회전)/`Remove`/`ItemAt`/`IsOccupied`/`FreeCellCount`/`Clear`). 경계·겹침 거부, 회전 배치. `InventoryGridTests` 15(빈그리드/1×1·2×2 점유/경계·겹침 거부/제거 복원/자동배치·만석실패/회전 적합·자동회전/Covers/다중·Clear/생성자 검증).
-- 📋 **다음 슬라이스(글루, 미구현)**: `Inventory` MonoBehaviour(`InventoryGrid` 보유) + **I키 토글 패널 UI**(격자 그리기 + 아이템 셀 점유 표시, 드래그/회전) + **루트→인벤토리 수납**(`LootPickup`/`PlayerLoot`가 `TryAutoPlace` 호출, 가득 차면 못 주움) + 아이템별 풋프린트/아이콘 데이터. 추후: 스택, 무게, 탈출 시 인벤토리 반출(메타 저장), 정렬/빠른수납.
+- ✅ **글루 (TDS.Game, 2026-06-25) — I키 패널 + 루트 수납** — `PlayerInventory` MonoBehaviour(10×6 `InventoryGrid` 보유, `PlayerMapBootstrap`서 스폰 시 `Ensure` → 처음부터 I키 열람). **I키 토글 패널 UI**(코드 생성 캔버스, MapHUD 패턴; 격자 셀 + 아이템을 풋프린트만큼 색칠/라벨, 빈칸 카운트; 캔버스는 별도 루트라 차 탑승 스케일 영향 없음). **루트→수납**: `LootPickup.Collect`가 `PlayerInventory.TryStore(LootItem(value))` 호출(value→풋프린트: 1=Scrap 1×1·2=Parts 2×1·3+=Salvage 2×2), **가득 차면 픽업 보류**(지갑·제거 안 함). 지갑(SALVAGE)은 유지(탈출 카운트). PlayMode `InventoryGlueTests` 2(수납+지갑 / 만석 보류). in-game: 7개 수납 → 패널에 금/청/회 멀티셀 배치 확인. **EditMode 259 / PlayMode 67 green.**
+  - 추후: 드래그/수동 배치·회전, 스택, 무게, 탈출 시 인벤토리 반출(메타 저장), 정렬/빠른수납, 아이콘.
 
 ## ⚠️ 빠른 시일 내 해결할 것
 
