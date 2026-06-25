@@ -55,7 +55,13 @@
 - ✅ **HUD** — `MapHUD`가 탑승 중 속도(km/h)+차 HP 표시(활성 차량 스로틀 스캔).
 - **검증**: in-game(1024 맵) 탑승→주행(16m, 바닥 유지)→하차 전 흐름 **NullRef 0**, 카메라 차 추적, 차량 3대 정상 배치(고정). SampleScene 회귀 0(싱글톤 경로 보존). PlayMode `CarIntegrationTests`(맵 컨텍스트 컨트롤 전환 NullRef 0) + EditMode `CarExitTests`. **EditMode 244 / PlayMode 65 green.**
 - ✅ **차량 폴리시 (2026-06-25, 사용자 피드백)** — ① 속도 ↑(prefab maxSpeed 7→14, motorForce/accel ↑, Range [7,30]) ② 피격 들썩임 수정(주행 중 `FreezeRotationX|Z`로 똑바로 유지) ③ **레이더에 차량 주황 블립**(`MapGenerator.CarTransforms` 노출 → `Minimap`, 컬링돼도 위치 유효) + `carCount` 5 ④ **차량/대형맵 FoV 수정**: `VisionMaskCpu`의 fog 쿼드가 고정 원점이라 멀리 가면 전맵이 보이던 것 → **fog 쿼드를 플레이어(차량 탑승 시 차) 따라 이동**(마스크는 이미 따라옴). in-game: fog가 플레이어 추종, 차량 블립 표시, maxSpeed 14, 똑바로 유지 확인.
-  - 추후: 차량 HP/파괴 연출 밸런스, 엔진 사운드(사운드 패스와 함께), 차량 탑승 시 CC 경고(스케일 0.01 → step offset) 정리, 차량용 넓은 시야(현재는 일반 콘 추종).
+- ✅ **차량 폭발 = 불 + 잔해 날림 (2026-06-25, 사용자 피드백)** — "폭발하면 불이라도 좀 나있어야". 프로젝트에 Chaos/프랙처 에셋 없음 → 진짜 파쇄는 보류, 대신: `Car_HealthController`에 **스폰형 FX 프리팹 필드**(`fireFxPrefab`/`explosionFxPrefab`, 프리팹 차일드 미할당 대응) 추가 → 부서질 때 차에 **CFXR Fire**(타오름) + 폭발 순간 **CFXR3 Fire Explosion B**. `maxHealth` 0→150(첫 피격에 즉사 방지). 폭발 시 **rb 구속 해제 + 질량 비례 임펄스**로 잔해를 날림(직립/고정 구속이면 안 날아감). 컬링된 차는 콜라이더도 비활성이라 실제 플레이서 피격 불가 → 폭발 코루틴 항상 활성서 시작. in-game: 불 타오름 확인(폭발 fuse는 에디터 sim-time 정지로 MCP 검증 불가 — 배럴 `Explosive`와 동일 배선).
+  - 추후: **진짜 카오스/프랙처 파괴**(에셋 필요), 차량 HP/파괴 연출 밸런스, 엔진 사운드(사운드 패스와 함께), 차량 탑승 시 CC 경고(스케일 0.01 → step offset) 정리, 차량용 넓은 시야(현재는 일반 콘 추종).
+
+### 🎒 그리드 인벤토리 (사용자 승인 2026-06-25) — "타르코프/디아블로식 멀티셀, I키로 수납"
+> P3 "인벤토리/파밍"을 사용자 명시 승인. 파밍한 루트를 **격자 인벤토리**(아이템이 W×H 셀 차지)에 수납. 사용자 지시: **md 추가 + 테스트 우선**(TDD) → 순수 로직+테스트 먼저, UI 글루는 다음 슬라이스.
+- ✅ **순수 시임 (TDS.Core, EditMode 15)** — `InventoryItem`(Id/DisplayName/Width/Height 풋프린트) + `PlacedItem`(앵커 X,Y + 회전 → 유효 W/H swap) + `InventoryGrid`(W×H, `CanPlace`/`Place`/`TryAutoPlace`(첫 빈자리 행우선, 필요시 회전)/`Remove`/`ItemAt`/`IsOccupied`/`FreeCellCount`/`Clear`). 경계·겹침 거부, 회전 배치. `InventoryGridTests` 15(빈그리드/1×1·2×2 점유/경계·겹침 거부/제거 복원/자동배치·만석실패/회전 적합·자동회전/Covers/다중·Clear/생성자 검증).
+- 📋 **다음 슬라이스(글루, 미구현)**: `Inventory` MonoBehaviour(`InventoryGrid` 보유) + **I키 토글 패널 UI**(격자 그리기 + 아이템 셀 점유 표시, 드래그/회전) + **루트→인벤토리 수납**(`LootPickup`/`PlayerLoot`가 `TryAutoPlace` 호출, 가득 차면 못 주움) + 아이템별 풋프린트/아이콘 데이터. 추후: 스택, 무게, 탈출 시 인벤토리 반출(메타 저장), 정렬/빠른수납.
 
 ## ⚠️ 빠른 시일 내 해결할 것
 
