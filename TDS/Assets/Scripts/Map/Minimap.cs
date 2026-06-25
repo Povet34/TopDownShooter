@@ -33,6 +33,8 @@ public class Minimap : MonoBehaviour
 
     private static readonly Color BlipNear = new Color(0.92f, 0.27f, 0.24f, 0.95f);
     private static readonly Color BlipEdge = new Color(0.92f, 0.27f, 0.24f, 0.45f);
+    private static readonly Color BlipCar = new Color(1f, 0.7f, 0.15f, 0.95f); // 차량 = 주황
+    private readonly List<Image> carBlips = new List<Image>();
 
     private void Start() => BuildUI();
 
@@ -79,6 +81,24 @@ public class Minimap : MonoBehaviour
             else extractionBlip.gameObject.SetActive(false);
         }
 
+        // 차량 — 주황 블립(항상 표시, 컬링돼 비활성이어도 위치 유효). 찾아가기 쉽게.
+        int carsUsed = 0;
+        if (mapGen != null)
+        {
+            var cars = mapGen.CarTransforms;
+            for (int i = 0; i < cars.Count; i++)
+            {
+                var ct = cars[i];
+                if (ct == null) continue;
+                Vector2 cXZ = new Vector2(ct.position.x, ct.position.z);
+                var cb = GetCarBlip(carsUsed++);
+                cb.rectTransform.anchoredPosition = MinimapProjection.ToMinimap(cXZ, pXZ, worldRange, radiusPixels, out _);
+                cb.gameObject.SetActive(true);
+            }
+        }
+        for (int i = carsUsed; i < carBlips.Count; i++)
+            carBlips[i].gameObject.SetActive(false);
+
         int used = 0;
         var enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
         foreach (var e in enemies)
@@ -112,6 +132,24 @@ public class Minimap : MonoBehaviour
             blips.Add(img);
         }
         return blips[i];
+    }
+
+    private Image GetCarBlip(int i)
+    {
+        while (carBlips.Count <= i)
+        {
+            var go = new GameObject("CarBlip");
+            go.transform.SetParent(blipRoot, false);
+            var img = go.AddComponent<Image>();
+            img.sprite = CircleSprite();
+            img.color = BlipCar;
+            img.raycastTarget = false;
+            var rt = img.rectTransform;
+            rt.sizeDelta = new Vector2(10f, 10f);
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            carBlips.Add(img);
+        }
+        return carBlips[i];
     }
 
     private void HideAllBlips()

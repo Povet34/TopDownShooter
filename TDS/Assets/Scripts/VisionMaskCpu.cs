@@ -89,6 +89,11 @@ public class VisionMaskCpu : MonoBehaviour
     {
         if (mask == null || fov == null) return;
 
+        // fog 쿼드를 플레이어(차량 탑승 시 차) 따라 이동. 안 그러면 원점 ±크기 밖으로 나가면
+        // fog가 안 덮여 전맵이 다 보인다(대형 맵·차량 주행 시 특히). 마스크는 이미 따라옴.
+        if (followPlayer && fogQuad != null)
+            fogQuad.transform.position = new Vector3(transform.position.x, fogQuadHeight, transform.position.z);
+
         if (computeRow == 0)
             cycleCenter = SnappedCenter();
 

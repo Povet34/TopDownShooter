@@ -54,7 +54,7 @@ MonoBehaviour:
   - {fileID: 7681473427590625113, guid: 19dbe7a632176134ebf22d4707201855, type: 3}
   - {fileID: 6630811048521316626, guid: 6dbdd1cb2da349849a89bb7a36366023, type: 3}
   - {fileID: 4838821308409759786, guid: 66640c5c6c3fe2f4999bac7a9116e66d, type: 3}
-  carCount: 3
+  carCount: 5
   interiorCliffCount: 10
   cliffHeight: 10
   cliffMinFootprint: 4

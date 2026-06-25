@@ -34,6 +34,10 @@ public class MapGenerator : MonoBehaviour
     public bool HasExtraction { get; private set; }
     public Vector3 ExtractionPosition { get; private set; }
 
+    /// <summary>배치된 차량 트랜스폼(레이더 블립용 — 컬링돼 비활성이어도 위치 유효).</summary>
+    private readonly System.Collections.Generic.List<Transform> carTransforms = new System.Collections.Generic.List<Transform>();
+    public System.Collections.Generic.IReadOnlyList<Transform> CarTransforms => carTransforms;
+
     private Transform mapRoot;
     private const string MapRootName = "MapRoot";
 
@@ -140,6 +144,7 @@ public class MapGenerator : MonoBehaviour
 
         cullables.Clear();
         cullPlayer = null;
+        carTransforms.Clear();
 
         mapRoot = new GameObject(MapRootName).transform;
         mapRoot.SetParent(transform, false);
@@ -629,6 +634,7 @@ public class MapGenerator : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
             }
 
+            carTransforms.Add(go.transform); // 레이더 블립용
             placed++;
         }
     }

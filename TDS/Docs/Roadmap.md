@@ -54,7 +54,8 @@
 - ✅ **모듈화(순수 시임)** — 하차 지점 선택을 순수 `CarExit.PickClearPoint`로 추출(EditMode 4).
 - ✅ **HUD** — `MapHUD`가 탑승 중 속도(km/h)+차 HP 표시(활성 차량 스로틀 스캔).
 - **검증**: in-game(1024 맵) 탑승→주행(16m, 바닥 유지)→하차 전 흐름 **NullRef 0**, 카메라 차 추적, 차량 3대 정상 배치(고정). SampleScene 회귀 0(싱글톤 경로 보존). PlayMode `CarIntegrationTests`(맵 컨텍스트 컨트롤 전환 NullRef 0) + EditMode `CarExitTests`. **EditMode 244 / PlayMode 65 green.**
-  - 추후: 차량을 레이더 블립으로(찾기 쉽게), 차량 HP/파괴 연출 밸런스, 엔진 사운드(사운드 패스와 함께).
+- ✅ **차량 폴리시 (2026-06-25, 사용자 피드백)** — ① 속도 ↑(prefab maxSpeed 7→14, motorForce/accel ↑, Range [7,30]) ② 피격 들썩임 수정(주행 중 `FreezeRotationX|Z`로 똑바로 유지) ③ **레이더에 차량 주황 블립**(`MapGenerator.CarTransforms` 노출 → `Minimap`, 컬링돼도 위치 유효) + `carCount` 5 ④ **차량/대형맵 FoV 수정**: `VisionMaskCpu`의 fog 쿼드가 고정 원점이라 멀리 가면 전맵이 보이던 것 → **fog 쿼드를 플레이어(차량 탑승 시 차) 따라 이동**(마스크는 이미 따라옴). in-game: fog가 플레이어 추종, 차량 블립 표시, maxSpeed 14, 똑바로 유지 확인.
+  - 추후: 차량 HP/파괴 연출 밸런스, 엔진 사운드(사운드 패스와 함께), 차량 탑승 시 CC 경고(스케일 0.01 → step offset) 정리, 차량용 넓은 시야(현재는 일반 콘 추종).
 
 ## ⚠️ 빠른 시일 내 해결할 것
 

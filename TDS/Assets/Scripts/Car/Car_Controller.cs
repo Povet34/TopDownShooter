@@ -41,8 +41,8 @@ public class Car_Controller : MonoBehaviour
 
     [Header("Engine Settings")]
     [SerializeField] private float currentSpeed;
-    [Range(7,12)]
-    [SerializeField] private float maxSpeed = 7;
+    [Range(7,30)]
+    [SerializeField] private float maxSpeed = 14;
     [Range(.5f,10)]
     [SerializeField] private float accleerationSpeed = 2;
     [Range(1500,5000)]
@@ -261,9 +261,12 @@ public class Car_Controller : MonoBehaviour
         if (carSounds != null)
             carSounds.ActivateCarSFX(activate);
 
-        // 주차 중(비활성)엔 완전 고정 → 절차 배치 후 떨어지거나 떠밀리지 않음. 탑승 시에만 물리.
+        // 주차 중(비활성)엔 완전 고정. 주행 중엔 X/Z 회전 고정 → 피격/충돌에 뒤집히거나 들썩이지 않고
+        // 똑바로 유지(위치 이동 + Y축 조향은 자유).
         if (rb != null)
-            rb.constraints = activate ? RigidbodyConstraints.None : RigidbodyConstraints.FreezeAll;
+            rb.constraints = activate
+                ? (RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ)
+                : RigidbodyConstraints.FreezeAll;
     }
 
     public void BrakeTheCar()
