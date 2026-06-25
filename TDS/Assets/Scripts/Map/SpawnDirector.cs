@@ -51,6 +51,14 @@ public class SpawnDirector : MonoBehaviour
     [Tooltip("맵 bounds 제공(미할당 시 씬에서 자동 탐색). 로밍 스폰/디스폰 영역")]
     [SerializeField] private MapGenerator mapGenerator;
 
+    [Header("전리품 드랍 (적 처치 시)")]
+    [Tooltip("드랍할 전리품 프리팹(LootPickup 포함). 비우면 프리미티브 코인")]
+    [SerializeField] private GameObject lootPrefab;
+    [Range(0f, 1f)]
+    [SerializeField] private float lootDropChance = 0.7f;
+    [SerializeField] private int lootMin = 1;
+    [SerializeField] private int lootMax = 2;
+
     [SerializeField] private int seed = 1;
     [SerializeField] private bool requirePlayer = true;
     [SerializeField] private bool autoStart = true;
@@ -198,7 +206,12 @@ public class SpawnDirector : MonoBehaviour
             var go = Instantiate(def.prefab, pos, rot);
             var enemy = go.GetComponentInChildren<Enemy>();
             if (enemy != null)
+            {
                 squad.Register(enemy);
+                // 전리품 드랍 부착·설정(프리팹 수정 없이) — Enemy.Die가 DropLoot 호출.
+                var dropper = enemy.GetComponent<LootDropper>() ?? enemy.gameObject.AddComponent<LootDropper>();
+                dropper.Configure(lootPrefab, lootDropChance, lootMin, lootMax);
+            }
         }
         return squad;
     }

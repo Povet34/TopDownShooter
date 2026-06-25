@@ -35,6 +35,11 @@
 - ✅ **저체력 비네트 (2026-06-25)** — 생존 긴장감: 체력이 `startRatio`(35%) 이하로 떨어지면 화면 가장자리가 빨갛게 맥동. 순수 `HealthVignette`(`Intensity`(체력비율→0..1)·`Pulse`, EditMode 8) + 글루 `LowHealthVignette`(TDS.Game, 자족 캔버스: 런타임 생성 방사형 비네트 스프라이트, alpha=강도×펄스, 풀HP면 꺼짐). `Map_Generated` HUD 부착. in-game: HP 12%서 빨간 가장자리 확인.
 - ✅ **절벽/바위 따뜻한 틴트 (2026-06-25)** — Rock029/Rocks012가 사막 대비 차가워서 `Mat_Cliff`/`Mat_RockProp` `_BaseColor`에 미세 웜 틴트 → 사암 느낌으로 팔레트 정합.
 
+### 🚁 탈출 루프 (사용자 승인 2026-06-25) — "적 죽이면 떨구고, 주울 수 있고, 수송선 타면 탈출"
+> P2 "수송선 탈출 + 전리품 반출"을 사용자가 명시 승인 → 구현 착수. 게임명(Escape From Desert Planet)의 핵심 루프.
+- ✅ **전리품 드랍 + 픽업 (2026-06-25)** — 적 처치 시 전리품을 떨구고 플레이어가 주워 모은다. 순수 `LootWallet`(Carried/Bank/DropCarried)·`LootDrop`(ShouldDrop/Amount, EditMode 6) + 글루 `LootDropper`(적에 부착, `Enemy.Die`가 `DropLoot` 호출 — `SpawnDirector`가 스폰 시 부착·확률/수량 설정, 기본 70%/1~2)·`LootPickup`(프리미티브 금색 코인, **근접 반경 1.3m 자동 획득** — CC 트리거 물리 비의존)·`PlayerLoot`(플레이어 지갑, 런타임 부착). `MapHUD` "SALVAGE N" 표시. PlayMode 3(드랍/획득/중복방지). in-game: 처치→코인→근접 자동획득→HUD 증가.
+- 📋 **수송선 탈출 존** (다음 슬라이스) — 맵 고정 위치 수송선, 도달/탑승 시 탈출(승리). 휴대 전리품 반출.
+
 ## ⚠️ 빠른 시일 내 해결할 것
 
 - (없음 — 아래 해결 기록 참조)

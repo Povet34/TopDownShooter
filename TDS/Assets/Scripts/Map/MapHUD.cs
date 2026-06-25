@@ -15,9 +15,10 @@ public class MapHUD : MonoBehaviour
 {
     private HealthController playerHealth;
     private Player_WeaponController playerWeapon;
+    private PlayerLoot playerLoot;
     private SpawnDirector director;
 
-    private TextMeshProUGUI healthText, ammoText, waveText, endText;
+    private TextMeshProUGUI healthText, ammoText, waveText, lootText, endText;
     private GameObject endPanel;
     private bool ended;
 
@@ -39,6 +40,9 @@ public class MapHUD : MonoBehaviour
             if (w != null)
                 ammoText.text = $"{w.weaponType}\n<size=120%>{w.bulletsInMagazine}</size> / {w.totalReserveAmmo}";
         }
+
+        if (lootText != null)
+            lootText.text = $"SALVAGE  {(playerLoot != null ? playerLoot.Wallet.Carried : 0)}";
 
         if (director != null)
             waveText.text = director.IsRoaming
@@ -68,13 +72,14 @@ public class MapHUD : MonoBehaviour
 
     private void EnsureRefs()
     {
-        if (playerHealth == null || playerWeapon == null)
+        if (playerHealth == null || playerWeapon == null || playerLoot == null)
         {
             var p = GameObject.FindWithTag("Player");
             if (p != null)
             {
                 playerHealth = p.GetComponentInChildren<HealthController>();
                 playerWeapon = p.GetComponentInChildren<Player_WeaponController>();
+                playerLoot = p.GetComponent<PlayerLoot>(); // 첫 픽업 전엔 null → 0 표시
             }
         }
         if (director == null)
@@ -107,6 +112,8 @@ public class MapHUD : MonoBehaviour
         healthText = MakeText(canvas.transform, "Health", new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 24f), TextAlignmentOptions.BottomLeft, 34f);
         ammoText = MakeText(canvas.transform, "Ammo", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 24f), TextAlignmentOptions.BottomRight, 34f);
         waveText = MakeText(canvas.transform, "Wave", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -20f), TextAlignmentOptions.Top, 30f);
+        lootText = MakeText(canvas.transform, "Loot", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -22f), TextAlignmentOptions.TopLeft, 30f);
+        lootText.color = new Color(1f, 0.82f, 0.2f); // 금색
 
         // 종료 패널 (반투명 + 중앙 메시지)
         endPanel = new GameObject("EndPanel");

@@ -364,6 +364,7 @@ public class Enemy : MonoBehaviour
         GameServices.Registry.Resolve<ICombatFeedbackService>()?.ReportKill(transform.position + Vector3.up);
 
         dropController.DropItems();
+        GetComponent<LootDropper>()?.DropLoot(); // 전리품 드랍(있으면) — 스포너가 부착·설정
 
 
         anim.enabled = false;
