@@ -46,5 +46,38 @@ namespace TDS.Tests.PlayMode
             yield return null;
             Assert.IsTrue(player.controlsEnabled, "캐릭터 전환 시 켜져야");
         }
+
+        /// <summary>
+        /// F 키가 Character.Interaction(탑승)·Car.CarExit(하차)에 동시 바인딩돼 있어, 두 액션맵이 같이
+        /// 켜져 있으면 한 번 눌러 보드 직후 즉시 하차한다. 도보/탑승 스킴은 상호 배타여야(한쪽만 활성).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Control_schemes_are_mutually_exclusive_so_shared_F_key_is_safe()
+        {
+            GameServices.ResetForTests();
+            GameBootstrap.EnsureSystems();
+            var prefab = Resources.Load<GameObject>("Player");
+            var player = Object.Instantiate(prefab).GetComponent<Player>();
+            yield return null;
+
+            var ctrls = Object.FindObjectOfType<ControlsManager>();
+            var c = ctrls.controls;
+
+            // 버그 사전조건 재현: Player.OnEnable의 controls.Enable()처럼 모든 맵 활성.
+            c.Enable();
+            Assert.IsTrue(c.Character.enabled && c.Car.enabled, "사전조건: 모든 맵 활성");
+
+            // 도보 스킴 → Car 맵이 꺼져야 F가 CarExit를 같이 울리지 않는다.
+            ctrls.SwitchToCharacterControls();
+            yield return null;
+            Assert.IsTrue(c.Character.enabled, "도보: Character 활성");
+            Assert.IsFalse(c.Car.enabled, "도보: Car 비활성이어야(아니면 F가 보드+즉시하차)");
+
+            // 탑승 스킴 → Character 맵이 꺼져야.
+            ctrls.SwitchToCarControls();
+            yield return null;
+            Assert.IsTrue(c.Car.enabled, "탑승: Car 활성");
+            Assert.IsFalse(c.Character.enabled, "탑승: Character 비활성이어야");
+        }
     }
 }
