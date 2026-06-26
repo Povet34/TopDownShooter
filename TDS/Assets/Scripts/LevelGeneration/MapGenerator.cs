@@ -595,14 +595,24 @@ public class MapGenerator : MonoBehaviour
     // 스폰 지점 주변 겹치는 오브젝트를 치워 물리 튕김 방지. 시드 결정적.
     private void PlaceCars(int gw, int gh, float cell, Vector3 origin, float clearR, System.Random rng)
     {
-        int count = config != null ? config.carCount : 0;
         var pool = config != null ? config.carPrefabs : null;
-        if (count <= 0 || pool == null || pool.Count == 0) return;
+        if (pool == null || pool.Count == 0) return;
 
         Physics.SyncTransforms(); // 방금 배치한 장애물 콜라이더를 물리월드에 반영(OverlapBox 정확도)
         Vector3 half = new Vector3(2.6f, 0.6f, 2.6f);    // 차량 점유 체크 박스(바닥 위, y≈0.4~1.6)
 
-        int placed = 0, attempts = 0, maxAttempts = count * 40;
+        // 테스트 편의: 플레이어 스폰 옆(중앙 스폰존 안 — 장애물이 이미 비워진 영역)에 차 1대.
+        if (config.spawnCarNearPlayer)
+        {
+            float ang = (float)(rng.NextDouble() * Mathf.PI * 2.0);
+            float r = Mathf.Max(2.5f, clearR - 1.5f); // 스폰존 안쪽(반경 clearR 안은 깨끗)
+            Vector3 near = new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r);
+            SpawnCar(near, pool[rng.Next(pool.Count)], rng);
+            Physics.SyncTransforms(); // 아래 랜덤 차들이 이 차를 피하도록
+        }
+
+        int count = config.carCount;
+        int placed = 0, attempts = 0, maxAttempts = Mathf.Max(1, count) * 40;
         while (placed < count && attempts++ < maxAttempts)
         {
             int x = 1 + rng.Next(Mathf.Max(1, gw - 2));
@@ -617,26 +627,34 @@ public class MapGenerator : MonoBehaviour
             var prefab = pool[rng.Next(pool.Count)];
             if (prefab == null) continue;
 
-            var go = Instantiate(prefab, mapRoot);
-            go.name = "Car";
-            go.transform.localPosition = pos;
-            go.transform.localRotation = Quaternion.Euler(0f, rng.Next(4) * 90f, 0f);
-            SnapToGround(go);
-            go.transform.position += Vector3.up * 0.5f; // 바퀴가 바닥에 약간 묻히지 않게(SnapToGround는 바디 기준)
-
-            // 즉시 고정(스폰~Car_Controller.Start 사이 프레임에 떨어지지 않게) + 주행 시 관통 방지.
-            var rb = go.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                rb.constraints = RigidbodyConstraints.FreezeAll; // Car_Controller.Start의 ActivateCar(false)가 유지
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-
-            carTransforms.Add(go.transform); // 레이더 블립용
+            SpawnCar(pos, prefab, rng);
             placed++;
         }
+    }
+
+    // 차량 1대 스폰(스냅+리프트+즉시 고정+레이더 등록). localPos는 mapRoot 로컬 좌표.
+    private void SpawnCar(Vector3 localPos, GameObject prefab, System.Random rng)
+    {
+        if (prefab == null) return;
+
+        var go = Instantiate(prefab, mapRoot);
+        go.name = "Car";
+        go.transform.localPosition = localPos;
+        go.transform.localRotation = Quaternion.Euler(0f, rng.Next(4) * 90f, 0f);
+        SnapToGround(go);
+        go.transform.position += Vector3.up * 0.5f; // 바퀴가 바닥에 약간 묻히지 않게(SnapToGround는 바디 기준)
+
+        // 즉시 고정(스폰~Car_Controller.Start 사이 프레임에 떨어지지 않게) + 주행 시 관통 방지.
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.constraints = RigidbodyConstraints.FreezeAll; // Car_Controller.Start의 ActivateCar(false)가 유지
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        carTransforms.Add(go.transform); // 레이더 블립용
     }
 
     private void PlaceBarrels(int gw, int gh, float cell, Vector3 origin, int count, float clearR, System.Random rng)

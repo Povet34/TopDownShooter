@@ -71,6 +71,8 @@ public class MapConfig : ScriptableObject
     [Min(0)]
     [Tooltip("맵에 배치할 차량 수")]
     public int carCount = 0;
+    [Tooltip("테스트 편의: 플레이어 스폰 옆(중앙 스폰존 안)에 차량 1대를 풀에서 랜덤 배치. 완료 후 끄면 됨")]
+    public bool spawnCarNearPlayer = true;
 
     [Header("절벽 (못 올라가는 지형 — 경계 + 내부)")]
     [Tooltip("내부 절벽(메사) 수. 못 올라가는 임패서블 바위 덩어리 — 동선을 막아 우회/엄폐 유발. navmesh가 자동 제외(가팔라 못 걸음). 0이면 끔")]

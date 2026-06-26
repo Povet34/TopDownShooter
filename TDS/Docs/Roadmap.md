@@ -60,6 +60,7 @@
 - ✅ **차량 탑승 "한번에 안 탐" 수정 (2026-06-25, 사용자 피드백)** — 두 원인:
   - **(핵심) F 키 동시 바인딩 + 액션맵 미정리**: `Character.Interaction`(탑승)과 `Car.CarExit`(하차)가 **둘 다 `<Keyboard>/f`**. 맵 씬은 `Player.OnEnable`의 `controls.Enable()`이 모든 맵을 켜는데 **`SwitchToCharacterControls` 최초 호출이 없어** Car 맵이 도보 중에도 활성 → F 한 번에 `Interaction`(탑승)+`CarExit`(하차)가 같이 울려 보드 직후 즉시 하차. (SampleScene은 `ControlsManager.Start`가 SwitchToCharacter 호출 → 정상.) **수정**: `PlayerMapBootstrap`가 배선 시 `ControlsManager.SwitchToCharacterControls()` 호출 → 도보 스킴 확정(Car/UI 맵 off). in-game: 실제 F 입력 주입 1회로 탑승**유지**(carActive True·parent=Car), 다시 F로 하차 확인. PlayMode 회귀 `Control_schemes_are_mutually_exclusive_so_shared_F_key_is_safe`.
   - **(부수) 트리거 협소**: 상호작용 트리거가 차체와 거의 같은 크기라 플레이어가 차체에 막히는 지점이 트리거 경계와 일치 → 등록 불안정. 각 차 프리팹 루트 트리거를 **차체보다 ~1.1m 바깥으로 확장**(PickUp 2.55×4.62→4.75×6.82, 높이 2.2). 다가서면 안정적으로 `interactables`에 등록.
+- ✅ **테스트 차 스폰 (2026-06-25, 사용자 편의 요청)** — `MapConfig.spawnCarNearPlayer`(기본 true) → `MapGenerator.PlaceCars`가 풀에서 랜덤 1대를 **플레이어 스폰(중앙 스폰존, 원점) 옆 반경 ~clearR-1.5(≈3.5m)**에 추가 배치(스폰존 안은 장애물 비워져 있어 안전, 차체 반길이 고려해 겹침 없음). 차 스폰 로직은 `SpawnCar` 헬퍼로 추출(랜덤/테스트 차 공용). in-game: 플레이어 원점·차 3.5m 옆 확인(스샷), 충돌·파괴 없음. 완료 후 Inspector에서 끄면 됨.
 
 ### 🎒 그리드 인벤토리 (사용자 승인 2026-06-25) — "타르코프/디아블로식 멀티셀, I키로 수납"
 > P3 "인벤토리/파밍"을 사용자 명시 승인. 파밍한 루트를 **격자 인벤토리**(아이템이 W×H 셀 차지)에 수납. 사용자 지시: **md 추가 + 테스트 우선**(TDD) → 순수 로직+테스트 먼저, UI 글루는 다음 슬라이스.
