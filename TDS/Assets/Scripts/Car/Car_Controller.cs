@@ -90,6 +90,7 @@ public class Car_Controller : MonoBehaviour
         rb.centerOfMass = centerOfMass.localPosition;
         rb.mass = carMass;
 
+        int wheelCount = Mathf.Max(1, wheels.Length);
         foreach (var wheel in wheels)
         {
             wheel.cd.mass = wheelsMass;
@@ -99,6 +100,15 @@ public class Car_Controller : MonoBehaviour
 
             if (wheel.axelType == AxelType.Back)
                 wheel.SetDefaultStiffnes(backWheelTraction);
+
+            // 서스펜션을 질량/바퀴수에 비례해 충분히 단단하게. 약하면 무거운 차가 가라앉아 차체가 바닥에
+            // 끌리고(바퀴 파묻힘) AddForce로도 안 움직였다 — 차체를 바퀴 위로 지지해 주행 가능하게.
+            JointSpring spring = wheel.cd.suspensionSpring;
+            spring.spring = carMass * 150f / wheelCount;
+            spring.damper = spring.spring * 0.25f;
+            spring.targetPosition = 0.5f;
+            wheel.cd.suspensionSpring = spring;
+            wheel.cd.forceAppPointDistance = 0.1f; // 힘 적용점을 살짝 올려 전복/끌림 줄임
         }
 
     }
