@@ -168,29 +168,25 @@ public class Car_Controller : MonoBehaviour
 
     private void ApplyDrive()
     {
-        // 아케이드 추진. 휠 모터 토크 방식은 토크가 트랙션을 압도하면 휠스핀(rpm 폭주, forwardSlip 1.0)만
-        // 나고 무거운 차가 전혀 안 나갔다. 대신 차체에 직접 가속도를 줘 질량·트랙션과 무관하게 확실히
-        // 전진/후진하고 속도를 정확히 제어한다. 휠은 굴러가며(모터 0) 조향·서스펜션·시각만 담당.
+        // 아케이드 추진 — 전진 속도를 '직접' 설정한다. AddForce/휠토크는 차가 살짝 가라앉아 차체가 바닥에
+        // 끌리면 마찰에 묶여 안 움직였다(사용자 "WASD 눌러도 안 감"). 속도를 직접 주면 끌림·질량·트랙션과
+        // 무관하게 항상 전진/후진하고 속도를 정확히 제어한다. 벽 충돌은 물리가 막아준다(ContinuousDynamic).
         foreach (var wheel in wheels)
             wheel.cd.motorTorque = 0f;
 
         float fwdSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
         currentSpeed = fwdSpeed; // 인스펙터 표시용(전진 방향 속력, 후진이면 음수)
 
-        if (Mathf.Abs(moveInput) > 0.01f)
-        {
-            float cap = moveInput > 0f ? maxSpeed : maxSpeed * 0.5f; // 후진은 절반 속도
-            bool reversing = Mathf.Sign(fwdSpeed) != Mathf.Sign(moveInput);
-            if (reversing || Mathf.Abs(fwdSpeed) < cap)
-                rb.AddForce(transform.forward * moveInput * accleerationSpeed * 3f, ForceMode.Acceleration);
-        }
-        else
-        {
-            // 스로틀 없으면 수평 속도를 천천히 감속(코스트 다운 — 영원히 미끄러지지 않게). 수직(중력)은 보존.
-            Vector3 v = rb.linearVelocity;
-            Vector3 flat = Vector3.MoveTowards(new Vector3(v.x, 0f, v.z), Vector3.zero, accleerationSpeed * Time.fixedDeltaTime);
-            rb.linearVelocity = new Vector3(flat.x, v.y, flat.z);
-        }
+        float target = moveInput * (moveInput > 0f ? maxSpeed : maxSpeed * 0.5f); // 후진 절반 속도
+        float accel = (Mathf.Abs(moveInput) > 0.01f ? accleerationSpeed * 3f : accleerationSpeed * 1.5f); // 가속 vs 코스트다운
+        float newFwd = Mathf.MoveTowards(fwdSpeed, target, accel * Time.fixedDeltaTime);
+
+        // 전진분만 직접 설정. 측면속도는 그립으로 약감쇠(미끄러짐↓), 수직(중력/서스펜션)은 보존.
+        Vector3 v = rb.linearVelocity;
+        Vector3 lateral = v - transform.forward * fwdSpeed;
+        lateral.y = 0f;
+        Vector3 horiz = transform.forward * newFwd + lateral * 0.9f;
+        rb.linearVelocity = new Vector3(horiz.x, v.y, horiz.z);
     }
 
     private void ApplySpeedLimit()
