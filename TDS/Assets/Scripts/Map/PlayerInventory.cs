@@ -30,6 +30,11 @@ public class PlayerInventory : MonoBehaviour
     private TextMeshProUGUI title;
     private readonly List<GameObject> itemViews = new List<GameObject>();
 
+    // 드래그(자유 배치) 상태
+    private PlacedItem dragItem;        // 드래그 중인 아이템(null=없음)
+    private bool dragRotated;
+    private GameObject dragGhost;
+
     /// <summary>플레이어에 PlayerInventory 보장(없으면 추가). 프리팹 수정 없이 런타임 부착.</summary>
     public static PlayerInventory Ensure(GameObject player)
     {
@@ -49,6 +54,104 @@ public class PlayerInventory : MonoBehaviour
         var kb = Keyboard.current;
         if (kb != null && kb.iKey.wasPressedThisFrame)
             SetOpen(!IsOpen);
+
+        if (IsOpen) UpdateDrag(kb);
+        else if (dragItem != null) EndDrag(); // 패널 닫히면 드래그 취소
+    }
+
+    // ---------- 자유 배치: 드래그 & 드롭 + R 회전 ----------
+
+    private void UpdateDrag(Keyboard kb)
+    {
+        var mouse = Mouse.current;
+        if (mouse == null) return;
+        Vector2 mp = mouse.position.ReadValue();
+
+        if (dragItem == null)
+        {
+            if (mouse.leftButton.wasPressedThisFrame && ScreenToCell(mp, out int cx, out int cy)
+                && Grid.InBounds(cx, cy))
+            {
+                var p = Grid.ItemAt(cx, cy);
+                if (p != null) BeginDrag(p);
+            }
+            return;
+        }
+
+        // 회전(정사각형이 아닌 것만)
+        if (kb != null && kb.rKey.wasPressedThisFrame && dragItem.Item.Width != dragItem.Item.Height)
+            dragRotated = !dragRotated;
+
+        int tw = dragRotated ? dragItem.Item.Height : dragItem.Item.Width;
+        int th = dragRotated ? dragItem.Item.Width : dragItem.Item.Height;
+        ScreenToCell(mp, out int curX, out int curY);
+        int ax = curX - (tw - 1) / 2; // 커서를 아이템 중심에 맞춤
+        int ay = curY - (th - 1) / 2;
+        bool valid = Grid.CanPlaceIgnoring(dragItem.Item, ax, ay, dragRotated, dragItem);
+
+        UpdateGhost(ax, ay, tw, th, valid);
+
+        if (mouse.leftButton.wasReleasedThisFrame)
+        {
+            if (valid)
+                Grid.TryMove(dragItem, ax, ay, dragRotated);
+            else if (Grid.InBounds(curX, curY)) // 빈자리 아니면, 커서 아래 아이템과 스왑 시도
+            {
+                var b = Grid.ItemAt(curX, curY);
+                if (b != null && b != dragItem) Grid.TrySwap(dragItem, b);
+            }
+            EndDrag();
+            Redraw();
+        }
+    }
+
+    private void BeginDrag(PlacedItem p)
+    {
+        dragItem = p;
+        dragRotated = p.Rotated;
+        dragGhost = NewRect("DragGhost", cellsRoot, p.X, p.Y, p.Width, p.Height);
+        dragGhost.transform.SetAsLastSibling();
+        var label = MakeText(dragGhost.GetComponent<RectTransform>(), "GhostLabel",
+            Vector2.zero, Vector2.one, Vector2.zero, TextAlignmentOptions.Center, 18f);
+        label.text = p.Item.DisplayName;
+    }
+
+    private void UpdateGhost(int ax, int ay, int tw, int th, bool valid)
+    {
+        if (dragGhost == null) return;
+        var rt = dragGhost.GetComponent<RectTransform>();
+        rt.anchoredPosition = new Vector2(ax * CellPx + 1f, -(ay * CellPx + 1f));
+        rt.sizeDelta = new Vector2(tw * CellPx - 2f, th * CellPx - 2f);
+        dragGhost.GetComponent<Image>().color = valid
+            ? new Color(0.3f, 0.9f, 0.4f, 0.55f)
+            : new Color(0.9f, 0.3f, 0.3f, 0.55f);
+    }
+
+    private void EndDrag()
+    {
+        if (dragGhost != null) Destroy(dragGhost);
+        dragGhost = null;
+        dragItem = null;
+    }
+
+    // 화면 좌표 → 셀 좌표(좌상단 원점, x→오른쪽 / y→아래). 범위 밖 셀도 그대로 반환(검사는 CanPlace가).
+    private bool ScreenToCell(Vector2 screen, out int cx, out int cy)
+    {
+        cx = cy = 0;
+        if (cellsRoot == null) return false;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(cellsRoot, screen, null, out var local))
+            return false;
+        cx = Mathf.FloorToInt(local.x / CellPx);
+        cy = Mathf.FloorToInt(-local.y / CellPx);
+        return true;
+    }
+
+    /// <summary>테스트/외부용: 놓인 아이템을 이동(그리드 TryMove + 열려있으면 다시 그림).</summary>
+    public bool MoveItem(PlacedItem placed, int x, int y, bool rotated)
+    {
+        bool ok = Grid != null && Grid.TryMove(placed, x, y, rotated);
+        if (ok && IsOpen) Redraw();
+        return ok;
     }
 
     private void OnDestroy()
@@ -133,7 +236,7 @@ public class PlayerInventory : MonoBehaviour
     private void Redraw()
     {
         if (Grid == null) return;
-        title.text = $"INVENTORY    <size=70%>{Grid.FreeCellCount}/{columns * rows} free   (I to close)</size>";
+        title.text = $"INVENTORY    <size=70%>{Grid.FreeCellCount}/{columns * rows} free    drag to move · R rotate · I close</size>";
 
         foreach (var v in itemViews) Destroy(v);
         itemViews.Clear();

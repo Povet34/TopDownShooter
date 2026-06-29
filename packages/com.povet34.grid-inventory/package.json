@@ -1,8 +1,8 @@
 {
   "name": "com.povet34.grid-inventory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Grid Inventory",
-  "description": "Tarkov/Diablo-style multi-cell grid inventory: place/auto-place/rotate/remove with bounds and overlap checks. Pure C#, EditMode-tested, no external dependencies.",
+  "description": "Tarkov/Diablo-style multi-cell grid inventory: place/auto-place/rotate/remove plus free placement (move, swap, place-ignoring-self) with bounds and overlap checks. Pure C#, EditMode-tested, no external dependencies.",
   "unity": "6000.0",
   "keywords": [
     "tds",

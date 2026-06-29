@@ -72,6 +72,13 @@ namespace TDS.Core
 
         /// <summary>아이템을 (x,y)에 (회전 포함) 놓을 수 있는가 — 경계 안 + 모든 대상 셀이 비어있어야.</summary>
         public bool CanPlace(InventoryItem item, int x, int y, bool rotated = false)
+            => CanPlaceIgnoring(item, x, y, rotated, null);
+
+        /// <summary>
+        /// <see cref="CanPlace"/>와 같되 <paramref name="ignore"/>가 차지한 셀은 '빈 칸'으로 본다.
+        /// 드래그 이동 시 자기 자신 위로 옮길 수 있게(미리보기/이동 검사) 쓴다.
+        /// </summary>
+        public bool CanPlaceIgnoring(InventoryItem item, int x, int y, bool rotated, PlacedItem ignore, PlacedItem ignore2 = null)
         {
             if (item == null) return false;
 
@@ -82,7 +89,10 @@ namespace TDS.Core
 
             for (int dx = 0; dx < w; dx++)
                 for (int dy = 0; dy < h; dy++)
-                    if (cells[x + dx, y + dy] != null) return false;
+                {
+                    var occ = cells[x + dx, y + dy];
+                    if (occ != null && occ != ignore && occ != ignore2) return false;
+                }
 
             return true;
         }
@@ -132,6 +142,43 @@ namespace TDS.Core
                     if (InBounds(cx, cy) && cells[cx, cy] == placed) cells[cx, cy] = null;
                 }
 
+            return true;
+        }
+
+        /// <summary>
+        /// 이미 놓인 아이템을 새 위치/회전으로 이동(자기 자리는 비우고 검사 — 겹쳐 옮기기 허용).
+        /// 불가하면 그리드 불변으로 false. 드래그&드롭 자유 배치의 핵심.
+        /// </summary>
+        public bool TryMove(PlacedItem placed, int x, int y, bool rotated)
+        {
+            if (placed == null || !items.Contains(placed)) return false;
+            if (!CanPlaceIgnoring(placed.Item, x, y, rotated, placed)) return false;
+
+            var item = placed.Item;
+            Remove(placed);
+            Place(item, x, y, rotated);
+            return true;
+        }
+
+        /// <summary>
+        /// 두 아이템의 자리를 맞바꾼다(각자 현재 회전 유지). 서로 상대 자리에 들어가지 못하면(크기 차이로
+        /// 겹침/경계 밖) 그리드 불변으로 false. 드래그로 다른 아이템 위에 떨궜을 때의 스왑.
+        /// </summary>
+        public bool TrySwap(PlacedItem a, PlacedItem b)
+        {
+            if (a == null || b == null || a == b || !items.Contains(a) || !items.Contains(b)) return false;
+
+            int ax = a.X, ay = a.Y; bool ar = a.Rotated;
+            int bx = b.X, by = b.Y; bool br = b.Rotated;
+            var ai = a.Item; var bi = b.Item;
+
+            // 먼저 검사(둘 다 없는 셈) — 실패 시 그리드/인스턴스 불변.
+            if (!CanPlaceIgnoring(ai, bx, by, ar, a, b)) return false;
+            if (!CanPlaceIgnoring(bi, ax, ay, br, a, b)) return false;
+
+            Remove(a); Remove(b);
+            Place(ai, bx, by, ar);
+            Place(bi, ax, ay, br);
             return true;
         }
 

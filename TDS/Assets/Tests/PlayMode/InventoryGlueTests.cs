@@ -57,5 +57,24 @@ namespace TDS.Tests.PlayMode
             Assert.IsTrue(loot == null || loot.Wallet.Carried == 0, "가득 찼는데 지갑에 더해짐");
             Assert.IsTrue(pickup != null, "가득 찼는데 픽업이 제거됨");
         }
+
+        [UnityTest]
+        public IEnumerator MoveItem_relocates_stored_item()
+        {
+            var player = new GameObject("Player") { tag = "Player" };
+            var inv = PlayerInventory.Ensure(player);
+            inv.TryStore(new InventoryItem("a", 2, 1));
+            var placed = inv.Grid.Items[0];
+
+            Assert.IsTrue(inv.MoveItem(placed, 4, 3, false), "자유 이동 실패");
+            Assert.IsNotNull(inv.Grid.ItemAt(4, 3), "새 위치 미점유");
+            Assert.IsNull(inv.Grid.ItemAt(0, 0), "옛 위치 미해제");
+
+            // 겹치는 곳으로는 이동 실패(그리드 불변)
+            inv.TryStore(new InventoryItem("b", 1, 1)); // (0,0)에 자동배치
+            var b = inv.Grid.ItemAt(0, 0);
+            Assert.IsFalse(inv.MoveItem(placed, 0, 3, false) && inv.Grid.ItemAt(0, 0) != b);
+            yield return null;
+        }
     }
 }
