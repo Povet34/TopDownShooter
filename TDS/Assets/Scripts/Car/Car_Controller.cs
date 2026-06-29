@@ -158,26 +158,28 @@ public class Car_Controller : MonoBehaviour
 
     private void ApplyDrive()
     {
-        currentSpeed = moveInput * accleerationSpeed * Time.deltaTime;
+        // 아케이드 추진. 휠 모터 토크 방식은 토크가 트랙션을 압도하면 휠스핀(rpm 폭주, forwardSlip 1.0)만
+        // 나고 무거운 차가 전혀 안 나갔다. 대신 차체에 직접 가속도를 줘 질량·트랙션과 무관하게 확실히
+        // 전진/후진하고 속도를 정확히 제어한다. 휠은 굴러가며(모터 0) 조향·서스펜션·시각만 담당.
+        foreach (var wheel in wheels)
+            wheel.cd.motorTorque = 0f;
 
-        float motorTorqueValue =  motorForce * currentSpeed;
+        float fwdSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
+        currentSpeed = fwdSpeed; // 인스펙터 표시용(전진 방향 속력, 후진이면 음수)
 
-        foreach(var wheel in wheels)
+        if (Mathf.Abs(moveInput) > 0.01f)
         {
-            if (driveType == DriveType.FrontWheelDrive)
-            {
-                if (wheel.axelType == AxelType.Front)
-                    wheel.cd.motorTorque = motorTorqueValue;
-            }
-            else if (driveType == DriveType.RearWheelDrive)
-            {
-                if (wheel.axelType == AxelType.Back)
-                    wheel.cd.motorTorque = motorTorqueValue;
-            }
-            else 
-            {
-                wheel.cd.motorTorque = motorTorqueValue;
-            }
+            float cap = moveInput > 0f ? maxSpeed : maxSpeed * 0.5f; // 후진은 절반 속도
+            bool reversing = Mathf.Sign(fwdSpeed) != Mathf.Sign(moveInput);
+            if (reversing || Mathf.Abs(fwdSpeed) < cap)
+                rb.AddForce(transform.forward * moveInput * accleerationSpeed * 3f, ForceMode.Acceleration);
+        }
+        else
+        {
+            // 스로틀 없으면 수평 속도를 천천히 감속(코스트 다운 — 영원히 미끄러지지 않게). 수직(중력)은 보존.
+            Vector3 v = rb.linearVelocity;
+            Vector3 flat = Vector3.MoveTowards(new Vector3(v.x, 0f, v.z), Vector3.zero, accleerationSpeed * Time.fixedDeltaTime);
+            rb.linearVelocity = new Vector3(flat.x, v.y, flat.z);
         }
     }
 
@@ -189,6 +191,7 @@ public class Car_Controller : MonoBehaviour
 
     private void ApplySteering()
     {
+        // 앞바퀴 시각 조향각
         foreach (var wheel in wheels)
         {
             if (wheel.axelType == AxelType.Front)
@@ -196,6 +199,22 @@ public class Car_Controller : MonoBehaviour
                 float targetSteerAngle = steerInput * turnSensetivity;
                 wheel.cd.steerAngle = Mathf.Lerp(wheel.cd.steerAngle, targetSteerAngle, .5f);
             }
+        }
+
+        // 아케이드 조향: 차체를 직접 yaw(휠 마찰만으론 약하거나 안 돌 수 있어 확실하게). 전진 속도에
+        // 비례, 정지 시엔 안 돎, 후진 시 반대 방향. 속도 벡터도 헤딩을 따라가게 해 과도한 미끄러짐 방지.
+        float fwdSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
+        if (Mathf.Abs(fwdSpeed) > 0.4f)
+        {
+            float speedFactor = Mathf.Clamp01(Mathf.Abs(fwdSpeed) / 6f); // 저속에서 회전 둔하게
+            float yaw = steerInput * turnSensetivity * speedFactor * Mathf.Sign(fwdSpeed) * Time.fixedDeltaTime;
+            Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
+            rb.MoveRotation(rb.rotation * rot);
+
+            // 수평 속도를 새 헤딩으로 정렬(그립감 — 옆으로 안 미끄러지게). 수직 속도 보존.
+            Vector3 v = rb.linearVelocity;
+            Vector3 flat = rot * new Vector3(v.x, 0f, v.z);
+            rb.linearVelocity = new Vector3(flat.x, v.y, flat.z);
         }
     }
 

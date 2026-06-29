@@ -70,13 +70,15 @@
 
 ## ⚠️ 빠른 시일 내 해결할 것 (최우선 — 사용자 지정 2026-06-26)
 
-> 장르 = **익스트랙션 루터**(탈출시켜 전리품 반출). 아래 둘이 다음 작업 최우선.
+> 장르 = **익스트랙션 루터**(탈출시켜 전리품 반출).
 
-1. **🚗 차량 주행 — 전진이 안 됨 + 속도 제어 필요**. 탑승은 되는데 **앞으로 안 나간다**(사용자 보고). 운전 중 가속/속도를 제어할 수 있어야 함.
-   - 조사 출발점: `Car_Controller.ApplyDrive`(moveInput→`motorTorque`)·`Car.Movement` 액션맵 바인딩(WASD)·`WheelCollider.motorTorque`/`driveType`(앞/뒤/4륜)·`BrakeTheCar`가 `motorForce=0`으로 만드는 경로. 탑승 시 `SwitchToCarControls`로 Car 맵은 켜지므로(검증됨) 입력은 들어올 것 — 구동/마찰/속도제한 쪽 의심. 예전엔 16m 주행됐으니 회귀 가능성 점검.
-   - 검증: 탑승 후 실제 WASD(또는 입력 주입)로 전진/후진/속도 변화 in-game 확인 + 회귀 테스트(가능하면 `Car.Movement` 입력→`rb.linearVelocity` 증가 PlayMode).
-2. **🎒 인벤토리 자유 배치 (드래그/수동 + 회전)**. 현재는 자동 배치(첫 빈자리)뿐. 익스트랙션 장르 핵심 = **칸 안에서 아이템을 자유롭게 옮기고/회전/재배치**(타르코프식 스태시 관리). 그리드 패널에 드래그&드롭(셀 스냅) + R 회전 + 칸 이동/스왑.
+1. **🎒 인벤토리 자유 배치 (드래그/수동 + 회전)** — 남은 최우선. 현재는 자동 배치(첫 빈자리)뿐. 익스트랙션 장르 핵심 = **칸 안에서 아이템을 자유롭게 옮기고/회전/재배치**(타르코프식 스태시 관리). 그리드 패널에 드래그&드롭(셀 스냅) + R 회전 + 칸 이동/스왑.
    - 토대: 순수 `InventoryGrid`에 `CanPlace`/`Place`/`Remove`/회전 이미 있음 → UI 드래그가 마우스 위치를 셀로 변환해 `Remove`+`CanPlace`+`Place` 호출. 손 놓을 때 불가면 원위치 복귀. `PlayerInventory`(코드 캔버스)에 드래그 핸들러 추가.
+
+> ✅ **해결: 차량 전진 안 됨 + 속도 제어 (2026-06-29)**
+> - **진단**: 탑승·입력(`moveInput=1`)·`motorForce`는 정상인데 차가 안 나갔다. `ApplyDrive`가 `motorTorque = motorForce × accel × Time.deltaTime`로 토크를 ~50배 작게 만든 게 1차 원인이라 키워봤더니, 이번엔 토크가 트랙션을 압도 → **앞바퀴 휠스핀**(rpm 115,668·forwardSlip 1.0)만 나고 무거운 차(트럭 790kg, 앞바퀴구동)는 제자리. WheelCollider 토크 방식은 차/질량마다 트랙션 튜닝이 필요해 취약.
+> - **수정(아케이드 구동)**: 휠 모터 토크를 0으로 두고 **차체에 직접 `AddForce`(ForceMode.Acceleration)**로 추진 → 질량·트랙션 무관하게 확실히 전진/후진, `maxSpeed`로 상한, 후진 절반 속도, 스로틀 없으면 코스트다운. 조향도 **직접 yaw**(속도 비례, 후진 반대, 속도벡터 헤딩 정렬)로 확실히 회전. 휠은 굴러가며 시각/서스펜션만.
+> - **검증**: 입력 주입으로 W→ +Z 121m 전진, `steerInput=+1`(D)→heading 0→94.7(우회전, 방향 정상) 확인. EditMode 259 / PlayMode 68 green. (실주행 손맛·회전속도는 사용자 확인 후 `maxSpeed`/`accleerationSpeed`/`turnSensetivity`로 튜닝.)
 
 > ✅ **해결: 플레이어가 적/낮은 prop 타고 Y축으로 솟구침 (2026-06-25)**
 > - **적 끼임**: 적이 **Enemy 레이어 래그돌 본 콜라이더**(non-trigger)를 갖고 있어 플레이어 `CharacterController`가 타고 솟구침 → `Player.Awake`에서 **`Physics.IgnoreLayerCollision(Player, Enemy)`**(총알=Bullet 레이어·근접=오버랩이라 영향 없음).
