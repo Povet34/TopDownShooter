@@ -1,5 +1,16 @@
 {
   "dependencies": {
+    "com.povet34.grid-inventory": "file:../../packages/com.povet34.grid-inventory",
+    "com.povet34.tds-loot": "file:../../packages/com.povet34.tds-loot",
+    "com.povet34.tds-extraction": "file:../../packages/com.povet34.tds-extraction",
+    "com.povet34.tds-minimap": "file:../../packages/com.povet34.tds-minimap",
+    "com.povet34.tds-spawning": "file:../../packages/com.povet34.tds-spawning",
+    "com.povet34.tds-ai": "file:../../packages/com.povet34.tds-ai",
+    "com.povet34.tds-squad": "file:../../packages/com.povet34.tds-squad",
+    "com.povet34.tds-camera": "file:../../packages/com.povet34.tds-camera",
+    "com.povet34.tds-vehicle": "file:../../packages/com.povet34.tds-vehicle",
+    "com.povet34.tds-services": "file:../../packages/com.povet34.tds-services",
+    "com.povet34.tds-combat-fx": "file:../../packages/com.povet34.tds-combat-fx",
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.9",
@@ -52,5 +63,18 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  }
+  },
+  "testables": [
+    "com.povet34.grid-inventory",
+    "com.povet34.tds-loot",
+    "com.povet34.tds-extraction",
+    "com.povet34.tds-minimap",
+    "com.povet34.tds-spawning",
+    "com.povet34.tds-ai",
+    "com.povet34.tds-squad",
+    "com.povet34.tds-camera",
+    "com.povet34.tds-vehicle",
+    "com.povet34.tds-services",
+    "com.povet34.tds-combat-fx"
+  ]
 }

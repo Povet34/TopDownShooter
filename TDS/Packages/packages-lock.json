@@ -17,6 +17,72 @@
       },
       "hash": "85c101f5329ec1b0c6f70cba44614166dd78f53c"
     },
+    "com.povet34.grid-inventory": {
+      "version": "file:../../packages/com.povet34.grid-inventory",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-ai": {
+      "version": "file:../../packages/com.povet34.tds-ai",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-camera": {
+      "version": "file:../../packages/com.povet34.tds-camera",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-combat-fx": {
+      "version": "file:../../packages/com.povet34.tds-combat-fx",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-extraction": {
+      "version": "file:../../packages/com.povet34.tds-extraction",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-loot": {
+      "version": "file:../../packages/com.povet34.tds-loot",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-minimap": {
+      "version": "file:../../packages/com.povet34.tds-minimap",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-services": {
+      "version": "file:../../packages/com.povet34.tds-services",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-spawning": {
+      "version": "file:../../packages/com.povet34.tds-spawning",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-squad": {
+      "version": "file:../../packages/com.povet34.tds-squad",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "com.povet34.tds-vehicle": {
+      "version": "file:../../packages/com.povet34.tds-vehicle",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
