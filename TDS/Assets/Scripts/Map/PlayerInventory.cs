@@ -183,6 +183,20 @@ public class PlayerInventory : MonoBehaviour
         IsOpen = value;
         if (panel != null) panel.gameObject.SetActive(IsOpen);
         if (IsOpen) Redraw();
+        else if (dragItem != null) EndDrag();
+        SuppressFire(IsOpen);
+    }
+
+    // 패널 열린 동안 사격 억제 — 드래그용 좌클릭이 무기 발사(Character.Fire)도 되는 것 방지.
+    // 도보일 때만(Character 맵 활성). 차량 탑승 중엔 안 건드린다.
+    private void SuppressFire(bool suppress)
+    {
+        var cm = ControlsManager.instance;
+        if (cm == null || cm.controls == null) return;
+        var character = cm.controls.Character;
+        if (!character.enabled) return;
+        if (suppress) character.Fire.Disable();
+        else character.Fire.Enable();
     }
 
     // ---------- 코드로 UI 생성 ----------
