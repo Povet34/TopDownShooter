@@ -1,0 +1,15 @@
+{
+  "name": "com.povet34.tds-squad",
+  "version": "0.1.0",
+  "displayName": "TDS Squads",
+  "description": "Squad formation (spiral offsets), decisions and roaming. Pure C#, EditMode-tested.",
+  "unity": "6000.0",
+  "keywords": [
+    "tds",
+    "gameplay",
+    "top-down"
+  ],
+  "author": {
+    "name": "Povet34"
+  }
+}

@@ -1,0 +1,24 @@
+{
+    "name": "Povet34.Tds.CombatFx.Tests",
+    "rootNamespace": "TDS.Tests.EditMode",
+    "references": [
+        "Povet34.Tds.CombatFx",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

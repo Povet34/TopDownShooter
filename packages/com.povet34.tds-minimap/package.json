@@ -1,0 +1,15 @@
+{
+  "name": "com.povet34.tds-minimap",
+  "version": "0.1.0",
+  "displayName": "TDS Minimap Projection",
+  "description": "World-to-minimap projection with edge clamping for radar blips. Pure C#, EditMode-tested.",
+  "unity": "6000.0",
+  "keywords": [
+    "tds",
+    "gameplay",
+    "top-down"
+  ],
+  "author": {
+    "name": "Povet34"
+  }
+}
