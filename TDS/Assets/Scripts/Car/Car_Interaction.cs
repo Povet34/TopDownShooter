@@ -65,6 +65,31 @@ public class Car_Interaction : Interactable
 
         if (CameraManager.instance != null) // SampleScene 경로(맵은 parent+CameraFollow로 충분)
             CameraManager.instance.ChangeCameraTarget(transform, 12, .5f);
+
+        EnsureDamageProxy(); // 몬스터가 차를 공격하도록 Player 레이어 히트박스
+    }
+
+    private GameObject damageProxy;
+
+    private void EnsureDamageProxy()
+    {
+        if (damageProxy != null) { damageProxy.SetActive(true); return; }
+
+        damageProxy = new GameObject("CarDamageProxy");
+        int playerLayer = LayerMask.NameToLayer("Player");
+        damageProxy.layer = playerLayer >= 0 ? playerLayer : gameObject.layer;
+        damageProxy.transform.SetParent(transform, false);
+        damageProxy.transform.localPosition = Vector3.up * 0.6f;
+        var box = damageProxy.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        box.size = new Vector3(2.6f, 1.6f, 5.0f); // 차체를 넉넉히 덮음
+        damageProxy.AddComponent<CarDamageProxy>().Init(carHealthController);
+    }
+
+    private void RemoveDamageProxy()
+    {
+        if (damageProxy != null) Destroy(damageProxy);
+        damageProxy = null;
     }
 
     public void GetOutOfTheCar()
@@ -72,6 +97,7 @@ public class Car_Interaction : Interactable
         if (carController.carActive == false)
             return;
 
+        RemoveDamageProxy(); // 차 떠나면 더 이상 차를 공격 대상으로 안 둠
         carController.ActivateCar(false);
 
         if (weaponController != null)

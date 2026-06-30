@@ -18,6 +18,14 @@ public class Player_Health : HealthController
 
     public override void ReduceHealth(int damage)
     {
+        // 차량 탑승 중(플레이어가 차에 parent됨)이면 데미지를 차로 돌린다 — 몬스터가 차를 공격하는 효과.
+        var car = GetComponentInParent<Car_HealthController>();
+        if (car != null)
+        {
+            car.TakeDamage(damage);
+            return;
+        }
+
         base.ReduceHealth(damage);
 
         GameServices.Registry.Resolve<ICombatFeedbackService>()?.ReportHit(transform.position + Vector3.up, 1.4f);

@@ -79,5 +79,31 @@ namespace TDS.Tests.PlayMode
             Assert.IsTrue(c.Car.enabled, "탑승: Car 활성");
             Assert.IsFalse(c.Character.enabled, "탑승: Character 비활성이어야");
         }
+
+        /// <summary>탑승 중(플레이어가 차에 parent됨)엔 플레이어가 받을 데미지가 차로 돌아간다 — 몬스터가 차를 공격.</summary>
+        [UnityTest]
+        public IEnumerator Driver_damage_redirects_to_the_car()
+        {
+            GameServices.ResetForTests();
+            GameBootstrap.EnsureSystems();
+            var player = Object.Instantiate(Resources.Load<GameObject>("Player")).GetComponent<Player>();
+            yield return null;
+            var ph = player.GetComponent<Player_Health>();
+            int playerBefore = ph.currentHealth;
+
+            var carGo = new GameObject("Car");
+            var carHealth = carGo.AddComponent<Car_HealthController>();
+            yield return null; // Start: currentHealth=maxHealth(0)
+            carHealth.maxHealth = 500; carHealth.currentHealth = 500;
+            player.transform.SetParent(carGo.transform); // 탑승 모사
+
+            ph.ReduceHealth(40);
+            yield return null;
+
+            Assert.AreEqual(460, carHealth.currentHealth, "차가 데미지를 안 받음(리다이렉트 실패)");
+            Assert.AreEqual(playerBefore, ph.currentHealth, "운전자가 데미지를 받음(차로 안 돌아감)");
+
+            Object.DestroyImmediate(carGo); // 자식 플레이어도 함께 정리
+        }
     }
 }
