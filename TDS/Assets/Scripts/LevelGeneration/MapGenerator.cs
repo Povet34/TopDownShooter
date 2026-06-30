@@ -121,6 +121,7 @@ public class MapGenerator : MonoBehaviour
         PlaceRockProps(worldW, worldL, clearR, rng);
         PlaceCover(gw, gh, cell, origin, covers, clearR, rng);
         PlaceBarrels(gw, gh, cell, origin, config != null ? config.barrelCount : 6, clearR, rng);
+        PlacePointsOfInterest(gw, gh, cell, origin, clearR, rng); // 보급 캐시·잔해 = 탐험 보상 + 비주얼 변주(베이크 전)
         PlaceDropship(worldW, worldL); // 맵을 다 깐 뒤 — 착륙 지점 주변을 비우고 배치(파묻힘 방지)
         BakeNavMesh();
         PlaceCars(gw, gh, cell, origin, clearR, rng); // 베이크 후 — 차량은 NavMeshObstacle로 런타임 카브(동적)
@@ -707,6 +708,97 @@ public class MapGenerator : MonoBehaviour
             mo.role = TDS.Core.MapObjectClassifier.Classify(h, isCover: false, breakable: true, movable: true);
             placed++;
         }
+    }
+
+    // 관심지점(POI): 보급 캐시(크레이트+전리품)와 잔해 더미(시각)를 흩어 배치 — 탐험 보상 + 비주얼 변주.
+    private void PlacePointsOfInterest(int gw, int gh, float cell, Vector3 origin, float clearR, System.Random rng)
+    {
+        if (mapRoot == null) return;
+        int count = Mathf.Clamp((gw * gh) / 110, 3, 10); // 맵 크기에 비례
+        float spacing = cell * 3f, spacing2 = spacing * spacing;
+        float clearGate = (clearR + 4f) * (clearR + 4f);
+        var used = new System.Collections.Generic.List<Vector3>();
+
+        int placed = 0, attempts = 0, maxAttempts = count * 25;
+        while (placed < count && attempts++ < maxAttempts)
+        {
+            int x = 2 + rng.Next(Mathf.Max(1, gw - 4));
+            int z = 2 + rng.Next(Mathf.Max(1, gh - 4));
+            Vector3 c = CellCenter(x, z, cell, origin);
+            if (c.x * c.x + c.z * c.z < clearGate) continue; // 중앙(스폰) 비움
+
+            bool tooClose = false;
+            foreach (var u in used) if ((u - c).sqrMagnitude < spacing2) { tooClose = true; break; }
+            if (tooClose) continue;
+            used.Add(c);
+
+            if (rng.Next(2) == 0) BuildSupplyCache(c, rng);
+            else BuildWreck(c, rng);
+            placed++;
+        }
+    }
+
+    private void BuildSupplyCache(Vector3 localCenter, System.Random rng)
+    {
+        var crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        crate.name = "POI_Crate";
+        crate.transform.SetParent(mapRoot, false);
+        crate.transform.localScale = new Vector3(1.6f, 1.0f, 1.2f);
+        crate.transform.localPosition = localCenter + new Vector3(0f, 0.5f, 0f);
+        crate.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+        TintPrimitive(crate, new Color(0.46f, 0.38f, 0.24f));
+        TagMapObject(crate, 1.0f, cover: true);
+
+        int coins = 3 + rng.Next(2); // 3~4개
+        for (int i = 0; i < coins; i++)
+        {
+            Vector2 o = RandInDisc(rng, 2.3f);
+            Vector3 world = mapRoot.TransformPoint(localCenter + new Vector3(o.x, 0.3f, o.y));
+            LootPickup.CreatePrimitive(world, 1 + rng.Next(3));
+        }
+    }
+
+    private void BuildWreck(Vector3 localCenter, System.Random rng)
+    {
+        int slabs = 2 + rng.Next(2); // 2~3개
+        for (int i = 0; i < slabs; i++)
+        {
+            var slab = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            slab.name = "POI_Debris";
+            slab.transform.SetParent(mapRoot, false);
+            Vector2 o = RandInDisc(rng, 2.0f);
+            slab.transform.localScale = new Vector3(0.6f + (float)rng.NextDouble(), 0.3f, 2.0f + (float)rng.NextDouble() * 1.5f);
+            slab.transform.localPosition = localCenter + new Vector3(o.x, 0.2f, o.y);
+            slab.transform.localRotation = Quaternion.Euler(rng.Next(-22, 22), rng.Next(360), rng.Next(-14, 14));
+            TintPrimitive(slab, new Color(0.24f, 0.24f, 0.27f));
+            TagMapObject(slab, 0.6f, cover: true);
+        }
+        int coins = 1 + rng.Next(2); // 1~2개
+        for (int i = 0; i < coins; i++)
+        {
+            Vector2 o = RandInDisc(rng, 1.6f);
+            Vector3 world = mapRoot.TransformPoint(localCenter + new Vector3(o.x, 0.3f, o.y));
+            LootPickup.CreatePrimitive(world, 2 + rng.Next(3));
+        }
+    }
+
+    private static Vector2 RandInDisc(System.Random rng, float radius)
+    {
+        double ang = rng.NextDouble() * Mathf.PI * 2.0;
+        double r = radius * System.Math.Sqrt(rng.NextDouble());
+        return new Vector2((float)(System.Math.Cos(ang) * r), (float)(System.Math.Sin(ang) * r));
+    }
+
+    private static void TintPrimitive(GameObject go, Color c)
+    {
+        var rend = go.GetComponent<Renderer>();
+        if (rend != null) rend.material.color = c;
+    }
+
+    private void TagMapObject(GameObject go, float height, bool cover)
+    {
+        var mo = go.AddComponent<MapObject>();
+        mo.role = TDS.Core.MapObjectClassifier.Classify(height, isCover: cover, breakable: false, movable: false);
     }
 
     private void PlaceCover(int gw, int gh, float cell, Vector3 origin,
