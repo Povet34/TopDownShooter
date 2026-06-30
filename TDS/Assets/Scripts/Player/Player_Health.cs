@@ -26,6 +26,15 @@ public class Player_Health : HealthController
             return;
         }
 
+        ApplyDamage(damage);
+        GetComponent<PlayerStatus>()?.OnHit(damage); // 외부 피격(도보) → 확률적 출혈 디버프
+    }
+
+    /// <summary>상태이상(출혈 등) DoT — 차 리다이렉트/추가 출혈 유발 없이 곧장 체력만 깎는다.</summary>
+    public void TakeStatusDamage(int damage) => ApplyDamage(damage);
+
+    private void ApplyDamage(int damage)
+    {
         base.ReduceHealth(damage);
 
         GameServices.Registry.Resolve<ICombatFeedbackService>()?.ReportHit(transform.position + Vector3.up, 1.4f);

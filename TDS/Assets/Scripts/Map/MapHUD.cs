@@ -16,10 +16,11 @@ public class MapHUD : MonoBehaviour
     private HealthController playerHealth;
     private Player_WeaponController playerWeapon;
     private PlayerLoot playerLoot;
+    private PlayerStatus playerStatus;
     private SpawnDirector director;
     private ExtractionZone extraction;
 
-    private TextMeshProUGUI healthText, ammoText, waveText, lootText, stashText, extractText, carText, endText;
+    private TextMeshProUGUI healthText, ammoText, waveText, lootText, stashText, debuffText, extractText, carText, endText;
     private GameObject endPanel;
     private bool ended;
 
@@ -51,6 +52,9 @@ public class MapHUD : MonoBehaviour
         if (stashText != null)
             stashText.text = MetaStashController.Instance != null
                 ? $"<size=80%>STASH  {MetaStashController.Instance.Summary()}</size>" : "";
+
+        if (debuffText != null)
+            debuffText.text = DebuffLabel();
 
         UpdateCarReadout();
 
@@ -105,12 +109,31 @@ public class MapHUD : MonoBehaviour
                 playerHealth = p.GetComponentInChildren<HealthController>();
                 playerWeapon = p.GetComponentInChildren<Player_WeaponController>();
                 playerLoot = p.GetComponent<PlayerLoot>(); // 첫 픽업 전엔 null → 0 표시
+                playerStatus = p.GetComponent<PlayerStatus>();
             }
         }
         if (director == null)
             director = FindObjectOfType<SpawnDirector>();
         if (extraction == null)
             extraction = FindObjectOfType<ExtractionZone>();
+    }
+
+    // 활성 디버프를 색칠된 한 줄로(없으면 빈 문자열).
+    private string DebuffLabel()
+    {
+        if (playerStatus == null || !playerStatus.Effects.Any) return "";
+        var sb = new System.Text.StringBuilder();
+        foreach (var k in playerStatus.Effects.Active)
+        {
+            if (sb.Length > 0) sb.Append("   ");
+            switch (k)
+            {
+                case TDS.Core.StatusKind.Bleed: sb.Append("<color=#E5484D>● BLEEDING</color>"); break;
+                case TDS.Core.StatusKind.Slow:  sb.Append("<color=#4FC3F7>● SLOWED</color>"); break;
+                case TDS.Core.StatusKind.Stun:  sb.Append("<color=#FFD54F>● STUNNED</color>"); break;
+            }
+        }
+        return sb.ToString();
     }
 
     // 차량 탑승 중이면 속도 + 차 HP 표시(주차 차량은 비활성이라 안 뜸). 스캔은 스로틀.
@@ -167,6 +190,7 @@ public class MapHUD : MonoBehaviour
         stashText = MakeText(canvas.transform, "Stash", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -58f), TextAlignmentOptions.TopLeft, 26f);
         stashText.color = new Color(0.6f, 0.85f, 1f); // 반출 스태시 = 하늘색
         extractText = MakeText(canvas.transform, "Extract", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), TextAlignmentOptions.Center, 44f);
+        debuffText = MakeText(canvas.transform, "Debuff", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 75f), TextAlignmentOptions.Center, 26f);
         extractText.color = new Color(0.3f, 0.85f, 0.95f); // 시안
         carText = MakeText(canvas.transform, "Car", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), TextAlignmentOptions.Bottom, 30f);
 

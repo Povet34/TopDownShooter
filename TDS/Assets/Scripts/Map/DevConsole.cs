@@ -192,6 +192,22 @@ public class DevConsole : MonoBehaviour
             m.ClearStash();
             return "stash cleared";
         });
+
+        registry.Register("debuff", "apply a debuff: debuff <bleed|slow|stun> [seconds]", args =>
+        {
+            var p = GameObject.FindWithTag("Player");
+            var st = p != null ? p.GetComponent<PlayerStatus>() : null;
+            if (st == null) return "no player status";
+            string which = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+            float dur = (args.Length > 1 && float.TryParse(args[1], out var d)) ? d : 5f;
+            switch (which)
+            {
+                case "bleed": st.Apply(StatusKind.Bleed, dur, 5f); return $"bleeding {dur}s";
+                case "slow": st.Apply(StatusKind.Slow, dur, 0.5f); return $"slowed {dur}s";
+                case "stun": st.Apply(StatusKind.Stun, dur, 1f); return $"stunned {dur}s";
+                default: return "usage: debuff <bleed|slow|stun> [seconds]";
+            }
+        });
     }
 
     // ---------- 코드로 UI 생성 ----------

@@ -1,8 +1,8 @@
 {
   "name": "com.povet34.tds-combat-fx",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "TDS Combat FX",
-  "description": "Breakable health, explosion model and low-health vignette. Pure C#, EditMode-tested.",
+  "description": "Breakable health, explosion model, low-health vignette and character StatusEffects (bleed DoT / slow / stun, speed-multiplier aggregation). Pure C#, EditMode-tested.",
   "unity": "6000.0",
   "keywords": [
     "tds",
