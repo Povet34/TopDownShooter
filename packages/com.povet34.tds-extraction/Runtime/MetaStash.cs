@@ -22,6 +22,14 @@ namespace TDS.Core
 
         public void AddCurrency(int amount) { if (amount > 0) Currency += amount; }
 
+        /// <summary>업그레이드 구매 등에 통화를 지출 — 잔액이 충분할 때만 차감하고 true.</summary>
+        public bool TrySpend(int amount)
+        {
+            if (amount <= 0 || Currency < amount) return false;
+            Currency -= amount;
+            return true;
+        }
+
         public void AddItem(string id, int count = 1)
         {
             if (string.IsNullOrEmpty(id) || count <= 0) return;

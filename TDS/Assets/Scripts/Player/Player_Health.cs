@@ -9,6 +9,9 @@ public class Player_Health : HealthController
 
     public bool isDead { get; private set; }
 
+    /// <summary>영구 업그레이드(Padding) 피해 경감률 0~1. 외부 피격에만 적용(출혈 DoT엔 미적용). StashUpgrades가 설정.</summary>
+    public float DamageResist { get; set; }
+
     protected override void Awake()
     {
         base.Awake();
@@ -26,8 +29,9 @@ public class Player_Health : HealthController
             return;
         }
 
-        ApplyDamage(damage);
-        GetComponent<PlayerStatus>()?.OnHit(damage); // 외부 피격(도보) → 확률적 출혈 디버프
+        int dealt = Mathf.Max(0, Mathf.RoundToInt(damage * (1f - DamageResist))); // Padding 경감
+        ApplyDamage(dealt);
+        GetComponent<PlayerStatus>()?.OnHit(dealt); // 외부 피격(도보) → 확률적 출혈 디버프
     }
 
     /// <summary>상태이상(출혈 등) DoT — 차 리다이렉트/추가 출혈 유발 없이 곧장 체력만 깎는다.</summary>

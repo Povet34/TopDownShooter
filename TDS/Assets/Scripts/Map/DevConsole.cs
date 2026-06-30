@@ -193,6 +193,27 @@ public class DevConsole : MonoBehaviour
             return "stash cleared";
         });
 
+        registry.Register("shop", "list stash upgrades + costs", _ =>
+        {
+            var c = StashUpgradesController.Ensure();
+            int salvage = MetaStashController.Instance != null ? MetaStashController.Instance.Stash.Currency : 0;
+            var sb = new StringBuilder($"stash: {salvage} salvage — buy <id>");
+            foreach (var d in c.Upgrades.Defs)
+            {
+                bool maxed = c.Upgrades.IsMaxed(d.Id);
+                sb.Append($"\n  {d.Id}  Lv{c.Upgrades.LevelOf(d.Id)}/{d.MaxLevel}  ")
+                  .Append(maxed ? "(MAX)" : $"cost {c.Upgrades.CostOf(d.Id)}")
+                  .Append($"  [+{d.PerLevel}/lv {d.Unit}]");
+            }
+            return sb.ToString();
+        });
+
+        registry.Register("buy", "buy a stash upgrade: buy <vitality|swiftness|padding>", args =>
+        {
+            if (args.Length < 1) return "usage: buy <vitality|swiftness|padding>";
+            return StashUpgradesController.Ensure().Buy(args[0].ToLowerInvariant());
+        });
+
         registry.Register("debuff", "apply a debuff: debuff <bleed|slow|stun> [seconds]", args =>
         {
             var p = GameObject.FindWithTag("Player");

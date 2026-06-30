@@ -42,5 +42,6 @@ public class PlayerMapBootstrap : MonoBehaviour
         PlayerStatus.Ensure(pgo);    // 상태이상(출혈/슬로우/스턴) 디버프
         DevConsole.Ensure();         // 백틱(`) 개발 콘솔
         MetaStashController.Ensure(); // 반출 전리품 영속 스태시
+        StashUpgradesController.Ensure().ApplyToPlayer(pgo); // 영구 업그레이드 효과 적용
     }
 }

@@ -21,6 +21,9 @@ public class Player_Movement : MonoBehaviour
     /// <summary>외부(상태이상) 이동 속도 배수. 1=정상, 0.6=슬로우, 0=스턴. PlayerStatus가 매 프레임 설정.</summary>
     public float ExternalSpeedMultiplier { get; set; } = 1f;
 
+    /// <summary>영구 업그레이드(Swiftness) 이동 속도 배수. 1=기본. StashUpgrades 적용 시 설정.</summary>
+    public float UpgradeSpeedMultiplier { get; set; } = 1f;
+
     /// <summary>현재 평면 이동 속도(탄퍼짐 계산용). 사격 감속이 반영된 실제 속도.</summary>
     public float CurrentPlanarSpeed
     {
@@ -111,7 +114,7 @@ public class Player_Movement : MonoBehaviour
             // 평면 탑다운: 적/낮은 prop을 타고 위로 솟구치는 것 차단 — 이동 후 위로 오른 수직분은 되돌린다
             // (중력 하강·낙하는 허용). 점프/수직 게임플레이가 없으므로 안전.
             float yBefore = transform.position.y;
-            characterController.Move(movementDirection * Time.deltaTime * speed * factor * ExternalSpeedMultiplier);
+            characterController.Move(movementDirection * Time.deltaTime * speed * factor * ExternalSpeedMultiplier * UpgradeSpeedMultiplier);
             if (transform.position.y > yBefore)
             {
                 Vector3 p = transform.position; p.y = yBefore;

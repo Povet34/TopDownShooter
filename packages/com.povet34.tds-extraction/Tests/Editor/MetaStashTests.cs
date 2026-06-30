@@ -60,6 +60,18 @@ namespace TDS.Tests.EditMode
         }
 
         [Test]
+        public void TrySpend_deducts_only_when_affordable()
+        {
+            var s = new MetaStash();
+            s.AddCurrency(100);
+            Assert.IsFalse(s.TrySpend(150)); // 부족 → 변화 없음
+            Assert.AreEqual(100, s.Currency);
+            Assert.IsTrue(s.TrySpend(40));
+            Assert.AreEqual(60, s.Currency);
+            Assert.IsFalse(s.TrySpend(0));   // 비양수 거부
+        }
+
+        [Test]
         public void Clear_resets()
         {
             var s = new MetaStash();
