@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using TDS.Core;
 
 public enum DriveType { FrontWheelDrive, RearWheelDrive, AllWheelDrive}
 
@@ -67,6 +68,17 @@ public class Car_Controller : MonoBehaviour
     private bool isDrifting;
     //private bool canEmitTrails = true;
 
+    [Header("Ramming (들이받기)")]
+    [Tooltip("이 속도(m/s) 이상으로 들이받아야 데미지")]
+    [SerializeField] private float ramMinSpeed = 3f;
+    [Tooltip("최소속도에서의 데미지(빠를수록 비례 증가, 상한까지)")]
+    [SerializeField] private int ramBaseDamage = 50;
+    [SerializeField] private int ramMaxDamage = 200;
+    [Tooltip("들이받은 대상(리지드바디) 넉백 임펄스(질량 비례)")]
+    [SerializeField] private float ramImpactForce = 8f;
+    [SerializeField] private float ramCooldownTime = 0.5f;
+    private readonly Dictionary<Transform, float> ramCooldown = new Dictionary<Transform, float>();
+    private readonly Dictionary<Transform, (IDamagable dmg, Rigidbody rb)> ramTargets = new Dictionary<Transform, (IDamagable, Rigidbody)>();
 
     private Car_Wheel[] wheels;
     private UI ui;
@@ -83,6 +95,10 @@ public class Car_Controller : MonoBehaviour
         AssignInputEvents();
         SetupDefaultValues();
         ActivateCar(false);
+
+        // 프리팹에 박힌 옛 Car_DamageZone(Jeep만, 레이어 한정 트리거)은 끄고 통합 ApplyRamming만 사용 → 이중타격 방지.
+        foreach (var dz in GetComponentsInChildren<Car_DamageZone>(true))
+            dz.enabled = false;
     }
 
     private void SetupDefaultValues()
@@ -140,11 +156,62 @@ public class Car_Controller : MonoBehaviour
         ApplySteering();
         ApplyBrakes();
         ApplySpeedLimit();
+        ApplyRamming();
 
         if (isDrifting)
             ApplyDrift();
         else
             StopDrift();
+    }
+
+    // 들이받기: 차체 주변 박스 안의 IDamagable에 속도 비례 데미지 + 넉백. 대상당 1회/프레임 + 쿨다운으로
+    // 같은 적의 본 11개를 11배 때리지 않게 한다. 자기 차/운전자(차에 parent됨)는 제외.
+    private void ApplyRamming()
+    {
+        float speed = rb.linearVelocity.magnitude;
+        if (!CarRam.CanDamage(speed, ramMinSpeed)) return;
+        int dmg = CarRam.DamageAt(speed, ramMinSpeed, ramBaseDamage, ramMaxDamage);
+
+        // 차체 주변 박스(로컬). 직렬화 필드 대신 고정값 — Y는 지면~적 머리까지 넉넉히.
+        Vector3 half = new Vector3(1.5f, 1.3f, 2.8f);
+        Vector3 center = transform.position + Vector3.up * 0.3f;
+        var hits = Physics.OverlapBox(center, half, transform.rotation, ~0, QueryTriggerInteraction.Ignore);
+
+        // 1차: 대상당 1개만 수집(데미지 주기 전에). 첫 타격이 적을 죽여 래그돌이 본을 재배치해도
+        // 같은 적을 여러 번 때리지 않게 — 데미지는 그 다음에.
+        ramTargets.Clear();
+        foreach (var col in hits)
+        {
+            if (col == null || col.transform.IsChildOf(transform)) continue; // 자기 차/운전자
+            var dmgable = col.GetComponent<IDamagable>() ?? col.GetComponentInParent<IDamagable>();
+            if (dmgable == null) continue;
+            Transform owner = OwnerOf(col);
+            if (!ramTargets.ContainsKey(owner)) ramTargets[owner] = (dmgable, col.attachedRigidbody);
+        }
+
+        // 2차: 쿨다운 아닌 대상에 1회 데미지 + 넉백.
+        foreach (var kv in ramTargets)
+        {
+            Transform owner = kv.Key;
+            if (ramCooldown.TryGetValue(owner, out float last) && Time.time - last < ramCooldownTime) continue;
+            ramCooldown[owner] = Time.time;
+
+            kv.Value.dmg.TakeDamage(dmg);
+
+            var orb = kv.Value.rb;
+            if (orb != null && orb != rb && !orb.isKinematic)
+                orb.AddExplosionForce(ramImpactForce * Mathf.Max(1f, orb.mass), transform.position, 4f, 1.5f, ForceMode.Impulse);
+        }
+    }
+
+    // 대상 식별 키 — 적은 본 여러 개가 한 적을 공유하므로 Enemy 루트로, 그 외는 리지드바디/자기 트랜스폼.
+    private static Transform OwnerOf(Collider col)
+    {
+        var e = col.GetComponentInParent<Enemy>();
+        if (e != null) return e.transform;
+        var r = col.attachedRigidbody;
+        if (r != null) return r.transform;
+        return col.transform;
     }
 
     private void ApplyTrailOnThGround()
