@@ -72,6 +72,11 @@
 
 > 장르 = **익스트랙션 루터**(탈출시켜 전리품 반출). (현재 최우선 항목 없음 — 아래 해결 기록 참조.)
 
+> ✅ **추가: 수송선 호출→착륙→탑승 + 맵 다양화 + 무기/보험 업그레이드 (2026-07-01)**
+> - **수송선 흐름**: `ExtractionZone`가 호출 전엔 패드 상공(y+32)에서 대기 → **C키 호출** → 강하(ease-out)·착륙 → 착륙 후에만 반경 탑승으로 탈출. Stage 머신 + `Call()`/`DescendTime`, 미니맵은 패드 지점, MapHUD 단계별 안내, 콘솔 `call`. PlayMode 3.
+> - **맵 다양화**: `PlacePointsOfInterest`(베이크 전) — 보급 캐시(크레이트+전리품 3~4)와 잔해(기울어진 슬랩 2~3 + 전리품)를 맵 크기 비례로 산포. 탐험 보상 + 비주얼 변주, MapObject로 거리 컬링. 검증: 캐시 5 + 잔해 13 + 전리품 26, 항법 정상.
+> - **상점 확장**: firepower(탄 데미지)·munitions(예비탄)·insurance(사망 회수율) 추가. 무기 보너스는 런타임 `Weapon`의 기본값(weaponData)에서 재계산(SO 불변·중복합산 없음). **사망 시 보험/부분반출** — `Insurance.Recovered=floor(amount×rate)`로 휴대 전리품 일부를 스태시로 회수, 나머지는 손실(extraction 0.4.0, +2 테스트).
+
 > ✅ **추가: 반출 → 영속 스태시 (extraction reward, 2026-06-30)**
 > - 순수 `MetaStash`(tds-extraction 패키지 0.2.0): 통화 + 아이템 수 누적, `Serialize`/`Deserialize`(깨진 입력 허용), EditMode 5개. 글루 `MetaStashController`(PlayerPrefs 영속, DontDestroyOnLoad): 탈출(`ExtractionZone.IsExtracted`) 시 휴대 통화(BankedOnExtract) + 인벤토리 아이템을 스태시에 넣고 저장 → 런 사이 보상이 쌓인다. MapHUD에 STASH 줄, 콘솔 `stash`/`stash_clear`. 검증: deposit → "50 salvage · 3 items", PlayerPrefs `50|Salvage:1;Parts:1;Scrap:1`로 영속. 추후: 스태시 화면(반출품으로 업그레이드 구매 등), 사망 시 휴대품 손실(타르코프식).
 
