@@ -209,6 +209,10 @@ public class MapHUD : MonoBehaviour
         extractText.color = new Color(0.3f, 0.85f, 0.95f); // 시안
         carText = MakeText(canvas.transform, "Car", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), TextAlignmentOptions.Bottom, 30f);
 
+        var hint = MakeText(canvas.transform, "Hint", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -22f), TextAlignmentOptions.TopRight, 20f);
+        hint.color = new Color(1f, 1f, 1f, 0.45f);
+        hint.text = "I inventory   ·   U upgrades   ·   ` console";
+
         // 종료 패널 (반투명 + 중앙 메시지)
         endPanel = new GameObject("EndPanel");
         endPanel.transform.SetParent(canvas.transform, false);

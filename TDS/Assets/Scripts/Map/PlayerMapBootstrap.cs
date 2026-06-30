@@ -43,5 +43,6 @@ public class PlayerMapBootstrap : MonoBehaviour
         DevConsole.Ensure();         // 백틱(`) 개발 콘솔
         MetaStashController.Ensure(); // 반출 전리품 영속 스태시
         StashUpgradesController.Ensure().ApplyToPlayer(pgo); // 영구 업그레이드 효과 적용
+        ShopPanel.Ensure();          // U키 업그레이드 상점
     }
 }
