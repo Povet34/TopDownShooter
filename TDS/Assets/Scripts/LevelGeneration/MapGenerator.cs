@@ -657,6 +657,18 @@ public class MapGenerator : MonoBehaviour
         carTransforms.Add(go.transform); // 레이더 블립용
     }
 
+    /// <summary>개발용: 월드 좌표에 풀에서 랜덤 차량 1대 스폰(콘솔 spawn_car). 없으면 null.</summary>
+    public Transform DebugSpawnCar(Vector3 worldPos)
+    {
+        var pool = config != null ? config.carPrefabs : null;
+        if (pool == null || pool.Count == 0 || mapRoot == null) return null;
+
+        var prefab = pool[UnityEngine.Random.Range(0, pool.Count)];
+        int before = carTransforms.Count;
+        SpawnCar(mapRoot.InverseTransformPoint(worldPos), prefab, new System.Random());
+        return carTransforms.Count > before ? carTransforms[carTransforms.Count - 1] : null;
+    }
+
     private void PlaceBarrels(int gw, int gh, float cell, Vector3 origin, int count, float clearR, System.Random rng)
     {
         int placed = 0, attempts = 0, maxAttempts = Mathf.Max(1, count) * 20;

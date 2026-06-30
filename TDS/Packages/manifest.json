@@ -11,6 +11,7 @@
     "com.povet34.tds-vehicle": "file:../../packages/com.povet34.tds-vehicle",
     "com.povet34.tds-services": "file:../../packages/com.povet34.tds-services",
     "com.povet34.tds-combat-fx": "file:../../packages/com.povet34.tds-combat-fx",
+    "com.povet34.dev-console": "file:../../packages/com.povet34.dev-console",
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.9",
@@ -75,6 +76,7 @@
     "com.povet34.tds-camera",
     "com.povet34.tds-vehicle",
     "com.povet34.tds-services",
-    "com.povet34.tds-combat-fx"
+    "com.povet34.tds-combat-fx",
+    "com.povet34.dev-console"
   ]
 }

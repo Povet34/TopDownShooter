@@ -17,6 +17,12 @@
       },
       "hash": "85c101f5329ec1b0c6f70cba44614166dd78f53c"
     },
+    "com.povet34.dev-console": {
+      "version": "file:../../packages/com.povet34.dev-console",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.povet34.grid-inventory": {
       "version": "file:../../packages/com.povet34.grid-inventory",
       "depth": 0,

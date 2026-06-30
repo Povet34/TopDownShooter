@@ -13,6 +13,7 @@
         "Povet34.Tds.Vehicle",
         "Povet34.Tds.Services",
         "Povet34.Tds.CombatFx",
+        "Povet34.Tds.DevConsole",
         "TDS.Input",
         "Unity.InputSystem",
         "Unity.InputSystem.ForUI",

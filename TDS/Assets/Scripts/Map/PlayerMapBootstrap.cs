@@ -39,5 +39,6 @@ public class PlayerMapBootstrap : MonoBehaviour
             player.weapon.SetDefaultWeapon(defaultWeapons);
 
         PlayerInventory.Ensure(pgo); // I키 그리드 인벤토리(처음부터 열람 가능)
+        DevConsole.Ensure();         // 백틱(`) 개발 콘솔
     }
 }
