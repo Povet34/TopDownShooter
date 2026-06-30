@@ -83,7 +83,7 @@ public class MapHUD : MonoBehaviour
             switch (GameOutcome.Evaluate(hp, finished, alive, extracted))
             {
                 case MatchState.Defeat:
-                    EndGame("DEFEATED", new Color(0.85f, 0.27f, 0.27f));
+                    EndGame($"DEFEATED\n<size=40%>{LoseCarriedLoot()}</size>", new Color(0.85f, 0.27f, 0.27f));
                     break;
                 case MatchState.Victory:
                     if (extracted)
@@ -116,6 +116,21 @@ public class MapHUD : MonoBehaviour
             director = FindObjectOfType<SpawnDirector>();
         if (extraction == null)
             extraction = FindObjectOfType<ExtractionZone>();
+    }
+
+    // 사망 = 휴대품 전손(타르코프식). 인벤토리/지갑을 비우고 잃은 양을 문자열로(스태시는 무관 — 반출분만 유지).
+    private string LoseCarriedLoot()
+    {
+        int items = 0, salvage = 0;
+        var p = GameObject.FindWithTag("Player");
+        if (p != null)
+        {
+            var inv = p.GetComponent<PlayerInventory>();
+            if (inv != null) items = inv.LoseAll();
+            var loot = p.GetComponent<PlayerLoot>();
+            if (loot != null) { salvage = loot.Wallet.Carried; loot.Wallet.DropCarried(); }
+        }
+        return (items == 0 && salvage == 0) ? "nothing carried" : $"lost {items} items · {salvage} salvage";
     }
 
     // 활성 디버프를 색칠된 한 줄로(없으면 빈 문자열).

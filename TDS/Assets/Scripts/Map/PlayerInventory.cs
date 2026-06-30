@@ -168,6 +168,16 @@ public class PlayerInventory : MonoBehaviour
         return ok;
     }
 
+    /// <summary>사망 시 휴대품 전손(타르코프식) — 그리드를 비우고, 잃은 아이템 수를 반환한다.</summary>
+    public int LoseAll()
+    {
+        if (Grid == null) return 0;
+        int n = Grid.Items.Count;
+        Grid.Clear();
+        if (IsOpen) Redraw();
+        return n;
+    }
+
     /// <summary>루트 value → 인벤토리 아이템(풋프린트 매핑). 같은 종류는 같은 id/색.</summary>
     public static InventoryItem LootItem(int value)
     {

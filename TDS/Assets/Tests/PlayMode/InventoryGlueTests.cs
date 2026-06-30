@@ -59,6 +59,22 @@ namespace TDS.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Death_loses_all_carried_items()
+        {
+            var player = new GameObject("Player") { tag = "Player" };
+            var inv = PlayerInventory.Ensure(player);
+            inv.TryStore(new InventoryItem("a", 2, 2));
+            inv.TryStore(new InventoryItem("b", 1, 1));
+            Assert.AreEqual(2, inv.Grid.Items.Count);
+
+            int lost = inv.LoseAll(); // 사망 시 휴대품 전손
+            Assert.AreEqual(2, lost, "잃은 아이템 수가 틀림");
+            Assert.AreEqual(0, inv.Grid.Items.Count, "그리드가 비워지지 않음");
+            Assert.IsFalse(inv.IsFull);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator MoveItem_relocates_stored_item()
         {
             var player = new GameObject("Player") { tag = "Player" };
