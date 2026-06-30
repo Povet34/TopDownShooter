@@ -1,8 +1,8 @@
 {
   "name": "com.povet34.tds-extraction",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "TDS Extraction",
-  "description": "Extraction-loop sims: board/stay progress and win/lose outcome evaluation. Pure C#, EditMode-tested.",
+  "description": "Extraction-loop sims: board/stay progress, win/lose outcome, and a persistent MetaStash (currency + item counts, serialize/deserialize) for run-to-run loot banking. Pure C#, EditMode-tested.",
   "unity": "6000.0",
   "keywords": [
     "tds",

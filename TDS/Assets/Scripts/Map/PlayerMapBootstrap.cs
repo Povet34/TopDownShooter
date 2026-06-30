@@ -40,5 +40,6 @@ public class PlayerMapBootstrap : MonoBehaviour
 
         PlayerInventory.Ensure(pgo); // I키 그리드 인벤토리(처음부터 열람 가능)
         DevConsole.Ensure();         // 백틱(`) 개발 콘솔
+        MetaStashController.Ensure(); // 반출 전리품 영속 스태시
     }
 }

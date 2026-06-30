@@ -19,7 +19,7 @@ public class MapHUD : MonoBehaviour
     private SpawnDirector director;
     private ExtractionZone extraction;
 
-    private TextMeshProUGUI healthText, ammoText, waveText, lootText, extractText, carText, endText;
+    private TextMeshProUGUI healthText, ammoText, waveText, lootText, stashText, extractText, carText, endText;
     private GameObject endPanel;
     private bool ended;
 
@@ -47,6 +47,10 @@ public class MapHUD : MonoBehaviour
 
         if (lootText != null)
             lootText.text = $"SALVAGE  {(playerLoot != null ? playerLoot.Wallet.Carried : 0)}";
+
+        if (stashText != null)
+            stashText.text = MetaStashController.Instance != null
+                ? $"<size=80%>STASH  {MetaStashController.Instance.Summary()}</size>" : "";
 
         UpdateCarReadout();
 
@@ -160,6 +164,8 @@ public class MapHUD : MonoBehaviour
         waveText = MakeText(canvas.transform, "Wave", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -20f), TextAlignmentOptions.Top, 30f);
         lootText = MakeText(canvas.transform, "Loot", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -22f), TextAlignmentOptions.TopLeft, 30f);
         lootText.color = new Color(1f, 0.82f, 0.2f); // 금색
+        stashText = MakeText(canvas.transform, "Stash", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -58f), TextAlignmentOptions.TopLeft, 26f);
+        stashText.color = new Color(0.6f, 0.85f, 1f); // 반출 스태시 = 하늘색
         extractText = MakeText(canvas.transform, "Extract", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), TextAlignmentOptions.Center, 44f);
         extractText.color = new Color(0.3f, 0.85f, 0.95f); // 시안
         carText = MakeText(canvas.transform, "Car", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), TextAlignmentOptions.Bottom, 30f);

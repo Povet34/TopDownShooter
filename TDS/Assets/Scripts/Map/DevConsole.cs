@@ -175,6 +175,23 @@ public class DevConsole : MonoBehaviour
             var car = mg.DebugSpawnCar(p.transform.position + p.transform.forward * 4f + Vector3.up * 0.6f);
             return car != null ? "spawned car" : "no car prefab in MapConfig";
         });
+
+        registry.Register("stash", "show the persistent extraction stash", _ =>
+        {
+            var m = MetaStashController.Instance;
+            if (m == null) return "no stash";
+            var sb = new StringBuilder("stash: ").Append(m.Stash.Currency).Append(" salvage");
+            foreach (var kv in m.Stash.Items) sb.Append("\n  ").Append(kv.Key).Append(" x").Append(kv.Value);
+            return sb.ToString();
+        });
+
+        registry.Register("stash_clear", "wipe the stash (dev)", _ =>
+        {
+            var m = MetaStashController.Instance;
+            if (m == null) return "no stash";
+            m.ClearStash();
+            return "stash cleared";
+        });
     }
 
     // ---------- 코드로 UI 생성 ----------

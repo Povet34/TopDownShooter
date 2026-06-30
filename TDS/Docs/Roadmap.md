@@ -72,6 +72,13 @@
 
 > 장르 = **익스트랙션 루터**(탈출시켜 전리품 반출). (현재 최우선 항목 없음 — 아래 해결 기록 참조.)
 
+> ✅ **추가: 반출 → 영속 스태시 (extraction reward, 2026-06-30)**
+> - 순수 `MetaStash`(tds-extraction 패키지 0.2.0): 통화 + 아이템 수 누적, `Serialize`/`Deserialize`(깨진 입력 허용), EditMode 5개. 글루 `MetaStashController`(PlayerPrefs 영속, DontDestroyOnLoad): 탈출(`ExtractionZone.IsExtracted`) 시 휴대 통화(BankedOnExtract) + 인벤토리 아이템을 스태시에 넣고 저장 → 런 사이 보상이 쌓인다. MapHUD에 STASH 줄, 콘솔 `stash`/`stash_clear`. 검증: deposit → "50 salvage · 3 items", PlayerPrefs `50|Salvage:1;Parts:1;Scrap:1`로 영속. 추후: 스태시 화면(반출품으로 업그레이드 구매 등), 사망 시 휴대품 손실(타르코프식).
+
+> ✅ **추가: 개발 콘솔 (backtick, 2026-06-30)** — com.povet34.dev-console(`ConsoleRegistry` 순수, 8 테스트) + `DevConsole`(백틱 토글, 게임 입력 차단). 명령: help/tp/heal/killall/give/spawn_loot/spawn_car/stash/stash_clear.
+
+> ✅ **추가: 차량 전투 (2026-06-30)** — 들이받기(`Car_Controller.ApplyRamming`+순수 `CarRam`, 속도 비례 데미지·넉백·대상당 1회) + 몬스터가 차 공격(`Player_Health` 리다이렉트 + Player레이어 `CarDamageProxy`).
+
 > ✅ **해결: 인벤토리 자유 배치 — 드래그/회전/스왑 (2026-06-30)**
 > - 순수 `InventoryGrid`(grid-inventory 패키지)에 추가: `CanPlaceIgnoring`(자기/상대 셀 무시), `TryMove`(겹쳐 옮기기 허용·실패 시 불변), `TrySwap`(두 아이템 자리 교환, 각자 회전 유지, 안 맞으면 불변). 모두 변경 전 검사 → **실패 시 그리드/인스턴스 불변**. EditMode 8개 추가.
 > - `PlayerInventory`(글루): 패널 열렸을 때 마우스 드래그 — `ScreenToCell`(RectTransformUtility로 화면→셀, 검증됨)로 커서 셀 계산, 좌클릭으로 아이템 집어 고스트(초록=가능/빨강=불가) 따라다님, **R로 회전**(비정사각형만), 놓으면 빈자리면 `TryMove`·다른 아이템 위면 `TrySwap`. 공개 `MoveItem`(테스트 훅, PlayMode 1). 패널 제목에 "drag to move · R rotate · I close".
