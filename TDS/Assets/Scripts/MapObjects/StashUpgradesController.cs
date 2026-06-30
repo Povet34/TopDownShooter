@@ -54,7 +54,16 @@ public class StashUpgradesController : MonoBehaviour
 
         var ph = player.GetComponent<Player_Health>();
         if (ph != null) ph.DamageResist = Mathf.Clamp01(Upgrades.TotalBonus("padding"));
+
+        var wc = player.GetComponentInChildren<Player_WeaponController>();
+        if (wc != null)
+            wc.ApplyUpgradeBonuses(
+                Mathf.RoundToInt(Upgrades.TotalBonus("firepower")),
+                Mathf.RoundToInt(Upgrades.TotalBonus("munitions")));
     }
+
+    /// <summary>사망 시 보험 회수율(0~1) — Insurance 레벨당 누적. 휴대 전리품의 이 비율이 스태시로 회수된다.</summary>
+    public float DeathRecoveryRate => Mathf.Clamp01(Upgrades.TotalBonus("insurance"));
 
     /// <summary>스태시 통화로 업그레이드 구매 — 결과 메시지 반환(콘솔/UI 표시용).</summary>
     public string Buy(string id)

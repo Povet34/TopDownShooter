@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0]
+- `StashUpgrades.Default`: + firepower (bullet damage), munitions (reserve ammo),
+  insurance (death recovery) upgrade defs.
+- `Insurance.Recovered(amount, rate)`: floor(amount × clamp01(rate)) for death-time
+  partial extraction / insurance payout.
+
 ## [0.3.0]
 - `MetaStash.TrySpend`: deduct currency only when affordable (for purchases).
 - `StashUpgrades`: buyable permanent upgrades — code-fixed defs (vitality/swiftness/padding),

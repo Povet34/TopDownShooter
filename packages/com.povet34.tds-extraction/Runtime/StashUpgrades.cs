@@ -37,6 +37,9 @@ namespace TDS.Core
             new UpgradeDef("vitality",  "Vitality",  30, 5, 25f,   "max HP"),
             new UpgradeDef("swiftness", "Swiftness", 40, 5, 0.08f, "move speed"),
             new UpgradeDef("padding",   "Padding",   50, 4, 0.06f, "damage resist"),
+            new UpgradeDef("firepower", "Firepower", 45, 5, 4f,    "bullet damage"),
+            new UpgradeDef("munitions", "Munitions", 35, 5, 40f,   "reserve ammo"),
+            new UpgradeDef("insurance", "Insurance", 60, 4, 0.2f,  "death recovery"),
         });
 
         public IReadOnlyList<UpgradeDef> Defs => defs;

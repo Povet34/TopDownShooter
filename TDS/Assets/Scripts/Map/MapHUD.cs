@@ -118,19 +118,43 @@ public class MapHUD : MonoBehaviour
             extraction = FindObjectOfType<ExtractionZone>();
     }
 
-    // 사망 = 휴대품 전손(타르코프식). 인벤토리/지갑을 비우고 잃은 양을 문자열로(스태시는 무관 — 반출분만 유지).
+    // 사망 = 휴대품 손실(타르코프식). 단, Insurance 업그레이드가 있으면 일부를 스태시로 회수(부분반출). 나머지는 손실.
     private string LoseCarriedLoot()
     {
-        int items = 0, salvage = 0;
         var p = GameObject.FindWithTag("Player");
-        if (p != null)
+        if (p == null) return "nothing carried";
+
+        var inv = p.GetComponent<PlayerInventory>();
+        var loot = p.GetComponent<PlayerLoot>();
+        var stash = MetaStashController.Instance != null ? MetaStashController.Instance.Stash : null;
+        float rate = StashUpgradesController.Instance != null ? StashUpgradesController.Instance.DeathRecoveryRate : 0f;
+
+        int salvage = loot != null ? loot.Wallet.Carried : 0;
+        int recoveredSalvage = Insurance.Recovered(salvage, rate);
+
+        int items = 0, recoveredItems = 0;
+        if (inv != null && inv.Grid != null)
         {
-            var inv = p.GetComponent<PlayerInventory>();
-            if (inv != null) items = inv.LoseAll();
-            var loot = p.GetComponent<PlayerLoot>();
-            if (loot != null) { salvage = loot.Wallet.Carried; loot.Wallet.DropCarried(); }
+            var carried = inv.Grid.Items; // IReadOnlyList<PlacedItem>
+            items = carried.Count;
+            recoveredItems = Insurance.Recovered(items, rate);
+            if (stash != null)
+                for (int i = 0; i < recoveredItems && i < carried.Count; i++)
+                    stash.AddItem(carried[i].Item.Id); // 보험으로 회수된 아이템을 스태시로
         }
-        return (items == 0 && salvage == 0) ? "nothing carried" : $"lost {items} items · {salvage} salvage";
+
+        if (stash != null && recoveredSalvage > 0) stash.AddCurrency(recoveredSalvage);
+        if (stash != null && (recoveredSalvage > 0 || recoveredItems > 0)) MetaStashController.Instance.Save();
+
+        // 나머지는 손실
+        if (inv != null) inv.LoseAll();
+        if (loot != null) loot.Wallet.DropCarried();
+
+        if (items == 0 && salvage == 0) return "nothing carried";
+        string lost = $"lost {items - recoveredItems} items · {salvage - recoveredSalvage} salvage";
+        return (recoveredItems + recoveredSalvage > 0)
+            ? $"{lost}\n<color=#7CFC9A>insured {recoveredItems} items · {recoveredSalvage} salvage</color>"
+            : lost;
     }
 
     // 활성 디버프를 색칠된 한 줄로(없으면 빈 문자열).

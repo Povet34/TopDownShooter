@@ -64,6 +64,21 @@ public class Player_WeaponController : MonoBehaviour
 
         EquipWeapon(0);
     }
+
+    /// <summary>
+    /// 영구 업그레이드(Firepower/Munitions)를 모든 무기에 반영. 각 무기의 기본값(weaponData)에서
+    /// 다시 계산해 적용 → 재호출/구매 시에도 중복 합산되지 않는다. SO 자산은 건드리지 않음(런타임 Weapon만).
+    /// </summary>
+    public void ApplyUpgradeBonuses(int bonusDamage, int bonusReserve)
+    {
+        if (weaponSlots == null) return;
+        foreach (var w in weaponSlots)
+        {
+            if (w == null || w.weaponData == null) continue;
+            w.bulletDamage = w.weaponData.bulletDamage + Mathf.Max(0, bonusDamage);
+            w.totalReserveAmmo = w.weaponData.totalReserveAmmo + Mathf.Max(0, bonusReserve);
+        }
+    }
     private void EquipWeapon(int i)
     {
         if (i >= weaponSlots.Count)
