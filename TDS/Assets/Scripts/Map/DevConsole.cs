@@ -176,6 +176,14 @@ public class DevConsole : MonoBehaviour
             return car != null ? "spawned car" : "no car prefab in MapConfig";
         });
 
+        registry.Register("call", "call the extraction dropship", _ =>
+        {
+            var z = FindObjectOfType<ExtractionZone>();
+            if (z == null) return "no extraction zone";
+            z.Call();
+            return $"dropship called ({z.CurrentStage})";
+        });
+
         registry.Register("stash", "show the persistent extraction stash", _ =>
         {
             var m = MetaStashController.Instance;

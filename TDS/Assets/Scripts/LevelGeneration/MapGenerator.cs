@@ -201,11 +201,12 @@ public class MapGenerator : MonoBehaviour
         }
         go.name = "Dropship";
 
+        Vector3 padWorld = go.transform.position; // 착륙 지점(Configure가 상공으로 올리기 전)
         var zone = go.GetComponent<ExtractionZone>() ?? go.AddComponent<ExtractionZone>();
         zone.Configure(config.extractionRadius, config.extractionBoardTime);
 
         HasExtraction = true;
-        ExtractionPosition = go.transform.position;
+        ExtractionPosition = padWorld; // 미니맵/HUD는 착륙 지점(패드)을 가리킴
     }
 
     // 프리팹 렌더러 바운드의 바닥이 y=0에 오도록 올림(피벗이 중앙이어도 땅에 안 파묻힘).

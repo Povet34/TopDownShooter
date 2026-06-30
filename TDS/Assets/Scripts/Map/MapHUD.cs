@@ -65,12 +65,9 @@ public class MapHUD : MonoBehaviour
                     ? "ALL WAVES CLEARED"
                     : $"WAVE  {director.CurrentWaveNumber} / {director.TotalWaves}     enemies: {director.AliveCount}";
 
-        // 탈출 진행 프롬프트(존 안에 있을 때)
+        // 탈출 프롬프트(호출 → 강하 → 착륙 → 탑승)
         if (extractText != null)
-        {
-            bool boarding = extraction != null && extraction.PlayerInZone && !extraction.IsExtracted;
-            extractText.text = boarding ? $"EXTRACTING…  {Mathf.RoundToInt(extraction.Progress01 * 100f)}%" : "";
-        }
+            extractText.text = ExtractionPrompt();
 
         if (!ended)
         {
@@ -155,6 +152,24 @@ public class MapHUD : MonoBehaviour
         return (recoveredItems + recoveredSalvage > 0)
             ? $"{lost}\n<color=#7CFC9A>insured {recoveredItems} items · {recoveredSalvage} salvage</color>"
             : lost;
+    }
+
+    // 탈출 단계별 안내 문구.
+    private string ExtractionPrompt()
+    {
+        if (extraction == null || extraction.IsExtracted) return "";
+        switch (extraction.CurrentStage)
+        {
+            case ExtractionZone.Stage.Hovering:
+                return "<size=70%>press</size>  C  <size=70%>to call the dropship</size>";
+            case ExtractionZone.Stage.Descending:
+                return "DROPSHIP INBOUND…";
+            case ExtractionZone.Stage.Landed:
+                return extraction.PlayerInZone
+                    ? $"EXTRACTING…  {Mathf.RoundToInt(extraction.Progress01 * 100f)}%"
+                    : "DROPSHIP LANDED — board to extract";
+        }
+        return "";
     }
 
     // 활성 디버프를 색칠된 한 줄로(없으면 빈 문자열).
