@@ -1556,6 +1556,14 @@ MonoBehaviour:
     m_Bits: 256
   idleTime: 3
   aggresionRange: 15
+  viewHalfAngle: 70
+  senseRadius: 2
+  eyeHeight: 1.6
+  viewOccluderMask:
+    serializedVersion: 2
+    m_Bits: 0
+  loseSightSeconds: 3
+  investigateSeconds: 5
   walkSpeed: 1.5
   runSpeed: 3
   turnSpeed: 5
@@ -1578,6 +1586,10 @@ MonoBehaviour:
   advanceSpeed: 3
   advanceStoppingDistance: 8
   advanceDuration: 2.5
+  canStrafe: 1
+  canBackstep: 1
+  canFlee: 1
+  fleeHealthFraction: 0.25
   minCoverTime: 4
   safeDistance: 2
   attackDelay: 1

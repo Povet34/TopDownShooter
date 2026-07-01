@@ -8435,8 +8435,8 @@ GameObject:
   - component: {fileID: 3934909495193360276}
   - component: {fileID: 8449886310543895008}
   - component: {fileID: 6351911576159481806}
-  - component: {fileID: 4022495599483676840}
   - component: {fileID: 8025575530366573411}
+  - component: {fileID: 4022495599483676840}
   - component: {fileID: 5535285681741723290}
   - component: {fileID: 9015491585020932887}
   - component: {fileID: 6804358807869815993}
@@ -8509,6 +8509,19 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5986155516868850622}
   m_Enabled: 1
+--- !u!114 &8025575530366573411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5986155516868850622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2423b43e650698d4caa5c35677a24dc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerBody: {fileID: 1431248732387060967}
 --- !u!114 &4022495599483676840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8523,19 +8536,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   currentHealth: 100
---- !u!114 &8025575530366573411
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5986155516868850622}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2423b43e650698d4caa5c35677a24dc3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerBody: {fileID: 1431248732387060967}
 --- !u!114 &5535285681741723290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8585,6 +8585,7 @@ MonoBehaviour:
   walkSpeed: 1.5
   runSpeed: 3
   turnSpeed: 10
+  shootingMoveFactor: 0.5
 --- !u!114 &6804358807869815993
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8616,7 +8617,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 709851603379088992, guid: 5d6f9576cecc23b428a0b635b90998be, type: 3}
   bulletSpeed: 15
   fireEffectLight: {fileID: 1147583651394888376}
-  gunshotNoiseRadius: 18
+  movingSpreadPenalty: 2
   weaponHolder: {fileID: 744513161581605566}
   tacticalLight: {fileID: 8410122562628821243}
   maxSlots: 2

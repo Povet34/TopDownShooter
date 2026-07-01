@@ -128,6 +128,8 @@ public class Player_AimController : MonoBehaviour
         aimLaser.SetPosition(2, endPoint + laserDirection * laserTipLenght);
 
         aimLaserEnd.transform.position = endPoint;
+        
+        if(hit.normal == Vector3.zero) return;
         aimLaserEnd.transform.forward = hit.normal;
     }
     private void UpdateAimPosition()
